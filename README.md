@@ -17,8 +17,16 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 
 | 이름 | 설명 |
 |---|---|
-| `DATA_GO_KR_KEY` | 공공데이터포털(data.go.kr) 일반 인증키. Decoding/Encoding 어느 쪽을 넣어도 프록시에서 정규화한다. |
-| `ALIO_API_KEY` | 알리오플러스(alioplus.go.kr) 인증키. 위와 발급처가 다른 별개의 키다. |
+| `DATA_GO_KR_KEY` | 공공데이터포털(data.go.kr) 일반 인증키. 이 키 하나로 포털 계열 4종을 모두 호출한다. Decoding/Encoding 어느 쪽을 넣어도 프록시에서 정규화한다. |
+| `ALIO_APBA_KEY` | 알리오플러스 **기관정보** 인증키. |
+| `ALIO_BIZ_KEY` | 알리오플러스 **사업정보** 인증키. |
+| `ALIO_FACILITY_KEY` | 알리오플러스 **시설정보** 인증키. |
+| `ALIO_EVENT_KEY` | 알리오플러스 **행사정보** 인증키. |
+
+알리오플러스(alioplus.go.kr)는 포털과 발급처가 다르고, **API 4종마다 인증키를 따로 발급**한다.
+프록시는 요청 본문의 `keySource`(`data` · `alio-apba` · `alio-biz` · `alio-facility` · `alio-event`)로
+어느 키를 쓸지 고르며, 이 이름은 `app/api/proxy/route.js` 의 `KEY_SOURCES` 와
+`app/api-test/page.js` 의 `KEY_SOURCES` 가 1:1로 맞춰져 있다.
 
 변수 이름만 담은 템플릿은 `.env.example` 에 있다.
 로컬 실행은 `.env.local` 로 복사해 값을 채우고, 배포는 Vercel → Settings → Environment Variables 에 등록한 뒤 재배포한다.
@@ -36,12 +44,19 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 
 ## 연결 대상 오픈API
 
-| 소관기관 | API | End Point |
-|---|---|---|
-| 조달청 | 나라장터 입찰공고정보서비스 | `https://apis.data.go.kr/1230000/ad/BidPublicInfoService` |
-| 과학기술정보통신부 | 주요정책 | `https://apis.data.go.kr/1721000/msitmainpolicyinfo` |
-| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst` |
-| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz` |
+| 소관기관 | API | End Point | 키 |
+|---|---|---|---|
+| 조달청 | 나라장터 입찰공고정보서비스 | `https://apis.data.go.kr/1230000/ad/BidPublicInfoService` | `DATA_GO_KR_KEY` |
+| 과학기술정보통신부 | 주요정책 | `https://apis.data.go.kr/1721000/msitmainpolicyinfo` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz` | `DATA_GO_KR_KEY` |
+| 기획재정부 | 알리오플러스 기관정보 | `http://openapi.alioplus.go.kr/api/apba` | `ALIO_APBA_KEY` |
+| 기획재정부 | 알리오플러스 사업정보 | `http://openapi.alioplus.go.kr/api/business` | `ALIO_BIZ_KEY` |
+| 기획재정부 | 알리오플러스 시설정보 | `http://openapi.alioplus.go.kr/api/facility` | `ALIO_FACILITY_KEY` |
+| 기획재정부 | 알리오플러스 행사정보 | `http://openapi.alioplus.go.kr/api/event` | `ALIO_EVENT_KEY` |
+
+알리오플러스 4종은 모두 `POST` + `application/x-www-form-urlencoded` 이고,
+인증 파라미터명은 `X-API-AUTH-KEY` 인데 헤더가 아니라 **폼 바디 필드**로 전달한다.
 
 `1051000` 계열은 포털에 베이스 주소까지만 공시되어 오퍼레이션 경로를 별도로 확인해야 한다.
 

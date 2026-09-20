@@ -24,9 +24,22 @@ function resolveKey(raw) {
   return k;
 }
 
+// 알리오플러스는 기관·사업·시설·행사 API가 각각 별도의 인증키를 발급한다.
+// 공공데이터포털 키 1개 + 알리오 키 4개를 keySource 이름으로 고른다.
+const KEY_SOURCES = {
+  data: 'DATA_GO_KR_KEY',
+  'alio-apba': 'ALIO_APBA_KEY',
+  'alio-biz': 'ALIO_BIZ_KEY',
+  'alio-facility': 'ALIO_FACILITY_KEY',
+  'alio-event': 'ALIO_EVENT_KEY',
+};
+
+function envNameFor(source) {
+  return KEY_SOURCES[source] || KEY_SOURCES.data;
+}
+
 function pickKey(source) {
-  const raw = source === 'alio' ? process.env.ALIO_API_KEY : process.env.DATA_GO_KR_KEY;
-  return resolveKey(raw);
+  return resolveKey(process.env[envNameFor(source)]);
 }
 
 function maskValue(sp, keyParam) {
@@ -36,10 +49,11 @@ function maskValue(sp, keyParam) {
 }
 
 export async function GET() {
-  return Response.json({
-    dataKeyConfigured: Boolean(process.env.DATA_GO_KR_KEY),
-    alioKeyConfigured: Boolean(process.env.ALIO_API_KEY),
-  });
+  const configured = {};
+  for (const [source, envName] of Object.entries(KEY_SOURCES)) {
+    configured[source] = Boolean(process.env[envName]);
+  }
+  return Response.json({ configured });
 }
 
 export async function POST(req) {
@@ -55,7 +69,7 @@ export async function POST(req) {
   const endpoint = String(body.endpoint || '').trim();
   const method = String(body.method || 'GET').toUpperCase() === 'POST' ? 'POST' : 'GET';
   const keyParam = String(body.keyParam || 'serviceKey').trim();
-  const keySource = body.keySource === 'alio' ? 'alio' : 'data';
+  const keySource = Object.hasOwn(KEY_SOURCES, body.keySource) ? body.keySource : 'data';
   const params = body.params && typeof body.params === 'object' ? body.params : {};
 
   if (!/^https?:\/\//i.test(endpoint)) {
@@ -77,7 +91,7 @@ export async function POST(req) {
 
   const key = pickKey(keySource);
   if (!key) {
-    const name = keySource === 'alio' ? 'ALIO_API_KEY' : 'DATA_GO_KR_KEY';
+    const name = envNameFor(keySource);
     return Response.json({
       ok: false,
       error: `${name} 환경변수가 설정되지 않았습니다. Vercel 프로젝트 Settings → Environment Variables 에서 등록한 뒤 재배포하세요.`,

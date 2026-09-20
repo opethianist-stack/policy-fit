@@ -77,7 +77,7 @@ function makePresets() {
       group: 'alio',
       label: '알리오플러스 · 기관',
       method: 'POST',
-      keySource: 'alio',
+      keySource: 'alio-apba',
       keyParam: 'X-API-AUTH-KEY',
       endpoint: 'http://openapi.alioplus.go.kr/api/apba',
       params: [
@@ -95,7 +95,7 @@ function makePresets() {
       group: 'alio',
       label: '알리오플러스 · 사업',
       method: 'POST',
-      keySource: 'alio',
+      keySource: 'alio-biz',
       keyParam: 'X-API-AUTH-KEY',
       endpoint: 'http://openapi.alioplus.go.kr/api/business',
       params: [
@@ -114,7 +114,7 @@ function makePresets() {
       group: 'alio',
       label: '알리오플러스 · 시설',
       method: 'POST',
-      keySource: 'alio',
+      keySource: 'alio-facility',
       keyParam: 'X-API-AUTH-KEY',
       endpoint: 'http://openapi.alioplus.go.kr/api/facility',
       params: [
@@ -125,14 +125,14 @@ function makePresets() {
         { k: 'schSggNa', v: '' },
         { k: 'schFacltNa', v: '' },
       ],
-      note: '공공기관 개방시설 정보. 이번 과제와는 직접 관련이 적지만 같은 인증키로 동작 확인용으로 씁니다.',
+      note: '공공기관 개방시설 정보. 이번 과제와 직접 관련은 적지만 ALIO_FACILITY_KEY 발급·연결 확인용으로 함께 둡니다.',
     },
     {
       id: 'alio-event',
       group: 'alio',
       label: '알리오플러스 · 행사',
       method: 'POST',
-      keySource: 'alio',
+      keySource: 'alio-event',
       keyParam: 'X-API-AUTH-KEY',
       endpoint: 'http://openapi.alioplus.go.kr/api/event',
       params: [
@@ -148,12 +148,24 @@ function makePresets() {
   ];
 }
 
+// 프록시(app/api/proxy/route.js)의 KEY_SOURCES 와 id 가 1:1로 맞아야 한다.
+const KEY_SOURCES = [
+  { id: 'data', env: 'DATA_GO_KR_KEY' },
+  { id: 'alio-apba', env: 'ALIO_APBA_KEY' },
+  { id: 'alio-biz', env: 'ALIO_BIZ_KEY' },
+  { id: 'alio-facility', env: 'ALIO_FACILITY_KEY' },
+  { id: 'alio-event', env: 'ALIO_EVENT_KEY' },
+];
+
 const APPLIED = [
   ['조달청', '나라장터 입찰공고정보서비스', 'data.go.kr', '2028-09-03'],
   ['과학기술정보통신부', '주요정책', 'data.go.kr', '2028-09-03'],
   ['재정경제부', '공공기관 정보 조회 서비스', 'data.go.kr', '2028-09-03'],
   ['재정경제부', '공공기관 사업정보 조회서비스', 'data.go.kr', '2028-09-07'],
-  ['기획재정부', '알리오플러스 정보 연동(시설·행사·기관·사업)', 'alioplus.go.kr', '별도 발급 필요'],
+  ['기획재정부', '알리오플러스 기관정보', 'alioplus.go.kr', 'API별 별도 발급'],
+  ['기획재정부', '알리오플러스 사업정보', 'alioplus.go.kr', 'API별 별도 발급'],
+  ['기획재정부', '알리오플러스 시설정보', 'alioplus.go.kr', 'API별 별도 발급'],
+  ['기획재정부', '알리오플러스 행사정보', 'alioplus.go.kr', 'API별 별도 발급'],
 ];
 
 function summarize(result) {
@@ -207,7 +219,7 @@ export default function ApiTest() {
     fetch('/api/proxy')
       .then((r) => r.json())
       .then(setKeys)
-      .catch(() => setKeys({ dataKeyConfigured: false, alioKeyConfigured: false }));
+      .catch(() => setKeys({ configured: {} }));
   }, []);
 
   function applyPreset(p) {
@@ -252,8 +264,6 @@ export default function ApiTest() {
   }
 
   const shape = summarize(result);
-  const dataOk = keys && keys.dataKeyConfigured;
-  const alioOk = keys && keys.alioKeyConfigured;
 
   return (
     <div className="page">
@@ -261,12 +271,18 @@ export default function ApiTest() {
       <h1>오픈API 연결 테스트</h1>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        <div className={`keystate ${keys ? (dataOk ? 'on' : 'off') : 'wait'}`} style={{ marginBottom: 0 }}>
-          {!keys ? '확인 중…' : dataOk ? 'DATA_GO_KR_KEY 등록됨' : 'DATA_GO_KR_KEY 없음'}
-        </div>
-        <div className={`keystate ${keys ? (alioOk ? 'on' : 'off') : 'wait'}`} style={{ marginBottom: 0 }}>
-          {!keys ? '확인 중…' : alioOk ? 'ALIO_API_KEY 등록됨' : 'ALIO_API_KEY 없음'}
-        </div>
+        {KEY_SOURCES.map((s) => {
+          const ok = Boolean(keys && keys.configured && keys.configured[s.id]);
+          return (
+            <div
+              key={s.id}
+              className={`keystate ${keys ? (ok ? 'on' : 'off') : 'wait'}`}
+              style={{ marginBottom: 0 }}
+            >
+              {!keys ? `${s.env} 확인 중…` : ok ? `${s.env} 등록됨` : `${s.env} 없음`}
+            </div>
+          );
+        })}
       </div>
 
       <div className="card">
@@ -281,7 +297,8 @@ export default function ApiTest() {
               <tr><td>방식</td><td>GET · 쿼리스트링</td><td>POST · form-urlencoded</td></tr>
               <tr><td>인증 파라미터</td><td>serviceKey / ServiceKey</td><td>X-API-AUTH-KEY</td></tr>
               <tr><td>키 발급처</td><td>data.go.kr 마이페이지</td><td>alioplus.go.kr 소셜 로그인 → Open API</td></tr>
-              <tr><td>환경변수</td><td>DATA_GO_KR_KEY</td><td>ALIO_API_KEY</td></tr>
+              <tr><td>키 개수</td><td>1개로 4종 공용</td><td>API 4종마다 별도 발급</td></tr>
+              <tr><td>환경변수</td><td>DATA_GO_KR_KEY</td><td>ALIO_APBA_KEY · ALIO_BIZ_KEY · ALIO_FACILITY_KEY · ALIO_EVENT_KEY</td></tr>
             </tbody>
           </table>
         </div>
@@ -345,8 +362,9 @@ export default function ApiTest() {
           <div style={{ minWidth: 210 }}>
             <label className="f">사용할 키</label>
             <select className="t" value={keySource} onChange={(e) => setKeySource(e.target.value)}>
-              <option value="data">DATA_GO_KR_KEY</option>
-              <option value="alio">ALIO_API_KEY</option>
+              {KEY_SOURCES.map((s) => (
+                <option key={s.id} value={s.id}>{s.env}</option>
+              ))}
             </select>
           </div>
         </div>
