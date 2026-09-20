@@ -1,0 +1,23 @@
+# dependencies
+node_modules
+
+# build
+.next
+out
+
+# vercel
+.vercel
+
+# env — 모든 형태의 환경변수 파일을 제외한다 (.env.example만 예외)
+.env
+.env.*
+!.env.example
+
+# 인증키가 들어있는 로컬 자료
+*.key
+*.pem
+공공데이터포털_API_현황.xlsx
+
+# os
+.DS_Store
+Thumbs.db
