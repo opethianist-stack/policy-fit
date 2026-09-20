@@ -182,3 +182,34 @@ th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--ha
 thead th { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--tint); letter-spacing: 0.02em; }
 tbody tr:last-child td { border-bottom: none; }
 td { color: var(--slate); }
+
+/* ---------- landing: violet theme ---------- */
+.landing {
+  min-height: calc(100vh - 56px);
+  background: linear-gradient(180deg, #f6f3ff 0%, #efeaff 45%, var(--bg) 100%);
+  max-width: none;
+  padding: 56px 24px 80px;
+}
+.landing > *,
+.landing .tiles,
+.landing .steplist { max-width: 1000px; margin-left: auto; margin-right: auto; }
+.landing .tiles { max-width: 720px; margin-top: 28px; }
+
+.landing h1 { color: var(--indigo); }
+.landing .eyebrow { color: var(--violet); }
+
+.landing .tile {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(115, 83, 234, 0.18);
+}
+.landing .tile:hover {
+  border-color: var(--violet);
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(115, 83, 234, 0.12);
+}
+.landing .tile .t { color: var(--violet); }
+
+.landing h2 { color: var(--indigo); }
+.landing .steprow { border-top-color: rgba(115, 83, 234, 0.16); }
+.landing .steprow .no { background: var(--violet); color: #fff; }
+.landing .steprow .tx b { color: var(--indigo); }
