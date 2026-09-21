@@ -140,6 +140,29 @@
   .hl { background: rgba(115,83,234,0.14); border-radius: 2px; }
   .logic { width: 100%; min-height: 58px; resize: vertical; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 12.5px; line-height: 1.5; color: var(--ink); outline: none; margin-bottom: 14px; background: #fff; }
   .logic:focus { border-color: var(--violet); }
+  .paper { background: #fff; border: 1px solid var(--hairline); border-radius: 4px; max-width: 760px; padding: 48px 56px; color: var(--ink); }
+  .paper h3 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .paper .sub { font-size: 14px; color: var(--muted); margin-bottom: 26px; }
+  .paper h4 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; }
+  .paper h5 { font-size: 13.5px; font-weight: 700; color: var(--indigo); margin: 16px 0 8px; }
+  .paper table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .paper td, .paper th { border: 1px solid #D5D9E0; padding: 7px 10px; text-align: left; vertical-align: top; line-height: 1.5; }
+  .paper th, .paper td.h { background: #F3F4F6; font-weight: 600; white-space: nowrap; }
+  .paper .flow { font-size: 13px; } .paper .flow small { color: var(--muted); font-size: 11.5px; }
+  .paper .note { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .paper .ev { margin: 12px 0 14px; font-size: 13px; line-height: 1.65; }
+  .paper .ev .s { font-weight: 700; margin-bottom: 5px; }
+  .paper .ev .q { border-left: 3px solid #D5D9E0; padding-left: 12px; margin-left: 12px; }
+  .paper .ev .l { margin: 6px 0 0 27px; } .paper .ev .l b { color: var(--muted); font-size: 11.5px; margin-right: 6px; }
+  .badge-warn { display: inline-flex; align-items: center; background: #FFF4E5; color: #9A5B00; padding: 5px 12px; border-radius: 500px; font-size: 11.5px; font-weight: 500; }
+  .deck-card { position: relative; }
+  .deck-card.rec { border-color: var(--violet); box-shadow: 0 0 0 1px var(--violet); }
+  .rec-tag { position: absolute; top: 18px; right: 18px; background: var(--violet); color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 500px; }
+  .slot { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+  .slot .t { font-size: 11px; font-weight: 700; color: var(--slate); margin-bottom: 6px; }
+  .slot .i { background: #fff; border-radius: 6px; padding: 8px 10px; margin-top: 6px; font-size: 11.5px; line-height: 1.5; color: var(--slate); }
+  .slot .i b { display: block; font-size: 10.5px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  @media (max-width: 860px) { .paper { padding: 24px 18px; } }
   .search-body { display: flex; gap: 24px; }
   .search-body .lineage { width: 280px; flex-shrink: 0; }
   .search-body .results { flex: 1; min-width: 0; }
@@ -367,41 +390,18 @@
       <div class="scroll">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
           <h2 class="title" style="margin:0;">사업 이해도 문서 산출</h2>
-          <div class="badge-ok" style="padding:5px 12px;border-radius:500px;font-size:11.5px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            출처 미확보 문장 0건
-          </div>
+          <div id="ex-badges" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:24px;">
+        <div class="actions" style="margin-bottom:20px;">
           <button class="fmt on" id="fmt-docx" onclick="setFmt('docx')">docx</button>
-          <button class="fmt" id="fmt-hwpx" onclick="setFmt('hwpx')">hwpx</button>
-        </div>
-
-        <div class="sec-label">문서 구성 · 총 4페이지</div>
-        <div class="pages">
-          <div class="page-card">
-            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:10px;">1. 사업 배경</div>
-            <div class="line"></div><div class="line" style="width:80%;"></div><div class="line" style="width:60%;"></div>
-          </div>
-          <div class="page-card">
-            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:10px;">2. 정책 근거 요약</div>
-            <div class="line"></div><div class="line" style="width:90%;"></div><div class="line" style="width:70%;"></div>
-          </div>
-          <div class="page-card">
-            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:10px;">3. 추진 필요성</div>
-            <div class="line"></div><div class="line" style="width:85%;"></div>
-          </div>
-          <div class="page-card">
-            <div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:10px;">4. 기대 효과</div>
-            <div class="line"></div><div class="line" style="width:75%;"></div>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="btn primary" id="dl-btn">docx 다운로드</button>
+          <button class="fmt" id="fmt-hwpx" disabled style="opacity:0.4;cursor:default;">hwpx</button>
+          <button class="btn primary" id="dl-btn" onclick="download()" disabled>docx 다운로드</button>
           <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
         </div>
+
+        <div id="ex-state" class="state-msg">근거 카드 검토를 먼저 마쳐 주세요.</div>
+        <div class="paper" id="ex-paper" style="display:none;"></div>
       </div>
     </div>
 
@@ -417,51 +417,12 @@
         <div class="step now"><div class="n">4</div><div class="l">구도 추천</div></div>
       </div>
       <div class="scroll">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
           <h2 class="title" style="margin:0;">사업 이해도 장표 구도 추천</h2>
           <div style="background:var(--soft);color:var(--slate);font-size:11px;font-weight:600;padding:5px 11px;border-radius:500px;">AI미래교육본부 PPT 템플릿 기반</div>
         </div>
-
-        <div class="decks">
-          <div class="card" style="padding:20px;">
-            <div class="doc-title" style="margin-bottom:4px;">안 1 · 텍스트 중심형</div>
-            <div class="meta" style="margin-bottom:14px;">정책 근거가 4개 이상, 인용 위주일 때</div>
-            <div class="wire">
-              <div style="background:#fff;border-radius:4px;height:18px;width:55%;"></div>
-              <div style="flex:1;display:flex;gap:8px;">
-                <div style="flex:1;background:#fff;border-radius:4px;display:flex;flex-direction:column;gap:6px;padding:8px;">
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;width:70%;"></div>
-                </div>
-                <div style="flex:1;background:#fff;border-radius:4px;display:flex;flex-direction:column;gap:6px;padding:8px;">
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;width:70%;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="padding:20px;">
-            <div class="doc-title" style="margin-bottom:4px;">안 2 · 그래픽 병행형</div>
-            <div class="meta" style="margin-bottom:14px;">핵심 통계·비교표가 있을 때</div>
-            <div class="wire">
-              <div style="background:#fff;border-radius:4px;height:18px;width:55%;"></div>
-              <div style="flex:1;display:flex;gap:8px;">
-                <div style="flex:1;background:#fff;border-radius:4px;display:flex;flex-direction:column;gap:6px;padding:8px;">
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;"></div>
-                  <div style="background:var(--hairline);border-radius:3px;height:6px;width:60%;"></div>
-                </div>
-                <div style="flex:1;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;">
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#524FA1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        <div class="meta" id="deck-reason" style="margin-bottom:20px;"></div>
+        <div class="decks" id="deck-grid"></div>
       </div>
     </div>
 
@@ -478,6 +439,7 @@
       document.getElementById(id).classList.remove('on');
     });
     document.getElementById(NAV[name]).classList.add('on');
+    if (name === 'export' || name === 'deck') loadDraft();
   }
   function $(id) { return document.getElementById(id); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -694,10 +656,87 @@
     $('rv-next').disabled = !(done === CARDS.length && adopted > 0);
   }
 
-  function setFmt(f) {
-    $('fmt-docx').classList.toggle('on', f === 'docx');
-    $('fmt-hwpx').classList.toggle('on', f === 'hwpx');
-    $('dl-btn').textContent = f + ' 다운로드';
+  /* ---------- 문서 산출 · 구도 추천 ---------- */
+  var DRAFT = null, draftKey = '';
+  function payload() {
+    keepLogic();
+    return {
+      notice: S.notice, lineage: S.lineage,
+      cards: CARDS.filter(function (c) { return c.state === 'ok'; }).map(function (c) {
+        var r = c.r;
+        return { id: r.id, docId: r.docId, org: r.org, category: r.category, title: r.title, year: r.year, page: r.page, pageEstimated: r.pageEstimated, quote: r.quote, logic: c.logic };
+      })
+    };
+  }
+  function loadDraft() {
+    var body = S.notice ? payload() : null;
+    if (!body || !body.cards.length) { renderDraft(null); return; }
+    var key = JSON.stringify(body);
+    if (key === draftKey && DRAFT) return;
+    $('ex-state').style.display = ''; $('ex-state').className = 'state-msg'; $('ex-state').textContent = '문서를 구성하고 있습니다.';
+    fetch('/api/draft', { method: 'POST', headers: { 'content-type': 'application/json' }, body: key })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) throw new Error(d.error);
+        DRAFT = d.draft; draftKey = key; renderDraft(DRAFT);
+      })
+      .catch(function (e) { DRAFT = null; $('ex-paper').style.display = 'none'; $('ex-state').className = 'state-msg err'; $('ex-state').textContent = (e && e.message) || '문서를 구성하지 못했습니다.'; });
+  }
+
+  function renderDraft(d) {
+    $('dl-btn').disabled = !d;
+    $('ex-paper').style.display = d ? '' : 'none';
+    $('ex-state').style.display = d ? 'none' : '';
+    if (!d) { $('ex-state').className = 'state-msg'; $('ex-state').textContent = '근거 카드 검토를 먼저 마쳐 주세요.'; $('ex-badges').innerHTML = ''; renderDeck(null); return; }
+    var st = d.stats;
+    $('ex-badges').innerHTML =
+      '<span class="badge-ok" style="padding:5px 12px;border-radius:500px;font-size:11.5px;">' + ICON_OK + '원문 대조 통과 ' + st.adopted + '건</span>' +
+      (st.blocked ? '<span class="badge-warn">차단 ' + st.blocked + '건</span>' : '') +
+      (st.missingLogic ? '<span class="badge-warn">연결 논리 미작성 ' + st.missingLogic + '건</span>' : '');
+    var html = '<h3>' + esc(d.title) + '</h3><div class="sub">' + esc(d.subtitle) + '</div>';
+    d.sections.forEach(function (s) {
+      html += '<h4>' + esc(s.heading) + '</h4>';
+      s.blocks.forEach(function (b) {
+        if (b.type === 'table') html += '<table>' + b.rows.map(function (r) { return '<tr><td class="h" style="width:120px;">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</table>';
+        if (b.type === 'grid') html += '<table><tr>' + b.header.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' + b.rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+        if (b.type === 'flow') html += '<div class="flow">' + b.nodes.map(function (n) { return '<b>' + esc(n.name) + '</b> <small>(' + esc(n.role) + ')</small>'; }).join(' &nbsp;→&nbsp; ') + '</div>';
+        if (b.type === 'note') html += '<div class="note">' + esc(b.text) + '</div>';
+        if (b.type === 'subheading') html += '<h5>' + esc(b.text) + '</h5>';
+        if (b.type === 'evidence') html += '<div class="ev"><div class="s">[근거 ' + b.no + '] ' + esc(b.source) + '</div><div class="q">“' + esc(b.quote) + '”</div>' + (b.logic ? '<div class="l"><b>사업 연결</b>' + esc(b.logic) + '</div>' : '') + '</div>';
+      });
+    });
+    $('ex-paper').innerHTML = html;
+    renderDeck(d.deck);
+  }
+
+  function renderDeck(deck) {
+    if (!deck) { $('deck-reason').textContent = '근거 카드 검토를 먼저 마쳐 주세요.'; $('deck-grid').innerHTML = ''; return; }
+    $('deck-reason').textContent = deck.reason;
+    $('deck-grid').innerHTML = deck.options.map(function (o) {
+      var rec = o.key === deck.recommended;
+      return '<div class="card deck-card' + (rec ? ' rec' : '') + '" style="padding:20px;">' + (rec ? '<span class="rec-tag">추천</span>' : '') +
+        '<div class="doc-title" style="margin-bottom:4px;">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div>' +
+        o.slots.map(function (sl) {
+          return '<div class="slot"><div class="t">' + esc(sl.label) + '</div>' + (sl.items.length ? sl.items.map(function (it) {
+            return '<div class="i"><b>' + esc(it.source) + '</b>' + esc(it.quote) + '</div>';
+          }).join('') : '<div class="i" style="color:var(--muted);">해당 근거 없음</div>') + '</div>';
+        }).join('') + '</div>';
+    }).join('');
+  }
+
+  function setFmt(f) { $('fmt-docx').classList.toggle('on', f === 'docx'); }
+  function download() {
+    var btn = $('dl-btn'); btn.disabled = true; btn.textContent = '만드는 중';
+    fetch('/api/export', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload()) })
+      .then(function (r) { if (!r.ok) return r.json().then(function (d) { throw new Error(d.error); }); return r.blob(); })
+      .then(function (blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = '사업이해도_' + S.notice.no + '.docx';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      })
+      .catch(function (e) { $('ex-state').style.display = ''; $('ex-state').className = 'state-msg err'; $('ex-state').textContent = (e && e.message) || '파일을 만들지 못했습니다.'; })
+      .then(function () { btn.disabled = false; btn.textContent = 'docx 다운로드'; });
   }
 
   /* ---------- 연결 상태 ---------- */
