@@ -120,6 +120,26 @@
   .fmt { font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 500px; background: #fff; border: 1px solid var(--hairline); color: var(--slate); }
   .fmt.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
   .btn:disabled { opacity: 0.4; cursor: default; }
+  .notice .files { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; color: var(--slate); background: var(--soft); border-radius: 500px; padding: 5px 11px; text-decoration: none; max-width: 100%; }
+  .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  a.chip:hover { background: #DDE0E6; }
+  .chip.term { background: var(--violet-tint); color: var(--violet); font-weight: 600; }
+  .chip.term button { color: var(--violet); font-size: 13px; line-height: 1; padding: 0; opacity: 0.7; }
+  .terms { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .terms input { border: 1px dashed #C7CCD4; border-radius: 500px; padding: 5px 11px; font-family: inherit; font-size: 11.5px; width: 110px; outline: none; background: #fff; }
+  .terms input:focus { border-color: var(--violet); border-style: solid; }
+  .scope { margin-left: auto; display: inline-flex; background: var(--soft); border-radius: 8px; padding: 2px; }
+  .scope button { font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 5px 10px; border-radius: 6px; }
+  .scope button.on { background: #fff; color: var(--ink); }
+  .node { font-size: 12.5px; font-weight: 600; padding: 9px 12px; border-radius: 8px; background: var(--bg); color: var(--slate); }
+  .node.first { background: var(--violet-tint); color: var(--violet); }
+  .node small { display: block; font-size: 10.5px; font-weight: 500; opacity: 0.75; margin-top: 2px; }
+  .state-msg { font-size: 13px; color: var(--muted); padding: 28px 4px; }
+  .state-msg.err { color: #B42318; }
+  .hl { background: rgba(115,83,234,0.14); border-radius: 2px; }
+  .logic { width: 100%; min-height: 58px; resize: vertical; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 12.5px; line-height: 1.5; color: var(--ink); outline: none; margin-bottom: 14px; background: #fff; }
+  .logic:focus { border-color: var(--violet); }
   .search-body { display: flex; gap: 24px; }
   .search-body .lineage { width: 280px; flex-shrink: 0; }
   .search-body .results { flex: 1; min-width: 0; }
@@ -219,9 +239,8 @@
     </div>
 
     <div class="side-div"></div>
-    <div class="side-label">최근 검색</div>
-    <button class="recent" onclick="openNotice('R26BK00412587')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>R26BK00412587</button>
-    <button class="recent" onclick="openNotice('R26BK00187340')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>R26BK00187340</button>
+    <div class="side-label" id="side-recent-label">최근 검색</div>
+    <div id="side-recent"></div>
 
     <div class="me">
       <div class="avatar">송</div>
@@ -248,21 +267,7 @@
           </div>
         </div>
 
-        <div class="sec-label">최근 검색</div>
-        <div class="rows">
-          <button class="row" onclick="openNotice('R26BK00412587')">
-            <span class="no">R26BK00412587</span>
-            <span class="nm">2026년 AI 학습분석 활용 교원 연수 운영</span>
-            <span class="meta ag">한국교육학술정보원</span>
-            <span class="st">검토 중</span>
-          </button>
-          <button class="row" onclick="openNotice('R26BK00187340')">
-            <span class="no">R26BK00187340</span>
-            <span class="nm">2026년 중등 교원 AI·디지털 역량 강화 연수</span>
-            <span class="meta ag">서울특별시교육청</span>
-            <span class="st">산출 완료</span>
-          </button>
-        </div>
+        <div id="home-recent"></div>
       </div>
     </div>
 
@@ -282,76 +287,30 @@
 
         <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--hairline);border-radius:8px;padding:13px 16px;margin-bottom:16px;max-width:520px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <div id="no-view" style="font-size:14px;font-weight:500;color:var(--ink);">R26BK00412587</div>
+          <div id="no-view" style="font-size:14px;font-weight:500;color:var(--ink);"></div>
           <div class="meta" style="margin-left:auto;">공고번호</div>
         </div>
 
-        <div class="card notice">
-          <div><div class="k">공고명</div><div class="v">2026년 AI 학습분석 활용 교원 연수 운영</div></div>
-          <div><div class="k">발주기관</div><div class="v">한국교육학술정보원</div></div>
-          <div><div class="k">사업금액</div><div class="v">480,000,000원</div></div>
-          <div><div class="k">입찰마감</div><div class="v">2026-10-12 17:00</div></div>
-        </div>
+        <div id="search-state" class="state-msg">홈에서 입찰공고번호를 입력해 주세요.</div>
 
-        <div class="search-body">
-          <div class="lineage">
-            <div class="sec-label">발주처 계보</div>
-            <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-              <div style="background:var(--violet-tint);color:var(--violet);font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:8px;">한국교육학술정보원(KERIS)</div>
-              <div style="display:flex;justify-content:center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-              </div>
-              <div style="background:var(--bg);color:var(--slate);font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:8px;">교육부</div>
+        <div id="search-main" style="display:none;">
+          <div class="card notice" id="notice-card"></div>
+
+          <div class="search-body">
+            <div class="lineage">
+              <div class="sec-label">발주처 계보</div>
+              <div class="card" id="lineage-card" style="display:flex;flex-direction:column;gap:8px;"></div>
             </div>
-          </div>
 
-          <div class="results">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
-              <div class="sec-label" style="margin-bottom:0;">2건</div>
-            </div>
-            <div class="result-grid">
-
-              <div class="card">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7353EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-                  <div class="doc-title">KERIS 부서별 주요사업 계획</div>
-                </div>
-                <div class="meta" style="margin-bottom:10px;">2026 · p.14</div>
-                <div class="quote" style="margin-bottom:12px;">"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button class="btn soft mini">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
-                    원문 열기
-                  </button>
-                  <button class="btn soft mini">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>
-                    첨부파일
-                  </button>
-                </div>
+            <div class="results">
+              <div class="terms" id="terms"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
+                <div class="sec-label" id="result-count" style="margin-bottom:0;"></div>
               </div>
-
-              <div class="card">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7353EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-                  <div class="doc-title">모두를 위한 AI 인재양성 방안</div>
-                </div>
-                <div class="meta" style="margin-bottom:10px;">2025 · p.7</div>
-                <div class="quote" style="margin-bottom:12px;">"전 국민 AI 리터러시 확산을 위한 단계별 교육과정을 마련한다"</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button class="btn soft mini">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
-                    원문 열기
-                  </button>
-                  <button class="btn soft mini">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>
-                    첨부파일
-                  </button>
-                </div>
-              </div>
-
+              <div class="result-grid" id="result-grid"></div>
+              <button class="btn primary" id="to-review" onclick="startReview()" disabled>근거 카드 검토</button>
             </div>
-            <button class="btn primary" onclick="go('chat')">근거 카드 검토</button>
           </div>
         </div>
       </div>
@@ -374,8 +333,8 @@
             <h2 class="title" style="margin:0;font-size:20px;">근거 카드 챗봇</h2>
           </div>
           <div class="chat-thread">
-            <div class="bubble-me"><span id="no-chat">R26BK00412587</span> 관련 근거를 근거 카드로 정리해줘</div>
-            <div class="bubble-ai">근거 카드 2건입니다. 원문 대조 후 채택 여부를 정해 주세요.</div>
+            <div class="bubble-me"><span id="no-chat"></span> 관련 근거를 근거 카드로 정리해줘</div>
+            <div class="bubble-ai" id="chat-ai"></div>
           </div>
           <div class="chat-input">
             <div style="flex:1;background:var(--bg);border-radius:500px;padding:12px 18px;font-size:13.5px;color:var(--muted);">질문을 입력하세요</div>
@@ -520,77 +479,231 @@
     });
     document.getElementById(NAV[name]).classList.add('on');
   }
-
-  function openNotice(no) {
-    document.getElementById('no-view').textContent = no;
-    document.getElementById('no-chat').textContent = no;
-    go('search');
-  }
-  function submitNo(e) {
-    e.preventDefault();
-    var v = document.getElementById('no-input').value.trim();
-    if (v) openNotice(v);
+  function $(id) { return document.getElementById(id); }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function api(path, params) {
+    var q = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
+    return fetch(path + '?' + q, { cache: 'no-store' }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, error: '응답을 읽지 못했습니다.' }; });
+    });
   }
 
-  var CARDS = [
-    { doc: 'KERIS 부서별 주요사업 계획', year: '2026', page: 'p.14',
-      quote: '"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"',
-      logic: '본부 AI 학습분석 제안의 사업 배경 근거로 활용 가능', state: 'wait' },
-    { doc: '모두를 위한 AI 인재양성 방안', year: '2025', page: 'p.7',
-      quote: '"전 국민 AI 리터러시 확산을 위한 단계별 교육과정을 마련한다"',
-      logic: '교원 대상 AI 역량 연수의 상위 정책 근거로 활용 가능', state: 'wait' }
-  ];
-  var cur = 0;
-  var LABEL = { wait: '대기', ok: '채택', no: '제외' };
+  var ICON_SEARCH = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
   var ICON_OPEN = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>';
-  var ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>';
+  var ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>';
+  var ICON_DOC = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7353EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
   var ICON_OK = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
 
+  /* ---------- 최근 검색 (이 브라우저에만 저장) ---------- */
+  function loadRecent() { try { return JSON.parse(localStorage.getItem('pf-recent') || '[]'); } catch (e) { return []; } }
+  function saveRecent(n) {
+    var list = loadRecent().filter(function (x) { return x.no !== n.no; });
+    list.unshift({ no: n.no, name: n.name, org: n.demandOrg });
+    try { localStorage.setItem('pf-recent', JSON.stringify(list.slice(0, 8))); } catch (e) {}
+    renderRecent();
+  }
+  function renderRecent() {
+    var list = loadRecent();
+    $('side-recent-label').style.display = list.length ? '' : 'none';
+    $('side-recent').innerHTML = list.slice(0, 5).map(function (x) {
+      return '<button class="recent" onclick="openNotice(\'' + esc(x.no) + '\')">' + ICON_SEARCH + esc(x.no) + '</button>';
+    }).join('');
+    $('home-recent').innerHTML = !list.length ? '' :
+      '<div class="sec-label">최근 검색</div><div class="rows">' + list.map(function (x) {
+        return '<button class="row" onclick="openNotice(\'' + esc(x.no) + '\')"><span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st"></span></button>';
+      }).join('') + '</div>';
+  }
+
+  /* ---------- 정책 근거 검색 ---------- */
+  var S = { no: '', notice: null, lineage: null, terms: [], scope: 'lineage', results: [] };
+  var seq = 0;
+
+  function submitNo(e) {
+    e.preventDefault();
+    var v = $('no-input').value.trim();
+    if (v) openNotice(v);
+  }
+  function setState(msg, isErr) {
+    $('search-state').style.display = msg ? '' : 'none';
+    $('search-state').className = 'state-msg' + (isErr ? ' err' : '');
+    $('search-state').textContent = msg || '';
+  }
+
+  function openNotice(no) {
+    var my = ++seq;
+    S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [] };
+    $('no-view').textContent = S.no;
+    $('no-chat').textContent = S.no;
+    $('search-main').style.display = 'none';
+    setState('공고를 조회하고 있습니다.');
+    go('search');
+
+    api('/api/notice', { no: S.no }).then(function (d) {
+      if (my !== seq) return;
+      if (!d.ok) { setState(d.error || '공고를 조회하지 못했습니다.', true); return; }
+      S.notice = d.notice;
+      saveRecent(d.notice);
+      renderNotice();
+      $('search-main').style.display = '';
+      setState('');
+      $('lineage-card').innerHTML = '<div class="meta">확인 중</div>';
+      $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
+      return api('/api/lineage', { name: d.notice.demandOrg }).then(function (l) {
+        if (my !== seq) return;
+        S.lineage = l.ok ? l : { chain: [{ name: d.notice.demandOrg, role: '발주처' }], orgs: [d.notice.demandOrg], source: 'none', error: l.error };
+        renderLineage();
+        return runEvidence(true);
+      });
+    }).catch(function () { if (my === seq) setState('서버에 연결하지 못했습니다.', true); });
+  }
+
+  function won(n) { return n ? Number(n).toLocaleString('ko-KR') + '원' : '-'; }
+  function renderNotice() {
+    var n = S.notice;
+    var files = n.files.map(function (f) {
+      return '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + ICON_FILE + '<span>' + esc(f.name) + '</span></a>';
+    }).join('');
+    var link = n.detailUrl ? '<a class="chip" href="' + esc(n.detailUrl) + '" target="_blank" rel="noopener">' + ICON_OPEN + '<span>나라장터 공고</span></a>' : '';
+    $('notice-card').innerHTML =
+      '<div><div class="k">공고명</div><div class="v">' + esc(n.name) + '</div></div>' +
+      '<div><div class="k">수요기관</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
+      '<div><div class="k">' + (n.budget ? '배정예산' : '추정가격') + '</div><div class="v">' + won(n.budget || n.estimatedPrice) + '</div></div>' +
+      '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>' +
+      (files || link ? '<div class="files">' + link + files + '</div>' : '');
+  }
+
+  function renderLineage() {
+    var arrow = '<div style="display:flex;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div>';
+    var l = S.lineage;
+    var html = l.chain.map(function (c, i) {
+      return '<div class="node' + (i === 0 ? ' first' : '') + '">' + esc(c.name) + '<small>' + esc(c.role) + '</small></div>';
+    }).join(arrow);
+    if (l.source === 'none') html += '<div class="meta" style="padding:4px 2px 0;">' + esc(l.error || '상위 기관을 찾지 못했습니다.') + '</div>';
+    $('lineage-card').innerHTML = html;
+  }
+
+  function runEvidence(fresh) {
+    var my = seq;
+    var params = { title: S.notice.name, orgs: S.lineage.orgs.join(','), scope: S.scope };
+    if (!fresh) params.terms = S.terms.join(',');
+    $('result-count').textContent = '검색 중';
+    $('to-review').disabled = true;
+    return api('/api/evidence', params).then(function (d) {
+      if (my !== seq) return;
+      if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
+      S.terms = d.terms; S.results = d.results;
+      renderTerms(); renderResults(d);
+    });
+  }
+
+  function renderTerms() {
+    $('terms').innerHTML = S.terms.map(function (t, i) {
+      return '<span class="chip term">' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
+    }).join('') +
+      '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="검색어 추가" aria-label="검색어 추가"></form>' +
+      '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">계보 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">전체 문서</button></span>';
+  }
+  function removeTerm(i) { S.terms.splice(i, 1); runEvidence(false); }
+  function addTerm(e) {
+    e.preventDefault();
+    var v = $('term-input').value.trim();
+    if (v && S.terms.indexOf(v) < 0) { S.terms.push(v); runEvidence(false); }
+  }
+  function setScope(v) { if (S.scope !== v) { S.scope = v; runEvidence(false); } }
+
+  function mark(text, terms) {
+    var out = esc(text);
+    terms.slice().sort(function (a, b) { return b.length - a.length; }).forEach(function (t) {
+      var re = new RegExp('(' + esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?![^<]*>)', 'gi');
+      out = out.replace(re, '<span class="hl">$1</span>');
+    });
+    return out;
+  }
+  function pageLabel(r) { return 'p.' + r.page + (r.pageEstimated ? ' (추정)' : ''); }
+  function sourceButtons(r) {
+    return r.url
+      ? '<a class="btn soft mini" href="' + esc(r.url) + '" target="_blank" rel="noopener" style="text-decoration:none;">' + ICON_OPEN + '원문 열기</a>'
+      : '<span class="meta" style="word-break:break-all;">' + esc(r.file) + '</span>';
+  }
+
+  function renderResults(d) {
+    $('result-count').textContent = S.results.length + '건 · 대상 문서 ' + d.scopeDocs + '건';
+    $('to-review').disabled = !S.results.length;
+    if (!S.results.length) {
+      $('result-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">' +
+        (d.scopeDocs ? '일치하는 근거가 없습니다. 검색어를 바꾸거나 전체 문서로 넓혀 보세요.' : '이 계보에 해당하는 문서가 지식베이스에 없습니다. 전체 문서로 넓혀 보세요.') + '</div>';
+      return;
+    }
+    $('result-grid').innerHTML = S.results.map(function (r) {
+      return '<div class="card">' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' + ICON_DOC + '<div class="doc-title">' + esc(r.org + ' ' + r.title) + '</div></div>' +
+        '<div class="meta" style="margin-bottom:10px;">' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
+        '<div class="quote" style="margin-bottom:12px;">' + mark(r.quote, r.matched) + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ---------- 근거 카드 검토 ---------- */
+  var CARDS = [];
+  var cur = 0;
+  var LABEL = { wait: '대기', ok: '채택', no: '제외' };
+
+  function startReview() {
+    CARDS = S.results.map(function (r) { return { r: r, state: 'wait', logic: '' }; });
+    cur = 0;
+    $('chat-ai').textContent = '근거 카드 ' + CARDS.length + '건입니다. 원문 대조 후 채택 여부를 정해 주세요.';
+    renderReview();
+    go('chat');
+  }
+  function keepLogic() { var el = $('rv-logic'); if (el && CARDS[cur]) CARDS[cur].logic = el.value; }
   function decide(state) {
+    keepLogic();
     CARDS[cur].state = state;
-    var next = -1;
-    for (var i = 0; i < CARDS.length; i++) { if (CARDS[i].state === 'wait') { next = i; break; } }
-    if (next >= 0) cur = next;
+    for (var i = 0; i < CARDS.length; i++) { if (CARDS[i].state === 'wait') { cur = i; break; } }
     renderReview();
   }
-  function pick(i) { cur = i; renderReview(); }
+  function pick(i) { keepLogic(); cur = i; renderReview(); }
 
   function renderReview() {
-    var c = CARDS[cur];
+    if (!CARDS.length) {
+      $('rv-count').textContent = '근거 카드 검토';
+      $('rv-card').innerHTML = '<div class="meta">정책 근거 검색을 먼저 진행해 주세요.</div>';
+      $('rv-list').innerHTML = ''; $('rv-next').disabled = true; return;
+    }
+    var c = CARDS[cur], r = c.r;
     var done = CARDS.filter(function (x) { return x.state !== 'wait'; }).length;
     var adopted = CARDS.filter(function (x) { return x.state === 'ok'; }).length;
-    document.getElementById('rv-count').textContent = '근거 카드 검토 · ' + done + '/' + CARDS.length;
-    document.getElementById('rv-card').innerHTML =
-      '<div class="doc-title" style="margin-bottom:8px;">' + c.doc + ' · ' + c.year + ' · ' + c.page + '</div>' +
-      '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '출처 확인됨</div>' +
-      '<div class="quote" style="margin-bottom:10px;">' + c.quote + '</div>' +
-      '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">' +
-        '<button class="btn soft mini">' + ICON_OPEN + '원문 열기</button>' +
-        '<button class="btn soft mini">' + ICON_FILE + '첨부파일</button>' +
-      '</div>' +
-      '<div class="sec-label" style="margin-bottom:3px;">사업 연결 논리</div>' +
-      '<div class="quote" style="margin-bottom:14px;">' + c.logic + '</div>' +
+    $('rv-count').textContent = '근거 카드 검토 · ' + done + '/' + CARDS.length + ' · 채택 ' + adopted;
+    $('rv-card').innerHTML =
+      '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
+      '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '원문 일치 확인</div>' +
+      '<div class="quote" style="margin-bottom:10px;">' + mark(r.quote, r.matched) + '</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
+      '<div class="sec-label" style="margin-bottom:5px;">사업 연결 논리</div>' +
+      '<textarea class="logic" id="rv-logic" placeholder="이 근거가 본 사업과 어떻게 이어지는지">' + esc(c.logic) + '</textarea>' +
       '<div style="display:flex;gap:8px;">' +
         '<button class="btn ' + (c.state === 'ok' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'ok\')">채택</button>' +
         '<button class="btn ' + (c.state === 'no' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'no\')">제외</button>' +
       '</div>';
-    document.getElementById('rv-list').innerHTML = CARDS.map(function (x, i) {
+    $('rv-list').innerHTML = CARDS.map(function (x, i) {
       return '<button onclick="pick(' + i + ')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 4px;border-top:1px solid var(--hairline);text-align:left;">' +
-        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + x.doc + ' · ' + x.year + ' · ' + x.page + '</span>' +
+        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · ' + pageLabel(x.r) + '</span>' +
         '<span class="state ' + x.state + '">' + LABEL[x.state] + '</span></button>';
     }).join('');
-    document.getElementById('rv-next').disabled = !(done === CARDS.length && adopted > 0);
+    $('rv-next').disabled = !(done === CARDS.length && adopted > 0);
   }
 
   function setFmt(f) {
-    document.getElementById('fmt-docx').classList.toggle('on', f === 'docx');
-    document.getElementById('fmt-hwpx').classList.toggle('on', f === 'hwpx');
-    document.getElementById('dl-btn').textContent = f + ' 다운로드';
+    $('fmt-docx').classList.toggle('on', f === 'docx');
+    $('fmt-hwpx').classList.toggle('on', f === 'hwpx');
+    $('dl-btn').textContent = f + ' 다운로드';
   }
 
+  /* ---------- 연결 상태 ---------- */
   var SIG = { g2b: '나라장터', inst: '공공기관 정보' };
   function setSig(id, state, reason) {
-    var el = document.getElementById('sig-' + id);
+    var el = $('sig-' + id);
     el.className = 'sig' + (state ? ' ' + state : '');
     el.lastElementChild.textContent = SIG[id] + (state === 'fail' ? ' 연결 안 됨' : state === 'ok' ? '' : ' 확인 불가');
     el.title = reason || '';
@@ -599,14 +712,12 @@
     fetch('/api/health', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (d) {
-        ['g2b', 'inst'].forEach(function (id) {
-          var x = d[id] || {};
-          setSig(id, x.ok ? 'ok' : 'fail', x.reason);
-        });
+        ['g2b', 'inst'].forEach(function (id) { var x = d[id] || {}; setSig(id, x.ok ? 'ok' : 'fail', x.reason); });
       })
       .catch(function () { setSig('g2b', ''); setSig('inst', ''); });
   }
 
+  renderRecent();
   renderReview();
   go('home');
   checkHealth();
