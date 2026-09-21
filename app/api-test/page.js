@@ -175,6 +175,20 @@ const APPLIED = [
 function summarize(result) {
   if (!result) return null;
   if (result.format === 'json' && result.parsed) {
+    // 알리오플러스처럼 최상위가 그대로 배열인 응답은 그 배열이 곧 목록이다.
+    // 배열을 객체로 훑으면 Object.keys 가 인덱스를 돌려주고, walk 이 첫 항목 안의
+    // 중첩 배열(bsnMstList 등)을 목록으로 잘못 집는다.
+    if (Array.isArray(result.parsed)) {
+      const first = result.parsed.find((x) => x && typeof x === 'object');
+      return {
+        kind: 'JSON',
+        top: [],
+        path: '(최상위 배열)',
+        count: result.parsed.length,
+        fields: first ? Object.keys(first) : [],
+      };
+    }
+
     const top = Object.keys(result.parsed);
     let arr = null;
     let path = '';
@@ -192,7 +206,13 @@ function summarize(result) {
       }
     };
     walk(result.parsed, '', 0);
-    return { kind: 'JSON', top, path, count: arr ? arr.length : 0, fields: arr ? Object.keys(arr[0]) : [] };
+    return {
+      kind: 'JSON',
+      top,
+      path,
+      count: arr ? arr.length : 0,
+      fields: arr && arr[0] ? Object.keys(arr[0]) : [],
+    };
   }
   if (result.format === 'xml' && result.bodyText) {
     const items = result.bodyText.match(/<item>/g) || [];
