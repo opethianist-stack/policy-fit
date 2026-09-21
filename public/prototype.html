@@ -144,16 +144,11 @@
   .paper h3 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
   .paper .sub { font-size: 14px; color: var(--muted); margin-bottom: 26px; }
   .paper h4 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; }
-  .paper h5 { font-size: 13.5px; font-weight: 700; color: var(--indigo); margin: 16px 0 8px; }
   .paper table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .paper td, .paper th { border: 1px solid #D5D9E0; padding: 7px 10px; text-align: left; vertical-align: top; line-height: 1.5; }
   .paper th, .paper td.h { background: #F3F4F6; font-weight: 600; white-space: nowrap; }
   .paper .flow { font-size: 13px; } .paper .flow small { color: var(--muted); font-size: 11.5px; }
   .paper .note { font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .paper .ev { margin: 12px 0 14px; font-size: 13px; line-height: 1.65; }
-  .paper .ev .s { font-weight: 700; margin-bottom: 5px; }
-  .paper .ev .q { border-left: 3px solid #D5D9E0; padding-left: 12px; margin-left: 12px; }
-  .paper .ev .l { margin: 6px 0 0 27px; } .paper .ev .l b { color: var(--muted); font-size: 11.5px; margin-right: 6px; }
   .badge-warn { display: inline-flex; align-items: center; background: #FFF4E5; color: #9A5B00; padding: 5px 12px; border-radius: 500px; font-size: 11.5px; font-weight: 500; }
   .deck-card { position: relative; }
   .deck-card.rec { border-color: var(--violet); box-shadow: 0 0 0 1px var(--violet); }
@@ -168,12 +163,38 @@
   .search-body .results { flex: 1; min-width: 0; }
   .result-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-bottom: 22px; }
   .chat-wrap { flex: 1; display: flex; overflow: hidden; min-height: 0; }
-  .chat-col { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-  .chat-head { padding: 20px 40px 16px; border-bottom: 1px solid var(--hairline); }
-  .chat-thread { flex: 1; overflow-y: auto; padding: 20px 40px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-  .chat-input { padding: 14px 40px 24px; border-top: 1px solid var(--hairline); display: flex; gap: 10px; align-items: center; }
-  .bubble-me { align-self: flex-end; max-width: 70%; background: var(--violet-tint); color: var(--ink); font-size: 13.5px; line-height: 1.55; padding: 11px 15px; border-radius: 14px 14px 4px 14px; }
-  .bubble-ai { align-self: flex-start; max-width: 70%; background: #fff; border: 1px solid var(--hairline); border-radius: 4px 14px 14px 14px; padding: 14px 16px; font-size: 13.5px; line-height: 1.55; color: var(--slate); }
+  .src-col { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .src-head { padding: 20px 40px 14px; border-bottom: 1px solid var(--hairline); display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .src-nav { display: flex; align-items: center; gap: 8px; }
+  .src-body { flex: 1; overflow-y: auto; padding: 20px 40px; min-height: 0; background: #fff; font-size: 13px; line-height: 1.75; color: var(--slate); white-space: pre-wrap; word-break: break-all; }
+  .src-body mark { background: rgba(115,83,234,0.16); color: var(--ink); border-radius: 2px; padding: 1px 0; }
+  .src-foot { padding: 12px 40px 20px; border-top: 1px solid var(--hairline); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .src-foot .meta { margin-right: auto; }
+  .tag { display: inline-block; font-size: 10.5px; font-weight: 600; color: #9A5B00; background: #FFF4E5; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+  .roles { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .roles button { font-size: 11.5px; font-weight: 600; padding: 6px 11px; border-radius: 500px; background: #fff; border: 1px solid var(--hairline); color: var(--slate); }
+  .roles button.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
+  .ex-body { display: flex; gap: 24px; align-items: flex-start; }
+  .work { width: 400px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+  .wblock { background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 16px; }
+  .wlabel { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .winput { width: 100%; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink); outline: none; margin-bottom: 12px; }
+  .winput:focus { border-color: var(--violet); }
+  .witem { border-top: 1px solid var(--hairline); padding-top: 10px; margin-top: 2px; }
+  .wsrc { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .wquote { font-size: 12px; color: var(--muted); line-height: 1.55; background: var(--bg); border-radius: 6px; padding: 7px 9px; margin-bottom: 6px; max-height: 92px; overflow-y: auto; }
+  .witem .logic { margin-bottom: 6px; }
+  .wwarn { font-size: 11.5px; color: #9A5B00; margin-bottom: 6px; }
+  .wwarn:empty { display: none; }
+  .ex-body .paper { flex: 1; min-width: 0; position: sticky; top: 0; }
+  .paper .arg { margin: 14px 0 12px; font-size: 13px; line-height: 1.65; }
+  .paper .arg .ah { font-weight: 700; margin-bottom: 6px; font-size: 13.5px; }
+  .paper .arg ul { margin: 0; padding-left: 18px; list-style: none; }
+  .paper .arg li { margin-bottom: 5px; text-indent: -10px; }
+  .paper .arg li:before { content: '- '; }
+  .paper .arg .ct { color: var(--muted); font-size: 11.5px; }
+  .paper .flow { margin-top: 10px; }
+  .paper td.foot { font-weight: 700; }
   .review { width: 360px; flex-shrink: 0; background: #fff; border-left: 1px solid var(--hairline); padding: 22px; overflow-y: auto; display: flex; flex-direction: column; }
   .pages { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; max-width: 760px; margin-bottom: 28px; }
   .page-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 14px; height: 150px; }
@@ -189,7 +210,10 @@
   }
   @media (max-width: 1180px) {
     :root { --pad: 32px; }
-    .chat-head, .chat-thread, .chat-input { padding-left: 24px; padding-right: 24px; }
+    .src-head, .src-body, .src-foot { padding-left: 24px; padding-right: 24px; }
+    .ex-body { flex-direction: column; }
+    .work { width: 100%; }
+    .ex-body .paper { position: static; width: 100%; }
     .review { width: 320px; }
     .pages { grid-template-columns: repeat(2, minmax(0,1fr)); }
   }
@@ -219,8 +243,7 @@
     .result-grid { grid-template-columns: 1fr; }
 
     .chat-wrap { flex-direction: column; overflow-y: auto; }
-    .chat-col { min-height: 420px; }
-    .bubble-me, .bubble-ai { max-width: 88%; }
+    .src-col { min-height: 460px; }
     .review { width: 100%; border-left: none; border-top: 1px solid var(--hairline); overflow: visible; }
 
     .pages { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -256,8 +279,8 @@
         <span>정책 근거 검색</span>
       </button>
       <button class="nav" id="nav-chat" onclick="go('chat')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        <span>근거 카드 챗봇</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+        <span>근거 카드 검토</span>
       </button>
     </div>
 
@@ -351,19 +374,23 @@
         <div class="step"><div class="n">4</div><div class="l">구도 추천</div></div>
       </div>
       <div class="chat-wrap">
-        <div class="chat-col">
-          <div class="chat-head">
-            <h2 class="title" style="margin:0;font-size:20px;">근거 카드 챗봇</h2>
+        <div class="src-col">
+          <div class="src-head">
+            <div style="flex:1;min-width:0;">
+              <h2 class="title" style="margin:0 0 4px;font-size:20px;">근거 카드 검토</h2>
+              <div class="meta" id="src-title"></div>
+            </div>
+            <div class="src-nav">
+              <button class="btn soft mini" id="src-prev" onclick="srcMove('prev')" disabled>이전 쪽</button>
+              <span class="meta" id="src-page" style="min-width:44px;text-align:center;"></span>
+              <button class="btn soft mini" id="src-next" onclick="srcMove('next')" disabled>다음 쪽</button>
+            </div>
           </div>
-          <div class="chat-thread">
-            <div class="bubble-me"><span id="no-chat"></span> 관련 근거를 근거 카드로 정리해줘</div>
-            <div class="bubble-ai" id="chat-ai"></div>
-          </div>
-          <div class="chat-input">
-            <div style="flex:1;background:var(--bg);border-radius:500px;padding:12px 18px;font-size:13.5px;color:var(--muted);">질문을 입력하세요</div>
-            <button style="width:40px;height:40px;border-radius:50%;background:var(--violet);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            </button>
+          <div class="src-body" id="src-body" onmouseup="srcSel()" onkeyup="srcSel()"></div>
+          <div class="src-foot">
+            <span class="meta" id="src-hint"></span>
+            <button class="btn soft mini" id="src-reset" onclick="resetQuote()" style="display:none;">처음 발췌로</button>
+            <button class="btn primary mini" id="src-use" onclick="useSelection()" disabled>선택한 부분으로 발췌</button>
           </div>
         </div>
 
@@ -401,7 +428,10 @@
         </div>
 
         <div id="ex-state" class="state-msg">근거 카드 검토를 먼저 마쳐 주세요.</div>
-        <div class="paper" id="ex-paper" style="display:none;"></div>
+        <div class="ex-body" id="ex-body" style="display:none;">
+          <div class="work" id="ex-work"></div>
+          <div class="paper" id="ex-paper"></div>
+        </div>
       </div>
     </div>
 
@@ -439,6 +469,8 @@
       document.getElementById(id).classList.remove('on');
     });
     document.getElementById(NAV[name]).classList.add('on');
+    if (name === 'chat') loadSrc();
+    if (name === 'export') renderWork();
     if (name === 'export' || name === 'deck') loadDraft();
   }
   function $(id) { return document.getElementById(id); }
@@ -495,7 +527,6 @@
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [] };
     $('no-view').textContent = S.no;
-    $('no-chat').textContent = S.no;
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
     go('search');
@@ -546,7 +577,7 @@
 
   function runEvidence(fresh) {
     var my = seq;
-    var params = { title: S.notice.name, orgs: S.lineage.orgs.join(','), scope: S.scope };
+    var params = { title: S.notice.name, orgs: S.lineage.orgs.join(','), ministry: S.lineage.ministry || '', scope: S.scope };
     if (!fresh) params.terms = S.terms.join(',');
     $('result-count').textContent = '검색 중';
     $('to-review').disabled = true;
@@ -607,25 +638,37 @@
   }
 
   /* ---------- 근거 카드 검토 ---------- */
+  // 역할 = 제안서 추진 배경 절에서 이 근거가 받치는 칸. 순서가 문서의 논증 순서다. (lib/roles.js 와 같게 유지)
+  var ROLES = [
+    { key: 'policy', label: '정책 기조', side: '정책·제도 측' },
+    { key: 'tech', label: '기술·환경', side: '기술·환경 측' },
+    { key: 'demand', label: '현장 수요', side: '현장 수요 측' },
+    { key: 'agency', label: '발주기관 계획', side: '발주기관 측' }
+  ];
+  var MARKS = ['가', '나', '다', '라'];
+  function roleLabel(k) { for (var i = 0; i < ROLES.length; i++) if (ROLES[i].key === k) return ROLES[i].label; return ''; }
+
   var CARDS = [];
   var cur = 0;
   var LABEL = { wait: '대기', ok: '채택', no: '제외' };
+  var HEAD = {}, CONCL = '';
 
   function startReview() {
-    CARDS = S.results.map(function (r) { return { r: r, state: 'wait', logic: '' }; });
+    CARDS = S.results.map(function (r) {
+      return { r: r, state: 'wait', role: r.role || 'policy', text: '', page: r.page, quote: r.quote, orig: { page: r.page, quote: r.quote } };
+    });
+    HEAD = {}; CONCL = '';
     cur = 0;
-    $('chat-ai').textContent = '근거 카드 ' + CARDS.length + '건입니다. 원문 대조 후 채택 여부를 정해 주세요.';
     renderReview();
     go('chat');
   }
-  function keepLogic() { var el = $('rv-logic'); if (el && CARDS[cur]) CARDS[cur].logic = el.value; }
   function decide(state) {
-    keepLogic();
     CARDS[cur].state = state;
     for (var i = 0; i < CARDS.length; i++) { if (CARDS[i].state === 'wait') { cur = i; break; } }
-    renderReview();
+    renderReview(); loadSrc();
   }
-  function pick(i) { keepLogic(); cur = i; renderReview(); }
+  function setRole(k) { CARDS[cur].role = k; renderReview(); }
+  function pick(i) { cur = i; renderReview(); loadSrc(); }
 
   function renderReview() {
     if (!CARDS.length) {
@@ -638,71 +681,151 @@
     var adopted = CARDS.filter(function (x) { return x.state === 'ok'; }).length;
     $('rv-count').textContent = '근거 카드 검토 · ' + done + '/' + CARDS.length + ' · 채택 ' + adopted;
     $('rv-card').innerHTML =
-      '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
+      '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · p.' + c.page + (r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
       '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '원문 일치 확인</div>' +
-      '<div class="quote" style="margin-bottom:10px;">' + mark(r.quote, r.matched) + '</div>' +
-      '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
-      '<div class="sec-label" style="margin-bottom:5px;">사업 연결 논리</div>' +
-      '<textarea class="logic" id="rv-logic" placeholder="이 근거가 본 사업과 어떻게 이어지는지">' + esc(c.logic) + '</textarea>' +
+      '<div class="quote" style="margin-bottom:12px;">' + mark(c.quote, r.matched) + '</div>' +
+      '<div class="sec-label" style="margin-bottom:6px;">역할</div>' +
+      '<div class="roles">' + ROLES.map(function (x) {
+        return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(\'' + x.key + '\')">' + x.label + '</button>';
+      }).join('') + '</div>' +
       '<div style="display:flex;gap:8px;">' +
         '<button class="btn ' + (c.state === 'ok' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'ok\')">채택</button>' +
         '<button class="btn ' + (c.state === 'no' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'no\')">제외</button>' +
       '</div>';
     $('rv-list').innerHTML = CARDS.map(function (x, i) {
       return '<button onclick="pick(' + i + ')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 4px;border-top:1px solid var(--hairline);text-align:left;">' +
-        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · ' + pageLabel(x.r) + '</span>' +
+        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · p.' + x.page + '</span>' +
         '<span class="state ' + x.state + '">' + LABEL[x.state] + '</span></button>';
     }).join('');
     $('rv-next').disabled = !(done === CARDS.length && adopted > 0);
   }
 
-  /* ---------- 문서 산출 · 구도 추천 ---------- */
-  var DRAFT = null, draftKey = '';
+  /* ---------- 원문 쪽 보기 ---------- */
+  var V = { key: '', data: null, page: 0 };
+  function loadSrc(page) {
+    var c = CARDS[cur];
+    if (!c) { $('src-title').textContent = ''; $('src-page').textContent = ''; $('src-body').textContent = ''; $('src-hint').textContent = ''; return; }
+    var pg = page || c.page;
+    var key = c.r.docId + '|' + pg + '|' + (pg === c.page ? c.quote : '');
+    if (key === V.key) return;
+    V.key = key;
+    $('src-title').textContent = c.r.org + ' 「' + c.r.title + '」 ' + c.r.year;
+    $('src-body').innerHTML = '<span class="meta">원문을 불러오고 있습니다.</span>';
+    api('/api/page', { doc: c.r.docId, page: pg, quote: pg === c.page ? c.quote : '' }).then(function (d) {
+      if (V.key !== key) return;
+      if (!d.ok) { V.data = null; $('src-body').innerHTML = '<span class="state-msg err">' + esc(d.error || '원문을 불러오지 못했습니다.') + '</span>'; return; }
+      V.data = d; V.page = d.page;
+      var t = d.text;
+      $('src-body').innerHTML = d.hit
+        ? esc(t.slice(0, d.hit[0])) + '<mark id="src-mark">' + esc(t.slice(d.hit[0], d.hit[1])) + '</mark>' + esc(t.slice(d.hit[1]))
+        : esc(t);
+      $('src-body').scrollTop = 0;
+      var m = $('src-mark'); if (m) m.scrollIntoView({ block: 'center' });
+      $('src-page').textContent = 'p.' + d.page;
+      $('src-prev').disabled = d.prev == null; $('src-next').disabled = d.next == null;
+      $('src-hint').innerHTML = d.page !== c.page ? '카드 발췌 쪽: p.' + c.page
+        : (d.pageEstimated ? '쪽 번호 추정(±1쪽) · 원본과 대조 필요' : '');
+      $('src-reset').style.display = (c.page !== c.orig.page || c.quote !== c.orig.quote) ? '' : 'none';
+      $('src-use').disabled = true;
+    });
+  }
+  function srcMove(dir) { if (V.data && V.data[dir] != null) loadSrc(V.data[dir]); }
+  function selectedText() {
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return '';
+    var box = $('src-body');
+    if (!box.contains(sel.anchorNode) || !box.contains(sel.focusNode)) return '';
+    return sel.toString().replace(/\s+/g, ' ').trim();
+  }
+  function srcSel() { var t = selectedText(); $('src-use').disabled = !(t.length >= 10 && t.length <= 600 && V.data); }
+  function useSelection() {
+    var t = selectedText(), c = CARDS[cur];
+    if (!t || !V.data || !c) return;
+    c.quote = t; c.page = V.page;
+    V.key = ''; renderReview(); loadSrc();
+  }
+  function resetQuote() { var c = CARDS[cur]; c.page = c.orig.page; c.quote = c.orig.quote; V.key = ''; renderReview(); loadSrc(); }
+
+  /* ---------- 문서 산출: 작성칸 + 미리보기 ---------- */
+  var DRAFT = null, draftKey = '', draftTimer = null;
+  function adoptedCards() { return CARDS.filter(function (c) { return c.state === 'ok'; }); }
+  function usedRoles() {
+    var ad = adoptedCards();
+    return ROLES.filter(function (r) { return ad.some(function (c) { return c.role === r.key; }); });
+  }
   function payload() {
-    keepLogic();
     return {
-      notice: S.notice, lineage: S.lineage,
-      cards: CARDS.filter(function (c) { return c.state === 'ok'; }).map(function (c) {
+      notice: S.notice, lineage: S.lineage, headlines: HEAD, conclusion: CONCL,
+      cards: adoptedCards().map(function (c) {
         var r = c.r;
-        return { id: r.id, docId: r.docId, org: r.org, category: r.category, title: r.title, year: r.year, page: r.page, pageEstimated: r.pageEstimated, quote: r.quote, logic: c.logic };
+        return { id: r.id, docId: r.docId, org: r.org, category: r.category, title: r.title, year: r.year, page: c.page, pageEstimated: r.pageEstimated, quote: c.quote, role: c.role, text: c.text };
       })
     };
   }
+
+  function renderWork() {
+    var used = usedRoles();
+    if (!used.length) { $('ex-work').innerHTML = ''; return; }
+    var html = used.map(function (r, i) {
+      return '<div class="wblock"><div class="wlabel">' + MARKS[i] + '. ' + esc(r.label) + '</div>' +
+        '<input class="winput" placeholder="헤드라인 한 줄" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;queueDraft()">' +
+        CARDS.map(function (c, ci) {
+          if (c.state !== 'ok' || c.role !== r.key) return '';
+          return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
+            '<div class="wquote">' + esc(c.quote) + '</div>' +
+            '<textarea class="logic" placeholder="문서 문장 · 비우면 발췌문을 그대로 싣습니다" oninput="CARDS[' + ci + '].text=this.value;queueDraft()">' + esc(c.text) + '</textarea>' +
+            '<div class="wwarn" id="warn-' + esc(c.r.id) + '"></div></div>';
+        }).join('') + '</div>';
+    }).join('');
+    if (used.length >= 2) {
+      html += '<div class="wblock"><div class="wlabel">수렴점 · 사업 추진의 필요성</div>' +
+        '<textarea class="logic" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장" oninput="CONCL=this.value;queueDraft()">' + esc(CONCL) + '</textarea></div>';
+    }
+    $('ex-work').innerHTML = html;
+  }
+  function queueDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(loadDraft, 350); }
+
   function loadDraft() {
     var body = S.notice ? payload() : null;
     if (!body || !body.cards.length) { renderDraft(null); return; }
     var key = JSON.stringify(body);
     if (key === draftKey && DRAFT) return;
-    $('ex-state').style.display = ''; $('ex-state').className = 'state-msg'; $('ex-state').textContent = '문서를 구성하고 있습니다.';
+    if (!DRAFT) { $('ex-state').style.display = ''; $('ex-state').className = 'state-msg'; $('ex-state').textContent = '문서를 구성하고 있습니다.'; }
     fetch('/api/draft', { method: 'POST', headers: { 'content-type': 'application/json' }, body: key })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.ok) throw new Error(d.error);
+        if (key !== JSON.stringify(payload())) return;   // 그사이 입력이 바뀌었으면 다음 응답을 쓴다
         DRAFT = d.draft; draftKey = key; renderDraft(DRAFT);
       })
-      .catch(function (e) { DRAFT = null; $('ex-paper').style.display = 'none'; $('ex-state').className = 'state-msg err'; $('ex-state').textContent = (e && e.message) || '문서를 구성하지 못했습니다.'; });
+      .catch(function (e) { DRAFT = null; $('ex-body').style.display = 'none'; $('ex-state').style.display = ''; $('ex-state').className = 'state-msg err'; $('ex-state').textContent = (e && e.message) || '문서를 구성하지 못했습니다.'; });
   }
 
   function renderDraft(d) {
     $('dl-btn').disabled = !d;
-    $('ex-paper').style.display = d ? '' : 'none';
+    $('ex-body').style.display = d ? '' : 'none';
     $('ex-state').style.display = d ? 'none' : '';
     if (!d) { $('ex-state').className = 'state-msg'; $('ex-state').textContent = '근거 카드 검토를 먼저 마쳐 주세요.'; $('ex-badges').innerHTML = ''; renderDeck(null); return; }
     var st = d.stats;
     $('ex-badges').innerHTML =
       '<span class="badge-ok" style="padding:5px 12px;border-radius:500px;font-size:11.5px;">' + ICON_OK + '원문 대조 통과 ' + st.adopted + '건</span>' +
       (st.blocked ? '<span class="badge-warn">차단 ' + st.blocked + '건</span>' : '') +
-      (st.missingLogic ? '<span class="badge-warn">연결 논리 미작성 ' + st.missingLogic + '건</span>' : '');
+      (st.missingHeadline.length ? '<span class="badge-warn">헤드라인 미작성 ' + st.missingHeadline.length + '</span>' : '') +
+      (d.factWarnings.length ? '<span class="badge-warn">숫자 확인 ' + d.factWarnings.length + '건</span>' : '');
+    adoptedCards().forEach(function (c) { var el = $('warn-' + c.r.id); if (el) el.textContent = ''; });
+    d.factWarnings.forEach(function (w) { var el = $('warn-' + w.id); if (el) el.textContent = '원문 쪽에 없는 숫자: ' + w.numbers.join(', '); });
+
     var html = '<h3>' + esc(d.title) + '</h3><div class="sub">' + esc(d.subtitle) + '</div>';
     d.sections.forEach(function (s) {
       html += '<h4>' + esc(s.heading) + '</h4>';
       s.blocks.forEach(function (b) {
+        if (b.type === 'argument') html += '<div class="arg"><div class="ah">' + b.mark + '. (' + esc(b.label) + ') ' + esc(b.headline) + '</div><ul>' +
+          b.bullets.map(function (x) { return '<li>' + (x.quoted ? '“' + esc(x.text) + '”' : esc(x.text)) + ' <span class="ct">' + esc(x.cite) + '</span></li>'; }).join('') + '</ul></div>';
+        if (b.type === 'grid') html += '<table><tr>' + b.header.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' +
+          b.rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (i === 0 ? ' class="h"' : '') + '>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') +
+          (b.foot ? '<tr><td class="h">' + esc(b.foot[0]).replace('\n', '<br>') + '</td><td colspan="2" class="foot">' + esc(b.foot[1]) + '</td></tr>' : '') + '</table>';
         if (b.type === 'table') html += '<table>' + b.rows.map(function (r) { return '<tr><td class="h" style="width:120px;">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</table>';
-        if (b.type === 'grid') html += '<table><tr>' + b.header.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr>' + b.rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
         if (b.type === 'flow') html += '<div class="flow">' + b.nodes.map(function (n) { return '<b>' + esc(n.name) + '</b> <small>(' + esc(n.role) + ')</small>'; }).join(' &nbsp;→&nbsp; ') + '</div>';
-        if (b.type === 'note') html += '<div class="note">' + esc(b.text) + '</div>';
-        if (b.type === 'subheading') html += '<h5>' + esc(b.text) + '</h5>';
-        if (b.type === 'evidence') html += '<div class="ev"><div class="s">[근거 ' + b.no + '] ' + esc(b.source) + '</div><div class="q">“' + esc(b.quote) + '”</div>' + (b.logic ? '<div class="l"><b>사업 연결</b>' + esc(b.logic) + '</div>' : '') + '</div>';
       });
     });
     $('ex-paper').innerHTML = html;

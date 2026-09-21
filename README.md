@@ -13,7 +13,8 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 | `/api/notice` | 입찰공고번호 → 공고 요약 |
 | `/api/lineage` | 수요기관명 → 발주처 계보 |
 | `/api/evidence` | 정책문서 색인 검색 → 근거 발췌 |
-| `/api/draft` | 채택 근거 → 문서 모델 · 장표 구도 추천 |
+| `/api/page` | 색인의 한 쪽 원문 + 발췌 위치 |
+| `/api/draft` | 채택 근거 → 논증 블록 문서 모델 · 장표 구도 추천 |
 | `/api/export` | 문서 모델 → docx |
 | `/api/health` | 나라장터·공공기관 정보 API 연결 상태 확인 |
 | `/api/proxy` | 오픈API 서버사이드 프록시 |

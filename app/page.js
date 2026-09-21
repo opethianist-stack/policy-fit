@@ -23,7 +23,7 @@ export default function Home() {
         <div className="tiles">
           <a className="tile" href="/prototype">
             <div className="t">프로토타입</div>
-            <div className="d">홈 · 정책 근거 검색 · 근거 카드 챗봇 · 문서 산출 · 구도 추천 5개 화면</div>
+            <div className="d">홈 · 정책 근거 검색 · 근거 카드 검토 · 문서 산출 · 구도 추천 5개 화면</div>
           </a>
           <a className="tile" href="/api-test">
             <div className="t">API 연결 테스트</div>

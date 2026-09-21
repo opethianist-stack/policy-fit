@@ -8,23 +8,50 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const FONT = '맑은 고딕';
-const INK = '191F28', MUTED = '66717E', LINE = 'D5D9E0', TINT = 'F3F4F6', ACCENT = '524FA1';
+const INK = '191F28', MUTED = '66717E', LINE = 'D5D9E0', TINT = 'F3F4F6';
 const CONTENT_W = 9026; // A4, 좌우 여백 1440 DXA
 
 const run = (text, o = {}) => new TextRun({ text, font: FONT, size: 20, color: INK, ...o });
 const para = (children, o = {}) => new Paragraph({ children: Array.isArray(children) ? children : [children], spacing: { after: 100, line: 320 }, ...o });
 const border = { style: BorderStyle.SINGLE, size: 4, color: LINE };
 const borders = { top: border, bottom: border, left: border, right: border };
+// 셀 글자 속 줄바꿈(\n)은 줄을 나눈다
+const lines = (text, o) => String(text || '').split('\n').map((t, i) => run(t, { size: 18, ...o, ...(i ? { break: 1 } : {}) }));
 const cell = (text, width, o = {}) => new TableCell({
-  width: { size: width, type: WidthType.DXA }, borders,
+  width: { size: width, type: WidthType.DXA }, borders, columnSpan: o.span,
   margins: { top: 80, bottom: 80, left: 120, right: 120 },
   shading: o.head ? { type: ShadingType.CLEAR, fill: TINT, color: 'auto' } : undefined,
-  children: [para(run(text, { size: 18, bold: !!o.head }), { spacing: { after: 0, line: 280 } })],
+  children: [para(lines(text, { bold: !!o.head || !!o.bold }), { spacing: { after: 0, line: 280 } })],
 });
 const table = (rows, widths, headFirstCol, headRow) => new Table({
   width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: widths,
   rows: rows.map((r, ri) => new TableRow({ children: r.map((t, ci) => cell(t, widths[ci], { head: (headRow && ri === 0) || (headFirstCol && ci === 0) })) })),
 });
+
+function argument(b) {
+  const out = [para([
+    run(`${b.mark}. (${b.label}) `, { bold: true, size: 22 }),
+    ...(b.headline ? [run(b.headline, { bold: true, size: 22 })] : []),
+  ], { spacing: { before: 200, after: 100, line: 320 } })];
+  for (const x of b.bullets) {
+    out.push(para([
+      run('- '),
+      run(x.quoted ? `“${x.text}”` : x.text),
+      run(` ${x.cite}`, { color: MUTED, size: 18 }),
+    ], { indent: { left: 440, hanging: 200 }, spacing: { after: 80, line: 320 } }));
+  }
+  return out;
+}
+
+function grid(b) {
+  const w = b.widths;
+  const rows = [
+    new TableRow({ tableHeader: true, children: b.header.map((t, i) => cell(t, w[i], { head: true })) }),
+    ...b.rows.map((r) => new TableRow({ children: r.map((t, i) => cell(t, w[i], { head: i === 0 })) })),
+  ];
+  if (b.foot) rows.push(new TableRow({ children: [cell(b.foot[0], w[0], { head: true }), cell(b.foot[1], w[1] + w[2], { span: 2, bold: true })] }));
+  return new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: w, rows });
+}
 
 function render(draft) {
   const out = [
@@ -34,18 +61,12 @@ function render(draft) {
   for (const s of draft.sections) {
     out.push(new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 280, after: 140 }, children: [run(s.heading, { size: 26, bold: true })] }));
     for (const b of s.blocks) {
+      if (b.type === 'argument') out.push(...argument(b));
+      if (b.type === 'grid') out.push(grid(b));
       if (b.type === 'table') out.push(table(b.rows, [2200, CONTENT_W - 2200], true, false));
-      if (b.type === 'grid') out.push(table([b.header, ...b.rows], [1600, 3300, CONTENT_W - 4900], false, true));
       if (b.type === 'flow') out.push(para(b.nodes.flatMap((n, i) => [
         ...(i ? [run('  →  ', { color: MUTED })] : []), run(n.name, { bold: true }), run(` (${n.role})`, { color: MUTED, size: 18 }),
-      ])));
-      if (b.type === 'note') out.push(para(run(b.text, { size: 16, color: MUTED })));
-      if (b.type === 'subheading') out.push(para(run(b.text, { size: 22, bold: true, color: ACCENT }), { spacing: { before: 200, after: 100 } }));
-      if (b.type === 'evidence') {
-        out.push(para([run(`[근거 ${b.no}] `, { bold: true }), run(b.source, { bold: true })], { spacing: { before: 120, after: 60 } }));
-        out.push(para(run(`“${b.quote}”`), { indent: { left: 360 }, border: { left: { style: BorderStyle.SINGLE, size: 12, color: LINE, space: 10 } } }));
-        if (b.logic) out.push(para([run('사업 연결  ', { bold: true, size: 18, color: MUTED }), run(b.logic)], { indent: { left: 360 }, spacing: { after: 160, line: 320 } }));
-      }
+      ]), { spacing: { before: 160, after: 100 } }));
     }
   }
   return out;
