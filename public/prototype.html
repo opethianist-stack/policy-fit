@@ -125,6 +125,17 @@
   .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   a.chip:hover { background: #DDE0E6; }
   .chip.term { background: var(--violet-tint); color: var(--violet); font-weight: 600; }
+  .chip.term.rfp { background: #fff; box-shadow: inset 0 0 0 1px rgba(115,83,234,0.45); }
+  .rfp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 16px; margin: -8px 0 24px; font-size: 12.5px; color: var(--slate); }
+  .rfp-row .k { font-size: 11px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+  .rfp-row .msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rfp-row .msg.err { color: #B42318; white-space: normal; }
+  .linkish { font-size: 12.5px; font-weight: 600; color: var(--violet); padding: 4px 2px; margin-top: 14px; }
+  .manual { max-width: 640px; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin: 0 0 32px; display: none; }
+  .manual.on { display: block; }
+  .manual label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
+  .manual input[type=text] { width: 100%; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; }
+  .manual input[type=text]:focus { border-color: var(--violet); }
   .chip.term button { color: var(--violet); font-size: 13px; line-height: 1; padding: 0; opacity: 0.7; }
   .terms { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .terms input { border: 1px dashed #C7CCD4; border-radius: 500px; padding: 5px 11px; font-family: inherit; font-size: 11.5px; width: 110px; outline: none; background: #fff; }
@@ -311,6 +322,20 @@
             <span class="sig" id="sig-g2b"><i></i><span>나라장터</span></span>
             <span class="sig" id="sig-inst"><i></i><span>공공기관 정보</span></span>
           </div>
+          <button class="linkish" onclick="toggleManual()">공고번호 없이 제안요청서로 시작</button>
+        </div>
+
+        <div class="manual" id="manual">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button class="btn soft mini" onclick="$('mn-file').click()">제안요청서 파일 선택</button>
+            <span class="meta" id="mn-state">pdf · hwp · hwpx · docx, 4MB 이하</span>
+            <input type="file" id="mn-file" accept=".pdf,.hwp,.hwpx,.docx" style="display:none;" onchange="manualFile(this.files[0])">
+          </div>
+          <label for="mn-name">사업명</label>
+          <input type="text" id="mn-name" autocomplete="off">
+          <label for="mn-org">발주기관</label>
+          <input type="text" id="mn-org" autocomplete="off" placeholder="예: 한국교육학술정보원">
+          <button class="btn primary" id="mn-go" style="margin-top:16px;" onclick="startManual()" disabled>정책 근거 검색</button>
         </div>
 
         <div id="home-recent"></div>
@@ -333,14 +358,16 @@
 
         <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--hairline);border-radius:8px;padding:13px 16px;margin-bottom:16px;max-width:520px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <div id="no-view" style="font-size:14px;font-weight:500;color:var(--ink);"></div>
-          <div class="meta" style="margin-left:auto;">공고번호</div>
+          <div id="no-view" style="font-size:14px;font-weight:500;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+          <div class="meta" id="no-label" style="margin-left:auto;flex-shrink:0;">공고번호</div>
         </div>
 
         <div id="search-state" class="state-msg">홈에서 입찰공고번호를 입력해 주세요.</div>
 
         <div id="search-main" style="display:none;">
           <div class="card notice" id="notice-card"></div>
+          <div class="rfp-row" id="rfp-row"></div>
+          <input type="file" id="rfp-file" accept=".pdf,.hwp,.hwpx,.docx" style="display:none;" onchange="uploadRfp(this.files[0]); this.value='';">
 
           <div class="search-body">
             <div class="lineage">
@@ -509,7 +536,7 @@
   }
 
   /* ---------- 정책 근거 검색 ---------- */
-  var S = { no: '', notice: null, lineage: null, terms: [], scope: 'lineage', results: [] };
+  var S = { no: '', notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
   var seq = 0;
 
   function submitNo(e) {
@@ -525,8 +552,8 @@
 
   function openNotice(no) {
     var my = ++seq;
-    S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [] };
-    $('no-view').textContent = S.no;
+    S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
+    $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
     go('search');
@@ -537,6 +564,7 @@
       S.notice = d.notice;
       saveRecent(d.notice);
       renderNotice();
+      autoRfp(my);
       $('search-main').style.display = '';
       setState('');
       $('lineage-card').innerHTML = '<div class="meta">확인 중</div>';
@@ -559,9 +587,10 @@
     var link = n.detailUrl ? '<a class="chip" href="' + esc(n.detailUrl) + '" target="_blank" rel="noopener">' + ICON_OPEN + '<span>나라장터 공고</span></a>' : '';
     $('notice-card').innerHTML =
       '<div><div class="k">공고명</div><div class="v">' + esc(n.name) + '</div></div>' +
-      '<div><div class="k">수요기관</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
+      '<div><div class="k">' + (n.manual ? '발주기관' : '수요기관') + '</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
+      (n.manual ? '' :
       '<div><div class="k">' + (n.budget ? '배정예산' : '추정가격') + '</div><div class="v">' + won(n.budget || n.estimatedPrice) + '</div></div>' +
-      '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>' +
+      '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>') +
       (files || link ? '<div class="files">' + link + files + '</div>' : '');
   }
 
@@ -586,12 +615,14 @@
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
       S.terms = d.terms; S.results = d.results;
       renderTerms(); renderResults(d);
+      mergeRfpTerms();
     });
   }
 
   function renderTerms() {
+    var fromRfp = (S.rfp && S.rfp.terms) || [];
     $('terms').innerHTML = S.terms.map(function (t, i) {
-      return '<span class="chip term">' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
+      return '<span class="chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + '"' + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
     }).join('') +
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="검색어 추가" aria-label="검색어 추가"></form>' +
       '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">계보 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">전체 문서</button></span>';
@@ -635,6 +666,100 @@
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
       '</div>';
     }).join('');
+  }
+
+  /* ---------- 제안요청서 ---------- */
+  // 공고 첨부파일 중 제안요청서를 골라 서버가 받아 읽는다. 실패하면 직접 올린다. 파일은 어디에도 저장하지 않는다.
+  var RFP_NAME = /제안\s*요청서|과업\s*지시서|과업\s*내용서|과업\s*내용|RFP/i;
+  var MAX_UPLOAD = 4 * 1024 * 1024;   // 서버리스 요청 크기 한도(4.5MB) 아래로
+  function pickRfpFile(files) {
+    var c = (files || []).filter(function (f) { return RFP_NAME.test(f.name); });
+    var rank = function (f) { var n = f.name.toLowerCase(); return /\.pdf$/.test(n) ? 0 : /\.hwpx$/.test(n) ? 1 : /\.hwp$/.test(n) ? 2 : 3; };
+    return c.sort(function (a, b) { return rank(a) - rank(b); })[0] || null;
+  }
+  function renderRfp() {
+    var r = S.rfp || { state: 'none' };
+    var up = '<button class="btn soft mini" onclick="$(\'rfp-file\').click()">' + (r.state === 'ok' ? '다른 파일 올리기' : '파일 올리기') + '</button>';
+    var msg = {
+      none: '<span class="msg meta">첨부파일에서 찾지 못했습니다.</span>',
+      loading: '<span class="msg meta">' + esc(r.name || '') + ' 읽는 중</span>',
+      ok: '<span class="msg">' + ICON_OK + ' ' + esc(r.name) + ' · 검색어 ' + (r.terms || []).length + '개 반영</span>',
+      err: '<span class="msg err">' + esc(r.error || '읽지 못했습니다.') + '</span>'
+    }[r.state];
+    $('rfp-row').innerHTML = '<span class="k">제안요청서</span>' + msg + (r.state === 'loading' ? '' : up);
+  }
+  function autoRfp(my) {
+    var f = pickRfpFile(S.notice.files);
+    if (!f) { S.rfp = { state: 'none' }; renderRfp(); return; }
+    S.rfp = { state: 'loading', name: f.name, prev: [] }; renderRfp();
+    api('/api/rfp', { url: f.url, name: f.name, title: S.notice.name }).then(function (d) { if (my === seq) gotRfp(d, f.name); })
+      .catch(function () { if (my === seq) gotRfp({ ok: false, error: '서버에 연결하지 못했습니다.' }, f.name); });
+  }
+  function postRfp(file, title) {
+    if (file.size > MAX_UPLOAD) return Promise.resolve({ ok: false, error: '4MB가 넘는 파일은 올릴 수 없습니다. 제안요청서 부분만 PDF로 저장해 올려 주세요.' });
+    var q = 'name=' + encodeURIComponent(file.name) + '&title=' + encodeURIComponent(title || '');
+    return fetch('/api/rfp?' + q, { method: 'POST', body: file }).then(function (r) {
+      return r.json().catch(function () { return { ok: false, error: r.status === 413 ? '파일이 너무 큽니다.' : '응답을 읽지 못했습니다.' }; });
+    }).catch(function () { return { ok: false, error: '서버에 연결하지 못했습니다.' }; });
+  }
+  function uploadRfp(file) {
+    if (!file || !S.notice) return;
+    var my = seq;
+    var prev = (S.rfp && (S.rfp.terms || S.rfp.prev)) || [];
+    S.rfp = { state: 'loading', name: file.name, prev: prev }; renderRfp();
+    postRfp(file, S.notice.name).then(function (d) { if (my === seq) gotRfp(d, file.name); });
+  }
+  function gotRfp(d, name) {
+    var old = (S.rfp && (S.rfp.prev || S.rfp.terms)) || [];
+    if (!d.ok) { S.rfp = { state: 'err', name: name, error: d.error }; renderRfp(); return; }
+    S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, merged: false };
+    // 이전 제안요청서에서 들어온 검색어는 뺀다
+    S.terms = S.terms.filter(function (t) { return old.indexOf(t) < 0; });
+    renderRfp(); mergeRfpTerms();
+  }
+  function mergeRfpTerms() {
+    var r = S.rfp;
+    if (!r || r.state !== 'ok' || r.merged || !S.terms.length) return;
+    r.merged = true;
+    var add = r.terms.filter(function (t) { return S.terms.indexOf(t) < 0; });
+    if (!add.length) { renderTerms(); return; }
+    S.terms = S.terms.concat(add);
+    runEvidence(false);
+  }
+
+  /* 나라장터 밖 사업: 제안요청서 + 사업명·발주기관으로 시작 */
+  var MN = null;
+  function toggleManual() { $('manual').classList.toggle('on'); }
+  function manualFile(file) {
+    if (!file) return;
+    $('mn-state').textContent = file.name + ' 읽는 중'; $('mn-go').disabled = true;
+    postRfp(file, '').then(function (d) {
+      if (!d.ok) { MN = null; $('mn-state').textContent = d.error || '읽지 못했습니다.'; return; }
+      MN = { name: file.name, d: d };
+      $('mn-state').textContent = file.name + ' · 검색어 ' + d.terms.length + '개';
+      if (!$('mn-name').value && d.meta.name) $('mn-name').value = d.meta.name;
+      if (!$('mn-org').value && d.meta.org) $('mn-org').value = d.meta.org;
+      $('mn-go').disabled = false;
+    });
+  }
+  function startManual() {
+    var name = $('mn-name').value.trim(), org = $('mn-org').value.trim();
+    if (!MN || !name || !org) { $('mn-state').textContent = '파일, 사업명, 발주기관을 모두 넣어 주세요.'; return; }
+    var my = ++seq;
+    S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
+      rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
+    $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
+    renderNotice(); renderRfp();
+    $('search-main').style.display = ''; setState('');
+    $('lineage-card').innerHTML = '<div class="meta">확인 중</div>';
+    $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
+    go('search');
+    api('/api/lineage', { name: org }).then(function (l) {
+      if (my !== seq) return;
+      S.lineage = l.ok ? l : { chain: [{ name: org, role: '발주처' }], orgs: [org], source: 'none', error: l.error };
+      renderLineage();
+      return runEvidence(true);
+    }).catch(function () { if (my === seq) setState('서버에 연결하지 못했습니다.', true); });
   }
 
   /* ---------- 근거 카드 검토 ---------- */
@@ -854,7 +979,7 @@
       .then(function (r) { if (!r.ok) return r.json().then(function (d) { throw new Error(d.error); }); return r.blob(); })
       .then(function (blob) {
         var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = '사업이해도_' + S.notice.no + '.docx';
+        a.href = URL.createObjectURL(blob); a.download = '사업이해도_' + (S.notice.no || 'draft') + '.docx';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
       })
