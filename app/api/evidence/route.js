@@ -1,4 +1,4 @@
-import { extractTerms, searchEvidence, corpusInfo } from '../../../lib/search';
+import { extractTerms, searchEvidence, corpusInfo, MAX_TERMS } from '../../../lib/search';
 import { defaultRole } from '../../../lib/roles';
 
 export const runtime = 'nodejs';
@@ -14,8 +14,8 @@ export async function GET(req) {
   const ministry = (sp.get('ministry') || '').trim();
   const scope = sp.get('scope') === 'all' ? 'all' : 'lineage';
   if (!terms.length) return Response.json({ ok: true, terms: [], results: [], scopeDocs: 0, corpus: corpusInfo() });
-  const { results, scopeDocs } = searchEvidence({ terms: terms.slice(0, 20), orgs, scope });
+  const { results, scopeDocs } = searchEvidence({ terms: terms.slice(0, MAX_TERMS), orgs, scope });
   const lineage = { chain: orgs.map((name) => ({ name })), ministry };
   for (const r of results) r.role = defaultRole(r, lineage);
-  return Response.json({ ok: true, terms, scope, scopeDocs, results, corpus: corpusInfo() });
+  return Response.json({ ok: true, terms: terms.slice(0, MAX_TERMS), scope, scopeDocs, results, corpus: corpusInfo() });
 }

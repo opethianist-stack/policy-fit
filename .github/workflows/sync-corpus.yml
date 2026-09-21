@@ -1,0 +1,47 @@
+name: 정책문서 색인 갱신
+
+# 구글드라이브 정책문서 폴더를 읽어 data/corpus-index.json 을 다시 만든다.
+# 바뀐 게 있으면 main 에 커밋하고, Vercel 이 그 커밋으로 자동 배포한다.
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 매일 03:00 (한국시간)
+  workflow_dispatch:        # Actions 탭의 "Run workflow" 버튼으로 바로 실행
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-corpus
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 패키지 설치
+        run: pip install pymupdf olefile google-api-python-client google-auth
+
+      - name: 드라이브에서 받아 색인
+        env:
+          GDRIVE_SA_KEY: ${{ secrets.GDRIVE_SA_KEY }}
+          GDRIVE_FOLDER_ID: 1-VLB42YhmZZIMxoR48J2qeIYgMYMdAK5
+        run: python scripts/sync_drive.py
+
+      - name: 바뀐 색인 커밋
+        run: |
+          git config user.name "policy-fit-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/corpus-index.json data/corpus-links.json
+          if git diff --cached --quiet; then
+            echo "바뀐 내용 없음"
+          else
+            git commit -m "chore: 정책문서 색인 갱신(구글드라이브)"
+            git push
+          fi

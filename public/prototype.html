@@ -140,6 +140,17 @@
   .rfp-row .k { font-size: 11px; font-weight: 600; color: var(--muted); margin-right: 2px; }
   .rfp-row .msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rfp-row .msg.err { color: #B42318; white-space: normal; }
+  .msit { background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 14px 16px 6px; margin: -8px 0 24px; }
+  .msit-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .msit-head .k { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .msit-row { border-top: 1px solid var(--hairline); padding: 10px 0; }
+  .msit-row:first-of-type { border-top: none; }
+  .msit-t { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .msit-t a { color: var(--ink); font-weight: 600; text-decoration: none; }
+  .msit-t a:hover { text-decoration: underline; }
+  .src-badge { font-size: 10.5px; font-weight: 700; color: var(--indigo); background: var(--blue-tint); border-radius: 4px; padding: 1px 6px; flex-shrink: 0; }
+  .msit-f { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  .msit-f .chip { padding: 4px 10px; font-size: 11px; }
   .linkish { font-size: 12.5px; font-weight: 600; color: var(--violet); padding: 4px 2px; margin-top: 14px; }
   .manual { max-width: 640px; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin: 0 0 32px; display: none; }
   .manual.on { display: block; }
@@ -377,6 +388,7 @@
         <div id="search-main" style="display:none;">
           <div class="card notice" id="notice-card"></div>
           <div class="rfp-row" id="rfp-row"></div>
+          <div class="msit" id="msit-box" style="display:none;"></div>
           <input type="file" id="rfp-file" accept=".pdf,.hwp,.hwpx,.docx" style="display:none;" onchange="uploadRfp(this.files[0]); this.value='';">
 
           <div class="search-body">
@@ -563,7 +575,7 @@
   function openNotice(no) {
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
-    CARDS = []; HEAD = {}; CONCL = ''; cur = 0;
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
@@ -626,6 +638,7 @@
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
       S.terms = d.terms; S.results = d.results;
       renderTerms(); renderResults(d);
+      loadMsit();
       mergeRfpTerms();
     });
   }
@@ -642,6 +655,7 @@
   function addTerm(e) {
     e.preventDefault();
     var v = $('term-input').value.trim();
+    if (S.terms.length >= MAX_TERMS) { $('term-input').value = ''; $('term-input').placeholder = MAX_TERMS + '개까지'; return; }
     if (v && S.terms.indexOf(v) < 0) { S.terms.push(v); runEvidence(false); }
   }
   function setScope(v) { if (S.scope !== v) { S.scope = v; runEvidence(false); } }
@@ -685,6 +699,50 @@
     renderPickCount();
   }
 
+  /* ---------- 과기정통부 게시판(주요정책·사업공고·보도자료·보도설명) ---------- */
+  // 계보에 과학기술정보통신부가 있으면, 최근 게시물 중 제목이 검색어와 맞는 것을 상세페이지·첨부와 함께 보여 준다.
+  // 첨부(hwpx·hwp·pdf·odt·docx)는 "검색어 보강"으로 제안요청서처럼 본문을 읽어 검색어를 더할 수 있다.
+  var MSIT = { key: '', items: [] };
+  function isMsitLine() {
+    return !!(S.lineage && (S.lineage.chain || []).some(function (c) { return /과학기술정보통신부|과기정통부/.test(c.name); }));
+  }
+  function loadMsit() {
+    if (!isMsitLine() || !S.terms.length) { $('msit-box').style.display = 'none'; return; }
+    var key = S.terms.join(',');
+    if (key === MSIT.key) return;
+    MSIT.key = key;
+    var my = seq;
+    $('msit-box').style.display = '';
+    $('msit-box').innerHTML = '<div class="msit-head"><span class="k">과기정통부 게시물</span><span class="meta">불러오는 중</span></div>';
+    api('/api/msit', { terms: key }).then(function (d) {
+      if (my !== seq || key !== MSIT.key) return;
+      MSIT.items = d.ok ? d.items : [];
+      renderMsit(d);
+    }).catch(function () { if (my === seq) renderMsit({ ok: false, error: '서버에 연결하지 못했습니다.' }); });
+  }
+  function renderMsit(d) {
+    var head = '<div class="msit-head"><span class="k">과기정통부 게시물</span><span class="meta">주요정책 · 사업공고 · 보도자료 · 보도설명</span></div>';
+    if (!d.ok) { $('msit-box').innerHTML = head + '<div class="state-msg err" style="padding:8px 0 12px;">' + esc(d.error || '불러오지 못했습니다.') + '</div>'; return; }
+    if (!MSIT.items.length) { $('msit-box').innerHTML = head + '<div class="meta" style="padding:6px 0 12px;">검색어와 제목이 맞는 최근 게시물이 없습니다.</div>'; return; }
+    $('msit-box').innerHTML = head + MSIT.items.map(function (it, i) {
+      return '<div class="msit-row"><div class="msit-t"><span class="src-badge">' + esc(it.sourceLabel) + '</span>' +
+        (it.viewUrl ? '<a href="' + esc(it.viewUrl) + '" target="_blank" rel="noopener">' + mark(it.title, it.matched) + '</a>' : '<b>' + mark(it.title, it.matched) + '</b>') +
+        '<span class="meta">' + esc(it.date) + (it.dept ? ' · ' + esc(it.dept) : '') + '</span></div>' +
+        (it.files.length ? '<div class="msit-f">' + it.files.map(function (f, j) {
+          return '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + ICON_FILE + '<span>' + esc(f.name) + '</span></a>' +
+            (f.readable ? '<button class="btn soft mini" onclick="msitTerms(' + i + ',' + j + ')">검색어 보강</button>' : '');
+        }).join('') + '</div>' : '') + '</div>';
+    }).join('');
+  }
+  function msitTerms(i, j) {
+    var f = MSIT.items[i] && MSIT.items[i].files[j]; if (!f || !S.notice) return;
+    var my = seq;
+    var prev = (S.rfp && (S.rfp.terms || S.rfp.prev)) || [];
+    S.rfp = { state: 'loading', name: f.name, prev: prev, src: 'msit' }; renderRfp();
+    api('/api/rfp', { url: f.url, name: f.name, title: S.notice.name }).then(function (d) { if (my === seq) gotRfp(d, f.name, 'msit'); })
+      .catch(function () { if (my === seq) gotRfp({ ok: false, error: '서버에 연결하지 못했습니다.' }, f.name); });
+  }
+
   /* ---------- 제안요청서 ---------- */
   // 공고 첨부파일 중 제안요청서를 골라 서버가 받아 읽는다. 실패하면 직접 올린다. 파일은 어디에도 저장하지 않는다.
   var RFP_NAME = /제안\s*요청서|과업\s*지시서|과업\s*내용서|과업\s*내용|RFP/i;
@@ -703,7 +761,7 @@
       ok: '<span class="msg">' + ICON_OK + ' ' + esc(r.name) + ' · 검색어 ' + (r.terms || []).length + '개 반영</span>',
       err: '<span class="msg err">' + esc(r.error || '읽지 못했습니다.') + '</span>'
     }[r.state];
-    $('rfp-row').innerHTML = '<span class="k">제안요청서</span>' + msg + (r.state === 'loading' ? '' : up);
+    $('rfp-row').innerHTML = '<span class="k">' + (r.src === 'msit' ? '과기정통부 문서' : '제안요청서') + '</span>' + msg + (r.state === 'loading' ? '' : up);
   }
   function autoRfp(my) {
     var f = pickRfpFile(S.notice.files);
@@ -726,19 +784,23 @@
     S.rfp = { state: 'loading', name: file.name, prev: prev }; renderRfp();
     postRfp(file, S.notice.name).then(function (d) { if (my === seq) gotRfp(d, file.name); });
   }
-  function gotRfp(d, name) {
+  function gotRfp(d, name, src) {
     var old = (S.rfp && (S.rfp.prev || S.rfp.terms)) || [];
-    if (!d.ok) { S.rfp = { state: 'err', name: name, error: d.error }; renderRfp(); return; }
-    S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, merged: false };
+    if (!d.ok) { S.rfp = { state: 'err', name: name, error: d.error, src: src }; renderRfp(); return; }
+    S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, merged: false, src: src };
     // 이전 제안요청서에서 들어온 검색어는 뺀다
     S.terms = S.terms.filter(function (t) { return old.indexOf(t) < 0; });
     renderRfp(); mergeRfpTerms();
   }
+  var MAX_TERMS = 10;   // 검색어는 모두 합쳐 10개까지(공고명 최대 6 + 나머지는 제안요청서). lib/search.js 와 같게 유지
   function mergeRfpTerms() {
     var r = S.rfp;
     if (!r || r.state !== 'ok' || r.merged || !S.terms.length) return;
     r.merged = true;
-    var add = r.terms.filter(function (t) { return S.terms.indexOf(t) < 0; });
+    var room = Math.max(0, MAX_TERMS - S.terms.length);
+    var add = r.terms.filter(function (t) { return S.terms.indexOf(t) < 0; }).slice(0, room);
+    r.terms = add;   // 실제로 들어간 것만 제안요청서 검색어로 표시
+    renderRfp();
     if (!add.length) { renderTerms(); return; }
     S.terms = S.terms.concat(add);
     runEvidence(false);
@@ -765,7 +827,7 @@
     var my = ++seq;
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
-    CARDS = []; HEAD = {}; CONCL = ''; cur = 0;
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();
     $('search-main').style.display = ''; setState('');
