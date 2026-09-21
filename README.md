@@ -8,10 +8,24 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 | 경로 | 내용 |
 |---|---|
 | `/` | 과제 개요와 8단계 처리 흐름 |
-| `/prototype` | 화면 프로토타입 5종 (홈 · 정책 근거 검색 · 근거 카드 챗봇 · 문서 산출 · 구도 추천) |
-| `/api-test` | 공공데이터포털 오픈API 연결 테스트. 상단 탭에는 없음, 주소로 접근 |
+| `/prototype` | 사용자 화면 (홈 · 정책 근거 검색 · 근거 카드 검토 · 문서 산출 · 구도 추천) |
+| `/api-test` | 오픈API 연결 테스트. 상단 탭에는 없고 주소로 접근한다 |
+| `/api/notice` | 입찰공고번호 → 공고 요약 |
+| `/api/lineage` | 수요기관명 → 발주처 계보 |
+| `/api/evidence` | 정책문서 색인 검색 → 근거 발췌 |
 | `/api/health` | 나라장터·공공기관 정보 API 연결 상태 확인 |
 | `/api/proxy` | 오픈API 서버사이드 프록시 |
+
+## 정책문서 색인
+
+근거 검색은 `data/corpus-index.json` 하나만 읽는다. 문서를 추가·교체하면 색인을 다시 만든다.
+
+```
+pip install pymupdf olefile
+python3 scripts/build_index.py <정책문서 폴더>
+```
+
+파일명은 `번호_분류_기관_문서명[_구분]_연도.확장자` 규칙을 따른다. 스캔 PDF는 색인되지 않는다.
 
 ## 환경변수
 
@@ -48,8 +62,8 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 |---|---|---|---|
 | 조달청 | 나라장터 입찰공고정보서비스 | `https://apis.data.go.kr/1230000/ad/BidPublicInfoService` | `DATA_GO_KR_KEY` |
 | 과학기술정보통신부 | 주요정책 | `https://apis.data.go.kr/1721000/msitmainpolicyinfo` | `DATA_GO_KR_KEY` |
-| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst/list` | `DATA_GO_KR_KEY` |
-| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz/list` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz` | `DATA_GO_KR_KEY` |
 | 기획재정부 | 알리오플러스 기관정보 | `http://openapi.alioplus.go.kr/api/apba` | `ALIO_APBA_KEY` |
 | 기획재정부 | 알리오플러스 사업정보 | `http://openapi.alioplus.go.kr/api/business` | `ALIO_BIZ_KEY` |
 | 기획재정부 | 알리오플러스 시설정보 | `http://openapi.alioplus.go.kr/api/facility` | `ALIO_FACILITY_KEY` |
@@ -58,13 +72,7 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 알리오플러스 4종은 모두 `POST` + `application/x-www-form-urlencoded` 이고,
 인증 파라미터명은 `X-API-AUTH-KEY` 인데 헤더가 아니라 **폼 바디 필드**로 전달한다.
 
-`1051000` 계열은 포털에 베이스 주소까지만 공시되어 있어 오퍼레이션 경로를 따로 확인했다.
-`public_inst` 는 `/list`(기관 목록)와 `/brnch`(지점 목록, `instCd` 필수) 두 개, `biz` 는 `/list` 하나다.
-`pageNo` · `numOfRows` · `resultType` 을 받으며, `instNm` · `bizNm` 은 문자열 포함 조건으로 검색된다.
-
-`public_inst/list` 응답의 `sprvsnInstNm`(주관부처명) · `sprvsnInstCd`(주관부처코드)가
-발주처 계보 매핑의 근거 필드다. 사업을 기관 단위로 좁히려면 여기서 얻은 `instCd` 를
-`biz/list` 파라미터로 넘긴다.
+`1051000` 계열은 포털에 베이스 주소까지만 공시되어 오퍼레이션 경로를 별도로 확인해야 한다.
 
 
 <!-- git 연동 확인 -->
