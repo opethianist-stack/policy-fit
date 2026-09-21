@@ -117,6 +117,16 @@
   .state.wait { color: var(--violet); }
   .state.ok { color: var(--green-deep); }
   .state.no { color: var(--muted); }
+  .pick { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: var(--slate); background: #fff; border: 1px solid var(--hairline); border-radius: 500px; padding: 5px 11px; flex-shrink: 0; }
+  .pick i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid #C7CCD4; display: inline-flex; align-items: center; justify-content: center; }
+  .pick.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
+  .pick.on i { background: var(--violet); border-color: var(--violet); }
+  .pick.on i:after { content: ''; width: 7px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .card.sel { border-color: var(--violet); box-shadow: 0 0 0 1px var(--violet); }
+  .rv-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 4px; border-top: 1px solid var(--hairline); text-align: left; }
+  .rv-row .box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #C7CCD4; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .rv-row .box.on { background: var(--violet); border-color: var(--violet); }
+  .rv-row .box.on:after { content: ''; width: 7px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
   .fmt { font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 500px; background: #fff; border: 1px solid var(--hairline); color: var(--slate); }
   .fmt.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
   .btn:disabled { opacity: 0.4; cursor: default; }
@@ -291,7 +301,7 @@
       </button>
       <button class="nav" id="nav-chat" onclick="go('chat')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
-        <span>근거 카드 검토</span>
+        <span>정책 근거 선택</span>
       </button>
     </div>
 
@@ -347,7 +357,7 @@
       <div class="steps">
         <div class="step now"><div class="n">1</div><div class="l">정책 근거</div></div>
         <div class="step-line"></div>
-        <div class="step"><div class="n">2</div><div class="l">검토</div></div>
+        <div class="step"><div class="n">2</div><div class="l">선택</div></div>
         <div class="step-line"></div>
         <div class="step"><div class="n">3</div><div class="l">산출</div></div>
         <div class="step-line"></div>
@@ -382,7 +392,7 @@
                 <div class="sec-label" id="result-count" style="margin-bottom:0;"></div>
               </div>
               <div class="result-grid" id="result-grid"></div>
-              <button class="btn primary" id="to-review" onclick="startReview()" disabled>근거 카드 검토</button>
+              <button class="btn primary" id="to-review" onclick="startReview()" disabled>정책 근거 선택</button>
             </div>
           </div>
         </div>
@@ -394,7 +404,7 @@
       <div class="steps">
         <div class="step done"><div class="n">1</div><div class="l">정책 근거</div></div>
         <div class="step-line"></div>
-        <div class="step now"><div class="n">2</div><div class="l">검토</div></div>
+        <div class="step now"><div class="n">2</div><div class="l">선택</div></div>
         <div class="step-line"></div>
         <div class="step"><div class="n">3</div><div class="l">산출</div></div>
         <div class="step-line"></div>
@@ -404,7 +414,7 @@
         <div class="src-col">
           <div class="src-head">
             <div style="flex:1;min-width:0;">
-              <h2 class="title" style="margin:0 0 4px;font-size:20px;">근거 카드 검토</h2>
+              <h2 class="title" style="margin:0 0 4px;font-size:20px;">정책 근거 선택</h2>
               <div class="meta" id="src-title"></div>
             </div>
             <div class="src-nav">
@@ -435,7 +445,7 @@
       <div class="steps">
         <div class="step done"><div class="n">1</div><div class="l">정책 근거</div></div>
         <div class="step-line"></div>
-        <div class="step done"><div class="n">2</div><div class="l">검토</div></div>
+        <div class="step done"><div class="n">2</div><div class="l">선택</div></div>
         <div class="step-line"></div>
         <div class="step now"><div class="n">3</div><div class="l">산출</div></div>
         <div class="step-line"></div>
@@ -454,7 +464,7 @@
           <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
         </div>
 
-        <div id="ex-state" class="state-msg">근거 카드 검토를 먼저 마쳐 주세요.</div>
+        <div id="ex-state" class="state-msg">정책 근거를 먼저 선택해 주세요.</div>
         <div class="ex-body" id="ex-body" style="display:none;">
           <div class="work" id="ex-work"></div>
           <div class="paper" id="ex-paper"></div>
@@ -467,7 +477,7 @@
       <div class="steps">
         <div class="step done"><div class="n">1</div><div class="l">정책 근거</div></div>
         <div class="step-line"></div>
-        <div class="step done"><div class="n">2</div><div class="l">검토</div></div>
+        <div class="step done"><div class="n">2</div><div class="l">선택</div></div>
         <div class="step-line"></div>
         <div class="step done"><div class="n">3</div><div class="l">산출</div></div>
         <div class="step-line"></div>
@@ -553,6 +563,7 @@
   function openNotice(no) {
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0;
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
@@ -625,7 +636,7 @@
       return '<span class="chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + '"' + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
     }).join('') +
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="검색어 추가" aria-label="검색어 추가"></form>' +
-      '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">계보 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">전체 문서</button></span>';
+      '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>';
   }
   function removeTerm(i) { S.terms.splice(i, 1); runEvidence(false); }
   function addTerm(e) {
@@ -652,20 +663,26 @@
 
   function renderResults(d) {
     $('result-count').textContent = S.results.length + '건 · 대상 문서 ' + d.scopeDocs + '건';
-    $('to-review').disabled = !S.results.length;
+    syncCards();
     if (!S.results.length) {
       $('result-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">' +
-        (d.scopeDocs ? '일치하는 근거가 없습니다. 검색어를 바꾸거나 전체 문서로 넓혀 보세요.' : '이 계보에 해당하는 문서가 지식베이스에 없습니다. 전체 문서로 넓혀 보세요.') + '</div>';
+        (d.scopeDocs ? '일치하는 근거가 없습니다. 검색어를 바꾸거나 관련 정책문서 전체로 넓혀 보세요.' : '유관기관 문서가 아직 없습니다. 관련 정책문서 전체로 넓혀 보세요.') + '</div>';
       return;
     }
-    $('result-grid').innerHTML = S.results.map(function (r) {
-      return '<div class="card">' +
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' + ICON_DOC + '<div class="doc-title">' + esc(r.org + ' ' + r.title) + '</div></div>' +
+    renderGrid();
+  }
+  function renderGrid() {
+    $('result-grid').innerHTML = S.results.map(function (r, i) {
+      var c = cardOf(r.id), on = c && c.sel;
+      return '<div class="card' + (on ? ' sel' : '') + '">' +
+        '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;">' + ICON_DOC + '<div class="doc-title" style="flex:1;">' + esc(r.org + ' ' + r.title) + '</div>' +
+        '<button class="pick' + (on ? ' on' : '') + '" onclick="toggleSel(\'' + esc(r.id) + '\')"><i></i>선택</button></div>' +
         '<div class="meta" style="margin-bottom:10px;">' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
         '<div class="quote" style="margin-bottom:12px;">' + mark(r.quote, r.matched) + '</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
       '</div>';
     }).join('');
+    renderPickCount();
   }
 
   /* ---------- 제안요청서 ---------- */
@@ -748,6 +765,7 @@
     var my = ++seq;
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0;
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();
     $('search-main').style.display = ''; setState('');
@@ -762,7 +780,7 @@
     }).catch(function () { if (my === seq) setState('서버에 연결하지 못했습니다.', true); });
   }
 
-  /* ---------- 근거 카드 검토 ---------- */
+  /* ---------- 정책 근거 선택 ---------- */
   // 역할 = 제안서 추진 배경 절에서 이 근거가 받치는 칸. 순서가 문서의 논증 순서다. (lib/roles.js 와 같게 유지)
   var ROLES = [
     { key: 'policy', label: '정책 기조', side: '정책·제도 측' },
@@ -773,56 +791,76 @@
   var MARKS = ['가', '나', '다', '라'];
   function roleLabel(k) { for (var i = 0; i < ROLES.length; i++) if (ROLES[i].key === k) return ROLES[i].label; return ''; }
 
+  // 검색 결과 = 후보. 담당자가 쓸 것만 선택한다(선택 안 한 것은 문서에 안 들어간다). 검색 화면과 이 화면이 같은 선택 상태를 쓴다.
   var CARDS = [];
   var cur = 0;
-  var LABEL = { wait: '대기', ok: '채택', no: '제외' };
   var HEAD = {}, CONCL = '';
 
-  function startReview() {
-    CARDS = S.results.map(function (r) {
-      return { r: r, state: 'wait', role: r.role || 'policy', text: '', page: r.page, quote: r.quote, orig: { page: r.page, quote: r.quote } };
+  function cardOf(id) { for (var i = 0; i < CARDS.length; i++) if (CARDS[i].r.id === id) return CARDS[i]; return null; }
+  // 검색어·범위를 바꿔 다시 찾으면 후보가 바뀐다. 이미 선택하거나 고친 카드는 결과에서 빠져도 유지한다.
+  function syncCards() {
+    var keep = CARDS.filter(function (c) { return c.sel; });
+    var next = S.results.map(function (r) {
+      return cardOf(r.id) || { r: r, sel: false, role: r.role || 'policy', text: '', page: r.page, quote: r.quote, orig: { page: r.page, quote: r.quote } };
     });
-    HEAD = {}; CONCL = '';
-    cur = 0;
+    keep.forEach(function (c) { if (next.indexOf(c) < 0) next.push(c); });
+    CARDS = next;
+    if (cur >= CARDS.length) cur = 0;
+  }
+  function selCount() { return CARDS.filter(function (c) { return c.sel; }).length; }
+  function renderPickCount() {
+    var n = selCount();
+    $('to-review').disabled = !CARDS.length;
+    $('to-review').textContent = n ? '선택한 ' + n + '건 확인' : '정책 근거 선택';
+  }
+  function toggleSel(id) {
+    var c = cardOf(id); if (!c) return;
+    c.sel = !c.sel;
+    renderGrid();
+    if ($('s-chat').classList.contains('on')) renderReview();
+  }
+  function startReview() {
+    var first = -1;
+    for (var i = 0; i < CARDS.length; i++) if (CARDS[i].sel) { first = i; break; }
+    cur = first >= 0 ? first : 0;
     renderReview();
     go('chat');
   }
-  function decide(state) {
-    CARDS[cur].state = state;
-    for (var i = 0; i < CARDS.length; i++) { if (CARDS[i].state === 'wait') { cur = i; break; } }
-    renderReview(); loadSrc();
-  }
   function setRole(k) { CARDS[cur].role = k; renderReview(); }
   function pick(i) { cur = i; renderReview(); loadSrc(); }
+  function toggleCur() { var c = CARDS[cur]; if (c) toggleSel(c.r.id); }
+  function stepCur(d) { if (!CARDS.length) return; cur = (cur + d + CARDS.length) % CARDS.length; renderReview(); loadSrc(); }
 
   function renderReview() {
     if (!CARDS.length) {
-      $('rv-count').textContent = '근거 카드 검토';
+      $('rv-count').textContent = '정책 근거 선택';
       $('rv-card').innerHTML = '<div class="meta">정책 근거 검색을 먼저 진행해 주세요.</div>';
-      $('rv-list').innerHTML = ''; $('rv-next').disabled = true; return;
+      $('rv-list').innerHTML = ''; $('rv-next').disabled = true; $('rv-next').textContent = '사업 이해도 문서 산출'; return;
     }
-    var c = CARDS[cur], r = c.r;
-    var done = CARDS.filter(function (x) { return x.state !== 'wait'; }).length;
-    var adopted = CARDS.filter(function (x) { return x.state === 'ok'; }).length;
-    $('rv-count').textContent = '근거 카드 검토 · ' + done + '/' + CARDS.length + ' · 채택 ' + adopted;
+    var c = CARDS[cur], r = c.r, n = selCount();
+    $('rv-count').textContent = '후보 ' + CARDS.length + '건 · 선택 ' + n + '건';
     $('rv-card').innerHTML =
       '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · p.' + c.page + (r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
       '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '원문 일치 확인</div>' +
       '<div class="quote" style="margin-bottom:12px;">' + mark(c.quote, r.matched) + '</div>' +
-      '<div class="sec-label" style="margin-bottom:6px;">역할</div>' +
-      '<div class="roles">' + ROLES.map(function (x) {
-        return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(\'' + x.key + '\')">' + x.label + '</button>';
-      }).join('') + '</div>' +
+      (c.sel ? '<div class="sec-label" style="margin-bottom:6px;">역할</div>' +
+        '<div class="roles">' + ROLES.map(function (x) {
+          return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(\'' + x.key + '\')">' + x.label + '</button>';
+        }).join('') + '</div>' : '') +
       '<div style="display:flex;gap:8px;">' +
-        '<button class="btn ' + (c.state === 'ok' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'ok\')">채택</button>' +
-        '<button class="btn ' + (c.state === 'no' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'no\')">제외</button>' +
+        '<button class="btn soft" style="min-height:36px;padding:0 12px;" onclick="stepCur(-1)" aria-label="이전 후보">‹</button>' +
+        '<button class="btn ' + (c.sel ? 'soft' : 'primary') + '" style="flex:1;min-height:36px;" onclick="toggleCur()">' + (c.sel ? '선택 해제' : '이 근거 선택') + '</button>' +
+        '<button class="btn soft" style="min-height:36px;padding:0 12px;" onclick="stepCur(1)" aria-label="다음 후보">›</button>' +
       '</div>';
     $('rv-list').innerHTML = CARDS.map(function (x, i) {
-      return '<button onclick="pick(' + i + ')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 4px;border-top:1px solid var(--hairline);text-align:left;">' +
-        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · p.' + x.page + '</span>' +
-        '<span class="state ' + x.state + '">' + LABEL[x.state] + '</span></button>';
+      return '<div class="rv-row">' +
+        '<button class="box' + (x.sel ? ' on' : '') + '" onclick="toggleSel(\'' + esc(x.r.id) + '\')" aria-label="선택"></button>' +
+        '<button onclick="pick(' + i + ')" style="flex:1;min-width:0;text-align:left;font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:700;color:var(--ink);' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · p.' + x.page + '</button>' +
+        (x.sel ? '<span class="meta" style="flex-shrink:0;">' + esc(roleLabel(x.role)) + '</span>' : '') +
+      '</div>';
     }).join('');
-    $('rv-next').disabled = !(done === CARDS.length && adopted > 0);
+    $('rv-next').disabled = !n;
+    $('rv-next').textContent = n ? '선택한 ' + n + '건으로 문서 산출' : '사용할 근거를 선택해 주세요';
   }
 
   /* ---------- 원문 쪽 보기 ---------- */
@@ -873,7 +911,7 @@
 
   /* ---------- 문서 산출: 작성칸 + 미리보기 ---------- */
   var DRAFT = null, draftKey = '', draftTimer = null;
-  function adoptedCards() { return CARDS.filter(function (c) { return c.state === 'ok'; }); }
+  function adoptedCards() { return CARDS.filter(function (c) { return c.sel; }); }
   function usedRoles() {
     var ad = adoptedCards();
     return ROLES.filter(function (r) { return ad.some(function (c) { return c.role === r.key; }); });
@@ -895,7 +933,7 @@
       return '<div class="wblock"><div class="wlabel">' + MARKS[i] + '. ' + esc(r.label) + '</div>' +
         '<input class="winput" placeholder="헤드라인 한 줄" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;queueDraft()">' +
         CARDS.map(function (c, ci) {
-          if (c.state !== 'ok' || c.role !== r.key) return '';
+          if (!c.sel || c.role !== r.key) return '';
           return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
             '<div class="wquote">' + esc(c.quote) + '</div>' +
             '<textarea class="logic" placeholder="문서 문장 · 비우면 발췌문을 그대로 싣습니다" oninput="CARDS[' + ci + '].text=this.value;queueDraft()">' + esc(c.text) + '</textarea>' +
@@ -930,7 +968,7 @@
     $('dl-btn').disabled = !d;
     $('ex-body').style.display = d ? '' : 'none';
     $('ex-state').style.display = d ? 'none' : '';
-    if (!d) { $('ex-state').className = 'state-msg'; $('ex-state').textContent = '근거 카드 검토를 먼저 마쳐 주세요.'; $('ex-badges').innerHTML = ''; renderDeck(null); return; }
+    if (!d) { $('ex-state').className = 'state-msg'; $('ex-state').textContent = '정책 근거를 먼저 선택해 주세요.'; $('ex-badges').innerHTML = ''; renderDeck(null); return; }
     var st = d.stats;
     $('ex-badges').innerHTML =
       '<span class="badge-ok" style="padding:5px 12px;border-radius:500px;font-size:11.5px;">' + ICON_OK + '원문 대조 통과 ' + st.adopted + '건</span>' +
@@ -958,7 +996,7 @@
   }
 
   function renderDeck(deck) {
-    if (!deck) { $('deck-reason').textContent = '근거 카드 검토를 먼저 마쳐 주세요.'; $('deck-grid').innerHTML = ''; return; }
+    if (!deck) { $('deck-reason').textContent = '정책 근거를 먼저 선택해 주세요.'; $('deck-grid').innerHTML = ''; return; }
     $('deck-reason').textContent = deck.reason;
     $('deck-grid').innerHTML = deck.options.map(function (o) {
       var rec = o.key === deck.recommended;
