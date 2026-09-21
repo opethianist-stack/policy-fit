@@ -48,8 +48,8 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 |---|---|---|---|
 | 조달청 | 나라장터 입찰공고정보서비스 | `https://apis.data.go.kr/1230000/ad/BidPublicInfoService` | `DATA_GO_KR_KEY` |
 | 과학기술정보통신부 | 주요정책 | `https://apis.data.go.kr/1721000/msitmainpolicyinfo` | `DATA_GO_KR_KEY` |
-| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst` | `DATA_GO_KR_KEY` |
-| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst/list` | `DATA_GO_KR_KEY` |
+| 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz/list` | `DATA_GO_KR_KEY` |
 | 기획재정부 | 알리오플러스 기관정보 | `http://openapi.alioplus.go.kr/api/apba` | `ALIO_APBA_KEY` |
 | 기획재정부 | 알리오플러스 사업정보 | `http://openapi.alioplus.go.kr/api/business` | `ALIO_BIZ_KEY` |
 | 기획재정부 | 알리오플러스 시설정보 | `http://openapi.alioplus.go.kr/api/facility` | `ALIO_FACILITY_KEY` |
@@ -58,7 +58,13 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 알리오플러스 4종은 모두 `POST` + `application/x-www-form-urlencoded` 이고,
 인증 파라미터명은 `X-API-AUTH-KEY` 인데 헤더가 아니라 **폼 바디 필드**로 전달한다.
 
-`1051000` 계열은 포털에 베이스 주소까지만 공시되어 오퍼레이션 경로를 별도로 확인해야 한다.
+`1051000` 계열은 포털에 베이스 주소까지만 공시되어 있어 오퍼레이션 경로를 따로 확인했다.
+`public_inst` 는 `/list`(기관 목록)와 `/brnch`(지점 목록, `instCd` 필수) 두 개, `biz` 는 `/list` 하나다.
+`pageNo` · `numOfRows` · `resultType` 을 받으며, `instNm` · `bizNm` 은 문자열 포함 조건으로 검색된다.
+
+`public_inst/list` 응답의 `sprvsnInstNm`(주관부처명) · `sprvsnInstCd`(주관부처코드)가
+발주처 계보 매핑의 근거 필드다. 사업을 기관 단위로 좁히려면 여기서 얻은 `instCd` 를
+`biz/list` 파라미터로 넘긴다.
 
 
 <!-- git 연동 확인 -->
