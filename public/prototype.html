@@ -45,7 +45,6 @@
   .brand { display: flex; align-items: center; gap: 9px; padding: 4px 8px 22px; }
   .brand-mark { width: 26px; height: 26px; border-radius: 6px; background: var(--violet); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .brand-name { font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
-  .brand-sub { font-size: 10px; color: var(--muted); font-weight: 500; }
   .navlist { display: flex; flex-direction: column; }
   .nav { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 4px; margin-bottom: 2px; width: 100%; white-space: nowrap; }
   .nav span { font-size: 13px; font-weight: 500; color: var(--slate); }
@@ -55,10 +54,8 @@
   .nav.on svg { stroke: var(--violet); }
   .side-div { border-top: 1px solid var(--hairline); margin: 12px 8px 14px; }
   .side-label { font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; padding: 0 10px; margin-bottom: 8px; }
-  .recent { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 12px; color: var(--slate); }
-  .kb-box { margin: 14px 8px 0; padding: 12px; background: var(--blue-tint); border-radius: 8px; }
-  .kb-box .t { font-size: 11px; font-weight: 700; color: #1B3FA8; margin-bottom: 3px; }
-  .kb-box .d { font-size: 11px; color: #3A5DA8; line-height: 1.45; }
+  .recent { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 12px; color: var(--slate); width: 100%; border-radius: 4px; text-align: left; }
+  .recent:hover { background: var(--tint); }
   .me { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--hairline); }
   .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--violet-tint); color: var(--violet); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
@@ -78,10 +75,7 @@
   .step.now .l { color: var(--ink); font-weight: 600; }
   .step-line { width: 28px; height: 1px; background: var(--hairline); flex-shrink: 0; }
 
-  h1.hero { font-family: 'Elice DX Neolli','Pretendard Variable','Noto Sans KR',sans-serif; font-size: clamp(24px, 3.2vw, 34px); font-weight: 500; line-height: 1.25; letter-spacing: -0.024em; margin: 0 0 16px; color: var(--ink); }
   h2.title { font-size: clamp(18px, 2.2vw, 22px); font-weight: 600; color: var(--ink); margin: 0 0 20px; }
-  .eyebrow { font-size: 12px; font-weight: 600; color: var(--violet); letter-spacing: 0.02em; margin-bottom: 14px; }
-  .lead { font-size: 14.5px; line-height: 1.7; color: var(--slate); margin-bottom: 26px; }
 
   .btn { font-size: 13px; font-weight: 600; padding: 8px 16px; min-height: 40px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
   .btn.primary { background: var(--violet); color: #fff; }
@@ -90,10 +84,6 @@
   .btn.mini { min-height: 32px; padding: 0 11px; font-size: 11.5px; }
 
   .card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; padding: 16px; }
-  .tinted { background: var(--tint); border-radius: 16px; padding: 24px; }
-  .pill { display: inline-flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 500px; padding: 7px 14px 7px 10px; }
-  .pill b { font-size: 12px; font-weight: 600; color: var(--ink); }
-  .pill span { font-size: 11px; color: var(--muted); }
   .badge-ok { display: inline-flex; align-items: center; gap: 4px; background: var(--green-tint); color: var(--green-deep); padding: 2px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 500; }
   .sec-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; margin-bottom: 10px; }
   .quote { font-size: 12.5px; color: var(--slate); line-height: 1.6; }
@@ -101,10 +91,35 @@
   .doc-title { font-size: 13px; font-weight: 600; color: var(--ink); }
 
   /* layout blocks */
-  .home-hero { display: flex; gap: 56px; align-items: center; margin-bottom: 40px; }
-  .home-hero .copy { flex: 1; max-width: 540px; }
-  .home-hero .preview { width: 380px; flex-shrink: 0; }
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; max-width: 820px; }
+  .entry { max-width: 640px; margin-bottom: 36px; }
+  .field { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 6px 6px 16px; }
+  .field:focus-within { border-color: var(--violet); }
+  .field input { flex: 1; min-width: 0; border: none; outline: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--ink); background: none; padding: 8px 0; }
+  .field input::placeholder { color: var(--muted); font-weight: 400; }
+  .health { display: flex; align-items: center; gap: 16px; margin-top: 10px; padding-left: 2px; }
+  .sig { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .sig i { width: 8px; height: 8px; border-radius: 50%; background: #C7CCD4; flex-shrink: 0; }
+  .sig.ok i { background: #00AB53; }
+  .sig.ok { color: var(--slate); }
+  .sig.fail i { background: #E5484D; }
+  .sig.fail { color: #B42318; }
+  .rows { max-width: 820px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; }
+  .row { display: grid; grid-template-columns: 150px minmax(0,1fr) 150px 76px; gap: 14px; align-items: center; width: 100%; padding: 13px 16px; text-align: left; border-top: 1px solid var(--hairline); }
+  .row:first-child { border-top: none; }
+  .row:hover { background: var(--tint); }
+  .row .no { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .row .nm { font-size: 12.5px; color: var(--slate); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .st { font-size: 11px; font-weight: 600; color: var(--violet); text-align: right; }
+  .notice { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; margin-bottom: 24px; }
+  .notice .k { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .notice .v { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; }
+  .state { font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .state.wait { color: var(--violet); }
+  .state.ok { color: var(--green-deep); }
+  .state.no { color: var(--muted); }
+  .fmt { font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 500px; background: #fff; border: 1px solid var(--hairline); color: var(--slate); }
+  .fmt.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
   .search-body { display: flex; gap: 24px; }
   .search-body .lineage { width: 280px; flex-shrink: 0; }
   .search-body .results { flex: 1; min-width: 0; }
@@ -131,8 +146,6 @@
   }
   @media (max-width: 1180px) {
     :root { --pad: 32px; }
-    .home-hero { gap: 32px; }
-    .home-hero .preview { width: 320px; }
     .chat-head, .chat-thread, .chat-input { padding-left: 24px; padding-right: 24px; }
     .review { width: 320px; }
     .pages { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -149,15 +162,14 @@
     }
     .side::-webkit-scrollbar { display: none; }
     .brand { padding: 0 10px 0 0; margin-right: 4px; border-right: 1px solid var(--hairline); flex-shrink: 0; }
-    .brand-sub { display: none; }
     .navlist { flex-direction: row; gap: 2px; }
     .nav { margin-bottom: 0; padding: 8px 12px; }
-    .side-div, .side-label, .recent, .kb-box, .me { display: none; }
+    .side-div, .side-label, .recent, .me { display: none; }
 
-    .home-hero { flex-direction: column; align-items: stretch; gap: 24px; margin-bottom: 28px; }
-    .home-hero .copy { max-width: none; }
-    .home-hero .preview { width: 100%; }
-    .stats { grid-template-columns: 1fr; }
+    .row { grid-template-columns: minmax(0,1fr) 64px; row-gap: 3px; }
+    .row .nm, .row .ag { grid-column: 1; }
+    .row .st { grid-column: 2; grid-row: 1; }
+    .notice { grid-template-columns: repeat(2, minmax(0,1fr)); }
 
     .search-body { flex-direction: column; gap: 18px; }
     .search-body .lineage { width: 100%; }
@@ -170,8 +182,6 @@
 
     .pages { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .decks { grid-template-columns: 1fr; }
-    .pipeline > svg { display: none; }
-    .pipeline { gap: 6px; }
     .actions .btn { flex: 1 1 auto; }
     .actions .btn.outline { margin-left: 0 !important; width: 100%; }
   }
@@ -190,10 +200,7 @@
       <div class="brand-mark">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       </div>
-      <div>
-        <div class="brand-name">Policy Fit</div>
-        <div class="brand-sub">KMA AI 스프린트</div>
-      </div>
+      <div class="brand-name">Policy Fit</div>
     </div>
 
     <div class="navlist">
@@ -213,19 +220,8 @@
 
     <div class="side-div"></div>
     <div class="side-label">최근 검색</div>
-    <div class="recent">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      2026-KERIS-00412
-    </div>
-    <div class="recent">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      2026-서울교육청-00187
-    </div>
-
-    <div class="kb-box">
-      <div class="t">지식베이스 · 구글드라이브</div>
-      <div class="d">정책문서 26건 · 기관 15곳<br>최근 적재 2026-09-08</div>
-    </div>
+    <button class="recent" onclick="openNotice('R26BK00412587')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>R26BK00412587</button>
+    <button class="recent" onclick="openNotice('R26BK00187340')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>R26BK00187340</button>
 
     <div class="me">
       <div class="avatar">송</div>
@@ -239,42 +235,33 @@
     <!-- HOME -->
     <div class="screen" id="s-home">
       <div class="scroll" style="padding-top:44px;">
-        <div class="home-hero">
-          <div class="copy">
-            <div class="eyebrow">정책 근거 자동화 · 장표 구도 추천</div>
-            <h1 class="hero">공고번호 하나로,<br>근거부터 장표 구도까지</h1>
-            <div class="lead">발주처 소속 계보를 자동으로 매핑하고, 구글드라이브 지식베이스에서 출처가 확인된 정책 문장만 근거 카드로 정리합니다. 검토가 끝나면 사업 이해도 문서와 장표 구도 추천까지 이어집니다.</div>
-            <button class="btn primary" onclick="go('search')">
-              공고번호로 시작하기
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </button>
-          </div>
-          <div class="tinted preview">
-            <div class="sec-label">근거 카드 미리보기</div>
-            <div style="background:#fff;border-radius:12px;padding:16px;">
-              <div class="doc-title" style="font-size:12px;margin-bottom:8px;">KERIS 부서별 주요사업 계획 · 2026 · p.14</div>
-              <div class="badge-ok" style="margin-bottom:9px;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                출처 확인됨
-              </div>
-              <div class="quote" style="font-size:12px;">"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"</div>
-            </div>
+        <h2 class="title">입찰공고번호</h2>
+        <div class="entry">
+          <form class="field" onsubmit="submitNo(event)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input id="no-input" type="text" inputmode="text" autocomplete="off" placeholder="예: R26BK00412587" aria-label="입찰공고번호">
+            <button class="btn primary" type="submit">조회</button>
+          </form>
+          <div class="health" aria-live="polite">
+            <span class="sig" id="sig-g2b"><i></i><span>나라장터</span></span>
+            <span class="sig" id="sig-inst"><i></i><span>공공기관 정보</span></span>
           </div>
         </div>
 
-        <div class="stats">
-          <div class="card" style="padding:18px;">
-            <div style="font-size:22px;font-weight:600;color:var(--ink);">26건</div>
-            <div class="meta" style="margin-top:4px;">지식베이스 정책문서</div>
-          </div>
-          <div class="card" style="padding:18px;">
-            <div style="font-size:22px;font-weight:600;color:var(--ink);">597곳</div>
-            <div class="meta" style="margin-top:4px;">발주처 계보 매핑</div>
-          </div>
-          <div class="card" style="padding:18px;">
-            <div style="font-size:22px;font-weight:600;color:var(--ink);">3~5h → 30분</div>
-            <div class="meta" style="margin-top:4px;">건당 조사 소요(목표)</div>
-          </div>
+        <div class="sec-label">최근 검색</div>
+        <div class="rows">
+          <button class="row" onclick="openNotice('R26BK00412587')">
+            <span class="no">R26BK00412587</span>
+            <span class="nm">2026년 AI 학습분석 활용 교원 연수 운영</span>
+            <span class="meta ag">한국교육학술정보원</span>
+            <span class="st">검토 중</span>
+          </button>
+          <button class="row" onclick="openNotice('R26BK00187340')">
+            <span class="no">R26BK00187340</span>
+            <span class="nm">2026년 중등 교원 AI·디지털 역량 강화 연수</span>
+            <span class="meta ag">서울특별시교육청</span>
+            <span class="st">산출 완료</span>
+          </button>
         </div>
       </div>
     </div>
@@ -295,30 +282,20 @@
 
         <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--hairline);border-radius:8px;padding:13px 16px;margin-bottom:16px;max-width:520px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <div style="font-size:14px;font-weight:500;color:var(--ink);">2026-KERIS-00412</div>
+          <div id="no-view" style="font-size:14px;font-weight:500;color:var(--ink);">R26BK00412587</div>
           <div class="meta" style="margin-left:auto;">공고번호</div>
         </div>
 
-        <div class="pipeline" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:28px;">
-          <div class="pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AB53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            <b>나라장터 API</b><span>① 공고 분석</span>
-          </div>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C7CCD4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          <div class="pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AB53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            <b>공공데이터 API</b><span>② 계보 매핑(알리오)</span>
-          </div>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C7CCD4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          <div class="pill" style="background:var(--blue-tint);border-color:#B8CCF7;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AB53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            <b style="color:#1B3FA8;">지식베이스</b><span style="color:#3A5DA8;">③ 구글드라이브 정책 코퍼스</span>
-          </div>
+        <div class="card notice">
+          <div><div class="k">공고명</div><div class="v">2026년 AI 학습분석 활용 교원 연수 운영</div></div>
+          <div><div class="k">발주기관</div><div class="v">한국교육학술정보원</div></div>
+          <div><div class="k">사업금액</div><div class="v">480,000,000원</div></div>
+          <div><div class="k">입찰마감</div><div class="v">2026-10-12 17:00</div></div>
         </div>
 
         <div class="search-body">
           <div class="lineage">
-            <div class="sec-label">발주처 계보 자동 매핑</div>
+            <div class="sec-label">발주처 계보</div>
             <div class="card" style="display:flex;flex-direction:column;gap:8px;">
               <div style="background:var(--violet-tint);color:var(--violet);font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:8px;">한국교육학술정보원(KERIS)</div>
               <div style="display:flex;justify-content:center;">
@@ -340,7 +317,7 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7353EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                   <div class="doc-title">KERIS 부서별 주요사업 계획</div>
                 </div>
-                <div class="meta" style="margin-bottom:10px;">2026 · p.14 · 지식베이스</div>
+                <div class="meta" style="margin-bottom:10px;">2026 · p.14</div>
                 <div class="quote" style="margin-bottom:12px;">"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button class="btn soft mini">
@@ -359,7 +336,7 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7353EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                   <div class="doc-title">모두를 위한 AI 인재양성 방안</div>
                 </div>
-                <div class="meta" style="margin-bottom:10px;">2025 · p.7 · 지식베이스</div>
+                <div class="meta" style="margin-bottom:10px;">2025 · p.7</div>
                 <div class="quote" style="margin-bottom:12px;">"전 국민 AI 리터러시 확산을 위한 단계별 교육과정을 마련한다"</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   <button class="btn soft mini">
@@ -374,7 +351,7 @@
               </div>
 
             </div>
-            <button class="btn primary" onclick="go('chat')">챗봇에게 근거 카드 정리 요청</button>
+            <button class="btn primary" onclick="go('chat')">근거 카드 검토</button>
           </div>
         </div>
       </div>
@@ -397,8 +374,8 @@
             <h2 class="title" style="margin:0;font-size:20px;">근거 카드 챗봇</h2>
           </div>
           <div class="chat-thread">
-            <div class="bubble-me">2026-KERIS-00412 관련 근거를 근거 카드로 정리해줘</div>
-            <div class="bubble-ai">지식베이스에서 근거 카드 2건을 찾았습니다. 검토 화면에서 원문 대조 후 채택해 주세요.</div>
+            <div class="bubble-me"><span id="no-chat">R26BK00412587</span> 관련 근거를 근거 카드로 정리해줘</div>
+            <div class="bubble-ai">근거 카드 2건입니다. 원문 대조 후 채택 여부를 정해 주세요.</div>
           </div>
           <div class="chat-input">
             <div style="flex:1;background:var(--bg);border-radius:500px;padding:12px 18px;font-size:13.5px;color:var(--muted);">질문을 입력하세요</div>
@@ -409,38 +386,10 @@
         </div>
 
         <div class="review">
-          <div class="sec-label">근거 카드 검토 · 1/2</div>
-          <div style="background:var(--tint);border-radius:12px;padding:16px;margin-bottom:14px;">
-            <div class="doc-title" style="margin-bottom:8px;">KERIS 부서별 주요사업 계획 · 2026 · p.14</div>
-            <div class="badge-ok" style="margin-bottom:10px;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-              출처 확인됨
-            </div>
-            <div class="quote" style="margin-bottom:10px;">"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"</div>
-            <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-              <button class="btn soft mini">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
-                원문 열기
-              </button>
-              <button class="btn soft mini">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>
-                첨부파일
-              </button>
-            </div>
-            <div class="sec-label" style="margin-bottom:3px;">사업 연결 논리</div>
-            <div class="quote" style="margin-bottom:14px;">본부 AI 학습분석 제안의 사업 배경 근거로 활용 가능</div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn primary" style="flex:1;min-height:36px;">채택</button>
-              <button class="btn soft" style="flex:1;min-height:36px;">제외</button>
-            </div>
-          </div>
-
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 4px;border-top:1px solid var(--hairline);margin-bottom:18px;">
-            <div style="font-size:12px;color:var(--slate);">모두를 위한 AI 인재양성 방안 · 2025 · p.7</div>
-            <div style="font-size:11px;color:var(--violet);font-weight:600;flex-shrink:0;">대기</div>
-          </div>
-
-          <button class="btn primary" style="margin-top:auto;" onclick="go('export')">사업 이해도 문서 산출</button>
+          <div class="sec-label" id="rv-count"></div>
+          <div id="rv-card" style="background:var(--tint);border-radius:12px;padding:16px;margin-bottom:14px;"></div>
+          <div id="rv-list" style="margin-bottom:18px;"></div>
+          <button class="btn primary" id="rv-next" style="margin-top:auto;" onclick="go('export')" disabled>사업 이해도 문서 산출</button>
         </div>
       </div>
     </div>
@@ -466,8 +415,8 @@
         </div>
 
         <div style="display:flex;gap:8px;margin-bottom:24px;">
-          <div style="background:var(--violet-tint);color:var(--violet);font-size:12px;font-weight:600;padding:7px 14px;border-radius:500px;">docx</div>
-          <div style="background:#fff;border:1px solid var(--hairline);color:var(--slate);font-size:12px;font-weight:600;padding:7px 14px;border-radius:500px;">hwpx</div>
+          <button class="fmt on" id="fmt-docx" onclick="setFmt('docx')">docx</button>
+          <button class="fmt" id="fmt-hwpx" onclick="setFmt('hwpx')">hwpx</button>
         </div>
 
         <div class="sec-label">문서 구성 · 총 4페이지</div>
@@ -491,9 +440,8 @@
         </div>
 
         <div class="actions">
-          <button class="btn primary">docx 다운로드</button>
-          <button class="btn soft">hwpx 다운로드</button>
-          <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">다음: PPT 구도 추천 보기</button>
+          <button class="btn primary" id="dl-btn">docx 다운로드</button>
+          <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
         </div>
       </div>
     </div>
@@ -555,7 +503,6 @@
           </div>
         </div>
 
-        <div class="meta">실제 장표 제작은 지원하지 않으며, 구도 추천까지 제공합니다.</div>
       </div>
     </div>
 
@@ -573,7 +520,96 @@
     });
     document.getElementById(NAV[name]).classList.add('on');
   }
+
+  function openNotice(no) {
+    document.getElementById('no-view').textContent = no;
+    document.getElementById('no-chat').textContent = no;
+    go('search');
+  }
+  function submitNo(e) {
+    e.preventDefault();
+    var v = document.getElementById('no-input').value.trim();
+    if (v) openNotice(v);
+  }
+
+  var CARDS = [
+    { doc: 'KERIS 부서별 주요사업 계획', year: '2026', page: 'p.14',
+      quote: '"AI 기반 학습분석 시스템 고도화를 통해 맞춤형 교육 지원을 확대한다"',
+      logic: '본부 AI 학습분석 제안의 사업 배경 근거로 활용 가능', state: 'wait' },
+    { doc: '모두를 위한 AI 인재양성 방안', year: '2025', page: 'p.7',
+      quote: '"전 국민 AI 리터러시 확산을 위한 단계별 교육과정을 마련한다"',
+      logic: '교원 대상 AI 역량 연수의 상위 정책 근거로 활용 가능', state: 'wait' }
+  ];
+  var cur = 0;
+  var LABEL = { wait: '대기', ok: '채택', no: '제외' };
+  var ICON_OPEN = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>';
+  var ICON_FILE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#343E4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>';
+  var ICON_OK = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+
+  function decide(state) {
+    CARDS[cur].state = state;
+    var next = -1;
+    for (var i = 0; i < CARDS.length; i++) { if (CARDS[i].state === 'wait') { next = i; break; } }
+    if (next >= 0) cur = next;
+    renderReview();
+  }
+  function pick(i) { cur = i; renderReview(); }
+
+  function renderReview() {
+    var c = CARDS[cur];
+    var done = CARDS.filter(function (x) { return x.state !== 'wait'; }).length;
+    var adopted = CARDS.filter(function (x) { return x.state === 'ok'; }).length;
+    document.getElementById('rv-count').textContent = '근거 카드 검토 · ' + done + '/' + CARDS.length;
+    document.getElementById('rv-card').innerHTML =
+      '<div class="doc-title" style="margin-bottom:8px;">' + c.doc + ' · ' + c.year + ' · ' + c.page + '</div>' +
+      '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '출처 확인됨</div>' +
+      '<div class="quote" style="margin-bottom:10px;">' + c.quote + '</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">' +
+        '<button class="btn soft mini">' + ICON_OPEN + '원문 열기</button>' +
+        '<button class="btn soft mini">' + ICON_FILE + '첨부파일</button>' +
+      '</div>' +
+      '<div class="sec-label" style="margin-bottom:3px;">사업 연결 논리</div>' +
+      '<div class="quote" style="margin-bottom:14px;">' + c.logic + '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="btn ' + (c.state === 'ok' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'ok\')">채택</button>' +
+        '<button class="btn ' + (c.state === 'no' ? 'primary' : 'soft') + '" style="flex:1;min-height:36px;" onclick="decide(\'no\')">제외</button>' +
+      '</div>';
+    document.getElementById('rv-list').innerHTML = CARDS.map(function (x, i) {
+      return '<button onclick="pick(' + i + ')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 4px;border-top:1px solid var(--hairline);text-align:left;">' +
+        '<span style="font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:600;' : '') + '">' + x.doc + ' · ' + x.year + ' · ' + x.page + '</span>' +
+        '<span class="state ' + x.state + '">' + LABEL[x.state] + '</span></button>';
+    }).join('');
+    document.getElementById('rv-next').disabled = !(done === CARDS.length && adopted > 0);
+  }
+
+  function setFmt(f) {
+    document.getElementById('fmt-docx').classList.toggle('on', f === 'docx');
+    document.getElementById('fmt-hwpx').classList.toggle('on', f === 'hwpx');
+    document.getElementById('dl-btn').textContent = f + ' 다운로드';
+  }
+
+  var SIG = { g2b: '나라장터', inst: '공공기관 정보' };
+  function setSig(id, state, reason) {
+    var el = document.getElementById('sig-' + id);
+    el.className = 'sig' + (state ? ' ' + state : '');
+    el.lastElementChild.textContent = SIG[id] + (state === 'fail' ? ' 연결 안 됨' : state === 'ok' ? '' : ' 확인 불가');
+    el.title = reason || '';
+  }
+  function checkHealth() {
+    fetch('/api/health', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (d) {
+        ['g2b', 'inst'].forEach(function (id) {
+          var x = d[id] || {};
+          setSig(id, x.ok ? 'ok' : 'fail', x.reason);
+        });
+      })
+      .catch(function () { setSig('g2b', ''); setSig('inst', ''); });
+  }
+
+  renderReview();
   go('home');
+  checkHealth();
 </script>
 </body>
 </html>
