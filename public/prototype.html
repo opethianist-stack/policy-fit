@@ -230,6 +230,17 @@
   .decks { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; max-width: 900px; margin-bottom: 18px; }
   .deck-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding-right: 50px; }
   .deck-head .doc-title { margin: 0; }
+  .ai-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--violet); background: var(--violet-tint); border: 0; border-radius: 500px; padding: 7px 12px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .ai-btn:disabled { opacity: .55; cursor: default; }
+  .ai-btn:before { content: '✦'; font-size: 11px; }
+  .ai-msg { font-size: 11.5px; color: var(--muted); align-self: center; }
+  .ai-msg.err { color: #B42318; }
+  .ai-sug { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: -6px 0 14px; }
+  .ai-sug:empty { display: none; }
+  .ai-sug .chip { border: 1px dashed var(--violet); background: #fff; color: var(--violet); cursor: pointer; font-family: inherit; }
+  .ai-why { font-size: 11.5px; color: var(--violet); margin: -6px 0 12px; }
+  .ai-tag { display: inline-block; font-size: 10.5px; font-weight: 600; color: var(--violet); background: var(--violet-tint); border-radius: 4px; padding: 1px 6px; }
+  .winput.ai, .logic.ai { background: var(--violet-tint); border-color: rgba(115,83,234,.3); }
   .deck-ctl { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; max-width: 900px; margin-bottom: 16px; }
   .deck-ctl input { flex: 1 1 260px; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; background: #fff; }
   .deck-ctl input:focus { border-color: var(--violet); }
@@ -486,6 +497,7 @@
 
             <div class="results">
               <div class="terms" id="terms"></div>
+              <div class="ai-sug" id="ai-sug"></div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                 <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
                 <div class="sec-label" id="result-count" style="margin-bottom:0;"></div>
@@ -533,6 +545,7 @@
         <div class="review">
           <div class="sec-label" id="rv-count"></div>
           <div id="rv-card" style="background:var(--tint);border-radius:12px;padding:16px;margin-bottom:14px;"></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;"><button class="ai-btn" id="ai-roles-btn" onclick="aiRoles()">AI 역할 분류</button><span class="ai-msg" id="ai-roles-msg"></span></div>
           <div id="rv-list" style="margin-bottom:18px;"></div>
           <button class="btn primary" id="rv-next" style="margin-top:auto;" onclick="go('export')" disabled>사업 이해도 문서 산출</button>
         </div>
@@ -560,6 +573,7 @@
           <button class="fmt on" id="fmt-docx" onclick="setFmt('docx')">docx</button>
           <button class="fmt" id="fmt-hwpx" disabled style="opacity:0.4;cursor:default;">hwpx</button>
           <button class="btn primary" id="dl-btn" onclick="download()" disabled>docx 다운로드</button>
+          <button class="ai-btn" id="ai-draft-btn" onclick="aiDraft()">AI 초안</button><span class="ai-msg" id="ai-draft-msg"></span>
           <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
         </div>
 
@@ -590,6 +604,7 @@
         <div class="deck-ctl" id="deck-ctl">
           <input id="deck-h1" placeholder="헤드라인 윗줄" oninput="DECKHL[0]=this.value;DECKHL.edited=true;paintDeck()">
           <input id="deck-h2" placeholder="헤드라인 아랫줄(강조)" oninput="DECKHL[1]=this.value;DECKHL.edited=true;paintDeck()">
+          <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
           <div class="pal"><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button></div>
         </div>
         <div class="decks" id="deck-grid"></div>
@@ -667,6 +682,7 @@
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', ''];
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
@@ -722,6 +738,7 @@
     var my = seq;
     var params = { title: S.notice.name, orgs: S.lineage.orgs.join(','), ministry: S.lineage.ministry || '', scope: S.scope };
     if (!fresh) params.terms = S.terms.join(',');
+    else { AI.sug = []; renderSug(); }
     $('result-count').textContent = '검색 중';
     $('to-review').disabled = true;
     return api('/api/evidence', params).then(function (d) {
@@ -740,6 +757,7 @@
       return '<span class="chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + '"' + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
     }).join('') +
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="검색어 추가" aria-label="검색어 추가"></form>' +
+      '<button class="ai-btn" id="ai-terms-btn" onclick="aiTerms()">AI 검색어 추천</button><span class="ai-msg" id="ai-terms-msg"></span>' +
       '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>';
   }
   function removeTerm(i) { S.terms.splice(i, 1); runEvidence(false); }
@@ -919,6 +937,7 @@
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', ''];
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();
     $('search-main').style.display = ''; setState('');
@@ -948,6 +967,71 @@
   var CARDS = [];
   var cur = 0;
   var HEAD = {}, CONCL = '';
+  // ---- AI(LLM) 보조: 버튼을 눌렀을 때만 부르고, 서버가 검증한 칸만 받는다 ----
+  var AI = { sug: [] }, AIF = { head: {}, concl: false }, COPY = null;
+  function aiPost(body) {
+    return fetch('/api/ai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: '응답을 읽지 못했습니다.' }; }); })
+      .catch(function () { return { ok: false, error: '서버에 연결하지 못했습니다.' }; });
+  }
+  function aiRun(btnId, msgId, body, onOk) {
+    var btn = $(btnId), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'AI 작업 중'; $(msgId).textContent = ''; $(msgId).className = 'ai-msg';
+    return aiPost(body).then(function (d) {
+      var b = $(btnId); if (b) { b.disabled = false; b.textContent = label; }
+      var m = $(msgId); if (!m) return;
+      if (!d.ok) { m.className = 'ai-msg err'; m.textContent = d.error || 'AI 처리에 실패했습니다.'; return; }
+      var drop = d.dropped || [];
+      m.textContent = (onOk(d) || '') + (drop.length ? ' · 검증에서 뺀 항목 ' + drop.length + '개' : '');
+      m.title = drop.map(function (x) { return (x.where || x.term || x.id) + ': ' + x.reason; }).join('\n');
+    });
+  }
+  function aiTerms() {
+    aiRun('ai-terms-btn', 'ai-terms-msg', {
+      task: 'terms', title: S.notice.name, terms: S.terms, orgs: (S.lineage.chain || []).map(function (c) { return c.name; }),
+      rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 8000) : '',
+    }, function (d) { AI.sug = d.terms; renderSug(); return d.terms.length ? '눌러서 추가' : '추가할 후보가 없습니다'; });
+  }
+  function renderSug() {
+    $('ai-sug').innerHTML = AI.sug.map(function (x, i) {
+      return '<button class="chip" onclick="addSug(' + i + ')" title="색인 ' + x.pages + '쪽">+ ' + esc(x.term) + '</button>';
+    }).join('');
+  }
+  function addSug(i) {
+    if (S.terms.length >= MAX_TERMS) { $('ai-terms-msg').textContent = '검색어는 ' + MAX_TERMS + '개까지입니다'; return; }
+    var t = AI.sug[i].term; AI.sug.splice(i, 1); renderSug();
+    if (S.terms.indexOf(t) < 0) { S.terms.push(t); runEvidence(false); }
+  }
+  function aiRoles() {
+    var body = payload();
+    if (!body.cards.length) { $('ai-roles-msg').textContent = '선택한 근거가 없습니다'; return; }
+    aiRun('ai-roles-btn', 'ai-roles-msg', { task: 'roles', cards: body.cards, lineage: S.lineage, notice: S.notice }, function (d) {
+      d.roles.forEach(function (x) { var c = cardOf(x.id); if (c) { c.role = x.role; c.aiWhy = x.why || ''; } });
+      renderReview();
+      return '선택한 근거 ' + d.roles.length + '건의 역할을 바꿨습니다';
+    });
+  }
+  function aiDraft() {
+    var body = payload(); body.task = 'draft';
+    aiRun('ai-draft-btn', 'ai-draft-msg', body, function (d) {
+      var n = 0;
+      d.sentences.forEach(function (x) { var c = cardOf(x.id); if (c && !String(c.text || '').trim()) { c.text = x.text; c.aiText = true; n++; } });
+      d.headlines.forEach(function (x) { if (!String(HEAD[x.role] || '').trim()) { HEAD[x.role] = x.text; AIF.head[x.role] = true; n++; } });
+      if (d.conclusion && !String(CONCL || '').trim()) { CONCL = d.conclusion; AIF.concl = true; n++; }
+      renderWork(); queueDraft();
+      return n ? '빈 칸 ' + n + '개를 채웠습니다(보라색 칸)' : '채울 빈 칸이 없습니다';
+    });
+  }
+  function aiDeck() {
+    var body = payload(); body.task = 'deck';
+    aiRun('ai-deck-btn', 'ai-deck-msg', body, function (d) {
+      COPY = { title: {}, summary: {} };
+      d.cells.forEach(function (x) { if (x.title) COPY.title[x.id] = x.title; if (x.summary) COPY.summary[x.id] = x.summary; });
+      if (d.headline) { DECKHL[0] = d.headline[0]; DECKHL[1] = d.headline[1]; DECKHL.edited = true; $('deck-h1').value = DECKHL[0]; $('deck-h2').value = DECKHL[1]; }
+      loadDraft(); paintDeck();
+      return '칸 ' + d.cells.length + '개' + (d.headline ? '와 헤드라인' : '') + '을 바꿨습니다';
+    });
+  }
 
   function cardOf(id) { for (var i = 0; i < CARDS.length; i++) if (CARDS[i].r.id === id) return CARDS[i]; return null; }
   // 검색어·범위를 바꿔 다시 찾으면 후보가 바뀐다. 이미 선택하거나 고친 카드는 결과에서 빠져도 유지한다.
@@ -979,7 +1063,7 @@
     renderReview();
     go('chat');
   }
-  function setRole(k) { CARDS[cur].role = k; renderReview(); }
+  function setRole(k) { CARDS[cur].role = k; CARDS[cur].aiWhy = ''; renderReview(); }
   function pick(i) { cur = i; renderReview(); loadSrc(); }
   function toggleCur() { var c = CARDS[cur]; if (c) toggleSel(c.r.id); }
   function stepCur(d) { if (!CARDS.length) return; cur = (cur + d + CARDS.length) % CARDS.length; renderReview(); loadSrc(); }
@@ -999,7 +1083,7 @@
       (c.sel ? '<div class="sec-label" style="margin-bottom:6px;">역할</div>' +
         '<div class="roles">' + ROLES.map(function (x) {
           return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(\'' + x.key + '\')">' + x.label + '</button>';
-        }).join('') + '</div>' : '') +
+        }).join('') + '</div>' + (c.aiWhy ? '<div class="ai-why">AI 분류: ' + esc(c.aiWhy) + '</div>' : '') : '') +
       '<div style="display:flex;gap:8px;">' +
         '<button class="btn soft" style="min-height:36px;padding:0 12px;" onclick="stepCur(-1)" aria-label="이전 후보">‹</button>' +
         '<button class="btn ' + (c.sel ? 'soft' : 'primary') + '" style="flex:1;min-height:36px;" onclick="toggleCur()">' + (c.sel ? '선택 해제' : '이 근거 선택') + '</button>' +
@@ -1071,7 +1155,7 @@
   }
   function payload() {
     return {
-      notice: S.notice, lineage: S.lineage, headlines: HEAD, conclusion: CONCL,
+      notice: S.notice, lineage: S.lineage, headlines: HEAD, conclusion: CONCL, copy: COPY,
       cards: adoptedCards().map(function (c) {
         var r = c.r;
         return { id: r.id, docId: r.docId, org: r.org, category: r.category, title: r.title, year: r.year, page: c.page, pageEstimated: r.pageEstimated, quote: c.quote, role: c.role, text: c.text, matched: r.matched || [] };
@@ -1084,18 +1168,18 @@
     if (!used.length) { $('ex-work').innerHTML = ''; return; }
     var html = used.map(function (r, i) {
       return '<div class="wblock"><div class="wlabel">' + MARKS[i] + '. ' + esc(r.label) + '</div>' +
-        '<input class="winput" placeholder="헤드라인 한 줄" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;queueDraft()">' +
+        '<input class="winput' + (AIF.head[r.key] ? ' ai' : '') + '" placeholder="헤드라인 한 줄" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;AIF.head[\'' + r.key + '\']=false;this.classList.remove(\'ai\');queueDraft()">' +
         CARDS.map(function (c, ci) {
           if (!c.sel || c.role !== r.key) return '';
           return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
             '<div class="wquote">' + esc(c.quote) + '</div>' +
-            '<textarea class="logic" placeholder="문서 문장 · 비우면 발췌문을 그대로 싣습니다" oninput="CARDS[' + ci + '].text=this.value;queueDraft()">' + esc(c.text) + '</textarea>' +
+            '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 비우면 발췌문을 그대로 싣습니다" oninput="CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
             '<div class="wwarn" id="warn-' + esc(c.r.id) + '"></div></div>';
         }).join('') + '</div>';
     }).join('');
     if (used.length >= 2) {
       html += '<div class="wblock"><div class="wlabel">수렴점 · 사업 추진의 필요성</div>' +
-        '<textarea class="logic" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장" oninput="CONCL=this.value;queueDraft()">' + esc(CONCL) + '</textarea></div>';
+        '<textarea class="logic' + (AIF.concl ? ' ai' : '') + '" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장" oninput="CONCL=this.value;AIF.concl=false;this.classList.remove(\'ai\');queueDraft()">' + esc(CONCL) + '</textarea></div>';
     }
     $('ex-work').innerHTML = html;
   }
@@ -1163,7 +1247,7 @@
     $('deck-grid').innerHTML = DECK.options.map(function (o) {
       var rec = o.key === DECK.recommended;
       return '<div class="card deck-card' + (rec ? ' rec' : '') + '" style="padding:20px;">' + (rec ? '<span class="rec-tag">추천</span>' : '') +
-        '<div class="deck-head"><div class="doc-title">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div></div>' +
+        '<div class="deck-head"><div class="doc-title">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div>' + (DECK.aiUsed && o.key !== 'voices' ? '<span class="ai-tag">AI 문구</span>' : '') + '</div>' +
         '<div class="sl-scroll"><div class="sl-wrap">' + slideHtml(o.slide) + '</div></div></div>';
     }).join('');
   }
