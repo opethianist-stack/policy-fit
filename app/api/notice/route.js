@@ -36,6 +36,22 @@ function shape(x, kind) {
   };
 }
 
+async function eorderFiles(key, no, ord) {
+  try {
+    const r = await portalGet(BASE + 'getBidPblancListInfoEorderAtchFileInfo', { ServiceKey: key, inqryDiv: '2', bidNtceNo: no, pageNo: '1', numOfRows: '30', type: 'json' });
+    const items = (r.json && r.json.response && r.json.response.body && r.json.response.body.items) || [];
+    const list = Array.isArray(items) ? items : [];
+    const same = list.filter((x) => x.bidNtceOrd === ord);
+    return (same.length ? same : list).filter((x) => x.eorderAtchFileUrl).map((x) => ({
+      name: x.eorderAtchFileNm || `${x.eorderDocDivNm || '첨부'}_${x.atchSno || ''}`,
+      url: x.eorderAtchFileUrl,
+      doc: x.eorderDocDivNm || '',   // 제안요청서 · 기타문서 등
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(req) {
   const no = (new URL(req.url).searchParams.get('no') || '').trim().toUpperCase().split('-')[0];
   if (!/^[A-Z0-9]{8,20}$/.test(no)) {
@@ -61,7 +77,11 @@ export async function GET(req) {
     if (items.length) {
       // 정정공고가 있으면 차수(bidNtceOrd)가 여러 개 온다. 가장 최신 차수를 쓴다.
       items.sort((a, b) => String(b.bidNtceOrd).localeCompare(String(a.bidNtceOrd)));
-      return Response.json({ ok: true, notice: shape(items[0], kind), revisions: items.length });
+      const notice = shape(items[0], kind);
+      // 나라장터 화면의 "제안요청정보"(e발주 첨부)는 공고 첨부(ntceSpecFile)와 따로 있다. 조달청이 대행한 공고는
+      // 공고서만 공고 첨부에 있고 제안요청서는 여기에만 있는 경우가 많다(실측: NIA·NIPA 공고 4건). 실패해도 공고 조회는 그대로 돌려준다.
+      notice.files = notice.files.concat(await eorderFiles(key, no, notice.ord));
+      return Response.json({ ok: true, notice, revisions: items.length });
     }
   }
   if (lastReason) return Response.json({ ok: false, error: lastReason }, { status: 502 });

@@ -959,8 +959,9 @@
   var RFP_NAME = /제안\s*요청서|과업\s*지시서|과업\s*내용서|과업\s*내용|RFP/i;
   var MAX_UPLOAD = 4 * 1024 * 1024;   // 서버리스 요청 크기 한도(4.5MB) 아래로
   function pickRfpFile(files) {
-    var c = (files || []).filter(function (f) { return RFP_NAME.test(f.name); });
-    var rank = function (f) { var n = f.name.toLowerCase(); return /\.pdf$/.test(n) ? 0 : /\.hwpx$/.test(n) ? 1 : /\.hwp$/.test(n) ? 2 : 3; };
+    // 나라장터 "제안요청정보"에서 온 파일은 문서 구분(doc)이 붙어 온다. 제안요청서 구분 > 이름 매칭, 같은 조건이면 pdf > hwpx > hwp
+    var c = (files || []).filter(function (f) { return f.doc === '제안요청서' || RFP_NAME.test(f.name); });
+    var rank = function (f) { var n = f.name.toLowerCase(); return (f.doc === '제안요청서' && RFP_NAME.test(f.name) ? 0 : f.doc === '제안요청서' ? 4 : 8) + (/\.pdf$/.test(n) ? 0 : /\.hwpx$/.test(n) ? 1 : /\.hwp$/.test(n) ? 2 : 3); };
     return c.sort(function (a, b) { return rank(a) - rank(b); })[0] || null;
   }
   function renderRfp() {
