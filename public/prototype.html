@@ -987,7 +987,7 @@
     });
   }
   function aiTerms() {
-    aiRun('ai-terms-btn', 'ai-terms-msg', {
+    return aiRun('ai-terms-btn', 'ai-terms-msg', {
       task: 'terms', title: S.notice.name, terms: S.terms, orgs: (S.lineage.chain || []).map(function (c) { return c.name; }),
       rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 8000) : '',
     }, function (d) { AI.sug = d.terms; renderSug(); return d.terms.length ? '눌러서 추가' : '추가할 후보가 없습니다'; });
@@ -1005,7 +1005,7 @@
   function aiRoles() {
     var body = payload();
     if (!body.cards.length) { $('ai-roles-msg').textContent = '선택한 근거가 없습니다'; return; }
-    aiRun('ai-roles-btn', 'ai-roles-msg', { task: 'roles', cards: body.cards, lineage: S.lineage, notice: S.notice }, function (d) {
+    return aiRun('ai-roles-btn', 'ai-roles-msg', { task: 'roles', cards: body.cards, lineage: S.lineage, notice: S.notice }, function (d) {
       d.roles.forEach(function (x) { var c = cardOf(x.id); if (c) { c.role = x.role; c.aiWhy = x.why || ''; } });
       renderReview();
       return '선택한 근거 ' + d.roles.length + '건의 역할을 바꿨습니다';
@@ -1013,7 +1013,7 @@
   }
   function aiDraft() {
     var body = payload(); body.task = 'draft';
-    aiRun('ai-draft-btn', 'ai-draft-msg', body, function (d) {
+    return aiRun('ai-draft-btn', 'ai-draft-msg', body, function (d) {
       var n = 0;
       d.sentences.forEach(function (x) { var c = cardOf(x.id); if (c && !String(c.text || '').trim()) { c.text = x.text; c.aiText = true; n++; } });
       d.headlines.forEach(function (x) { if (!String(HEAD[x.role] || '').trim()) { HEAD[x.role] = x.text; AIF.head[x.role] = true; n++; } });
@@ -1024,12 +1024,13 @@
   }
   function aiDeck() {
     var body = payload(); body.task = 'deck';
-    aiRun('ai-deck-btn', 'ai-deck-msg', body, function (d) {
+    return aiRun('ai-deck-btn', 'ai-deck-msg', body, function (d) {
       COPY = { title: {}, summary: {} };
       d.cells.forEach(function (x) { if (x.title) COPY.title[x.id] = x.title; if (x.summary) COPY.summary[x.id] = x.summary; });
       if (d.headline) { DECKHL[0] = d.headline[0]; DECKHL[1] = d.headline[1]; DECKHL.edited = true; $('deck-h1').value = DECKHL[0]; $('deck-h2').value = DECKHL[1]; }
       loadDraft(); paintDeck();
-      return '칸 ' + d.cells.length + '개' + (d.headline ? '와 헤드라인' : '') + '을 바꿨습니다';
+      if (!d.cells.length && !d.headline) return '바꿀 수 있는 칸이 없습니다';
+      return (d.cells.length ? '칸 ' + d.cells.length + '개' : '') + (d.cells.length && d.headline ? '와 ' : '') + (d.headline ? '헤드라인' : '') + '을 바꿨습니다';
     });
   }
 
