@@ -1,12 +1,12 @@
-import { suggestTerms, classifyRoles, draftText, deckCopy } from '../../../lib/ai';
+import { suggestTerms, classifyRoles, draftText, deckCopy, rankEvidence } from '../../../lib/ai';
 import { LlmError, llmReady, MODEL } from '../../../lib/llm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 45;   // 초안은 건너뛴 카드를 한 번 더 요청할 수 있다(첫 호출 ~6초 + 재요청 ≤15초)
 
-// POST { task: 'terms'|'roles'|'draft'|'deck', ... } → 검증을 통과한 칸만. GET → 사용 가능 여부.
-const TASKS = { terms: suggestTerms, roles: classifyRoles, draft: draftText, deck: deckCopy };
+// POST { task: 'terms'|'roles'|'draft'|'deck'|'rank', ... } → 검증을 통과한 칸만. GET → 사용 가능 여부.
+const TASKS = { terms: suggestTerms, roles: classifyRoles, draft: draftText, deck: deckCopy, rank: rankEvidence };
 
 export async function GET() {
   return Response.json({ ok: true, ready: llmReady(), model: llmReady() ? MODEL : null });
@@ -17,7 +17,8 @@ export async function POST(req) {
   try { body = await req.json(); } catch { return Response.json({ ok: false, error: '요청 본문이 JSON이 아닙니다.' }, { status: 400 }); }
   const fn = body && TASKS[body.task];
   if (!fn) return Response.json({ ok: false, error: '알 수 없는 작업입니다.' }, { status: 400 });
-  if (body.task !== 'terms' && !Array.isArray(body.cards)) return Response.json({ ok: false, error: 'cards가 필요합니다.' }, { status: 400 });
+  if (body.task === 'rank' && !Array.isArray(body.candidates)) return Response.json({ ok: false, error: 'candidates가 필요합니다.' }, { status: 400 });
+  if (body.task !== 'terms' && body.task !== 'rank' && !Array.isArray(body.cards)) return Response.json({ ok: false, error: 'cards가 필요합니다.' }, { status: 400 });
   try {
     const result = await fn(body);
     return Response.json({ ok: true, ...result });

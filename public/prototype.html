@@ -172,6 +172,11 @@
   .node { font-size: 12.5px; font-weight: 600; padding: 9px 12px; border-radius: 8px; background: var(--bg); color: var(--slate); }
   .node.first { background: var(--violet-tint); color: var(--violet); }
   .node small { display: block; font-size: 10.5px; font-weight: 500; opacity: 0.75; margin-top: 2px; }
+  .node .cov { display: block; font-size: 10.5px; font-weight: 500; margin-top: 4px; color: var(--muted); }
+  .node .cov.none { color: #B54708; }
+  .cov-warn { font-size: 11.5px; line-height: 1.55; color: #B54708; background: #FFFAEB; border-radius: 8px; padding: 8px 10px; }
+  .card .ai-rank { font-size: 11.5px; color: var(--violet); margin: -4px 0 10px; display: flex; gap: 6px; align-items: baseline; }
+  .card .ai-rank b { font-weight: 700; letter-spacing: 1px; }
   .state-msg { font-size: 13px; color: var(--muted); padding: 28px 4px; }
   .state-msg.err { color: #B42318; }
   .hl { background: rgba(115,83,234,0.14); border-radius: 2px; }
@@ -520,9 +525,10 @@
             <div class="results">
               <div class="terms" id="terms"></div>
               <div class="ai-sug" id="ai-sug"></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
                 <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
-                <div class="sec-label" id="result-count" style="margin-bottom:0;"></div>
+                <button class="ai-btn" id="ai-rank-btn" onclick="aiRank()">AI 관련도 정렬</button><span class="ai-msg" id="ai-rank-msg"></span>
+                <div class="sec-label" id="result-count" style="margin-bottom:0;margin-left:auto;"></div>
               </div>
               <div class="result-grid" id="result-grid"></div>
               <button class="btn primary" id="to-review" onclick="startReview()" disabled>정책 근거 선택</button>
@@ -774,16 +780,28 @@
   function renderLineage() {
     var arrow = '<div style="display:flex;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div>';
     var l = S.lineage;
+    // 기관별 색인 문서 수(누락 위험). 학교·대학 자체 문서는 원래 드물어 경고하지 않는다
+    var cov = {}; (S.coverage || []).forEach(function (x) { cov[x.name] = x; });
+    var missing = [];
     var html = l.chain.map(function (c, i) {
-      return '<div class="node' + (i === 0 ? ' first' : '') + '">' + esc(c.name) + '<small>' + esc(c.role) + '</small></div>';
+      var x = cov[c.name], badge = '';
+      if (x) {
+        var school = /학교$|대학$|대학교$/.test(c.name);
+        if (x.count) badge = '<span class="cov">색인 문서 ' + x.count + '건' + (x.latest ? ' · 최신 ' + esc(x.latest) : '') + '</span>';
+        else if (!school) { badge = '<span class="cov none">색인 문서 없음</span>'; missing.push(c.name); }
+      }
+      return '<div class="node' + (i === 0 ? ' first' : '') + '">' + esc(c.name) + '<small>' + esc(c.role) + '</small>' + badge + '</div>';
     }).join(arrow);
     if (l.source === 'none') html += '<div class="meta" style="padding:4px 2px 0;">' + esc(l.error || '상위 기관을 찾지 못했습니다.') + '</div>';
+    if (missing.length) html += '<div class="cov-warn">추가 권장: ' + missing.map(esc).join(', ') + '의 업무계획·사업계획 문서. 정책문서 드라이브 폴더에 넣으면 다음 날 검색에 반영됩니다.</div>';
     $('lineage-card').innerHTML = html;
   }
 
+  function evParams() { return { title: S.notice.name, orgs: S.lineage.orgs.join(','), ministry: S.lineage.ministry || '', scope: S.scope }; }
   function runEvidence(fresh) {
     var my = seq;
-    var params = { title: S.notice.name, orgs: S.lineage.orgs.join(','), ministry: S.lineage.ministry || '', scope: S.scope };
+    var params = evParams();
+    $('ai-rank-msg').textContent = '';
     if (!fresh) params.terms = S.terms.join(',');
     else { AI.sug = []; renderSug(); }
     $('result-count').textContent = '검색 중';
@@ -792,6 +810,7 @@
       if (my !== seq) return;
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
       S.terms = d.terms; S.results = d.results;
+      if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
       renderTerms(); renderResults(d);
       loadMsit();
       mergeRfpTerms();
@@ -871,6 +890,7 @@
         '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;">' + ICON_DOC + '<div class="doc-title" style="flex:1;">' + esc(r.org + ' ' + r.title) + '</div>' +
         '<button class="pick' + (on ? ' on' : '') + '" onclick="toggleSel(\'' + esc(r.id) + '\')"><i></i>선택</button></div>' +
         '<div class="meta" style="margin-bottom:10px;">' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
+        (r.aiScore ? '<div class="ai-rank"><b title="관련도 ' + r.aiScore + '/3">' + '●●●'.slice(0, r.aiScore) + '<span style="opacity:.25">' + '●●●'.slice(r.aiScore) + '</span></b>' + esc(r.aiWhy || '') + '</div>' : '') +
         '<div class="quote" style="margin-bottom:12px;">' + mark(r.quote, r.matched) + '</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
       '</div>';
@@ -1062,6 +1082,28 @@
       task: 'terms', title: S.notice.name, terms: S.terms, orgs: (S.lineage.chain || []).map(function (c) { return c.name; }),
       rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 8000) : '',
     }, function (d) { AI.sug = d.terms; renderSug(); return d.terms.length ? '눌러서 추가' : '추가할 후보가 없습니다'; });
+  }
+  // 키워드 후보를 넓게(30건) 받아 AI가 사업 관련도로 다시 줄 세운다. 발췌·문서는 그대로, 순서와 이유만 바뀐다
+  function aiRank() {
+    if (!S.notice || !S.lineage || !S.terms.length) return;
+    var my = seq, btn = $('ai-rank-btn');
+    btn.disabled = true; btn.textContent = '후보 모으는 중'; $('ai-rank-msg').textContent = ''; $('ai-rank-msg').className = 'ai-msg';
+    var params = evParams(); params.terms = S.terms.join(','); params.limit = 30;
+    return api('/api/evidence', params).then(function (ev) {
+      btn.disabled = false; btn.textContent = 'AI 관련도 정렬';
+      if (my !== seq) return;
+      if (!ev.ok || !ev.results.length) { $('ai-rank-msg').textContent = '정렬할 후보가 없습니다'; return; }
+      var by = {}; ev.results.forEach(function (r) { by[r.id] = r; });
+      return aiRun('ai-rank-btn', 'ai-rank-msg', {
+        task: 'rank', notice: S.notice, lineage: S.lineage, rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 3000) : '', candidates: ev.results,
+      }, function (d) {
+        if (my !== seq) return '';
+        S.results = d.ranked.filter(function (x) { return by[x.id]; }).map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; });
+        $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
+        syncCards(); renderTerms(); renderGrid(); repaintSteps();
+        return '후보 ' + d.candidates + '건을 관련도순으로 정렬' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : '');
+      });
+    });
   }
   function renderSug() {
     $('ai-sug').innerHTML = AI.sug.map(function (x, i) {
