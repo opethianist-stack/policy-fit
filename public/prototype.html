@@ -235,14 +235,31 @@
   .ai-btn:before { content: '✦'; font-size: 11px; }
   .ai-msg { font-size: 11.5px; color: var(--muted); align-self: center; }
   .ai-msg.err { color: #B42318; }
+  .ai-drop { display: inline-block; position: relative; }
+  .ai-drop summary { cursor: pointer; list-style: none; color: var(--violet); text-decoration: underline; text-underline-offset: 2px; }
+  .ai-drop summary::-webkit-details-marker { display: none; }
+  .ai-drop ul { position: absolute; z-index: 30; top: 100%; left: 0; width: max-content; max-width: min(420px, 82vw); margin: 6px 0 0; padding: 8px 12px 8px 26px; background: #fff; border: 1px solid var(--hairline); border-radius: 8px; box-shadow: 0 4px 14px rgba(25,31,40,.12); color: var(--ink); font-size: 11.5px; line-height: 1.5; }
+  .chip.term.weak { opacity: .55; }
+  .chip.term .n { font-size: 10.5px; font-weight: 500; opacity: .75; }
+  .chip.term.swap { cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--violet); opacity: 1; }
+  .chip.term.swap:hover { background: var(--violet); color: #fff; }
+  .chip.term.swap:hover button { color: #fff; }
+  .swap-note { flex-basis: 100%; font-size: 11.5px; color: var(--violet); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .swap-note button { font-size: 11.5px; color: var(--muted); text-decoration: underline; font-family: inherit; }
   .ai-sug { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: -6px 0 14px; }
   .ai-sug:empty { display: none; }
   .ai-sug .chip { border: 1px dashed var(--violet); background: #fff; color: var(--violet); cursor: pointer; font-family: inherit; }
   .ai-why { font-size: 11.5px; color: var(--violet); margin: -6px 0 12px; }
   .ai-tag { display: inline-block; font-size: 10.5px; font-weight: 600; color: var(--violet); background: var(--violet-tint); border-radius: 4px; padding: 1px 6px; }
   .winput.ai, .logic.ai { background: var(--violet-tint); border-color: rgba(115,83,234,.3); }
-  .deck-ctl { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; max-width: 900px; margin-bottom: 16px; }
-  .deck-ctl input { flex: 1 1 260px; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; background: #fff; }
+  .deck-ctl { display: flex; flex-direction: column; gap: 8px; max-width: 900px; margin-bottom: 16px; }
+  .deck-hl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .deck-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 30px; }
+  .deck-bar .ai-msg { flex: 1 1 200px; min-width: 0; }
+  .deck-bar .pal { margin-left: auto; align-items: center; }
+  .deck-bar .pal .k { font-size: 11.5px; color: var(--muted); margin-right: 2px; }
+  @media (max-width: 560px) { .deck-hl { grid-template-columns: 1fr; } }
+  .deck-ctl input { width: 100%; box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; background: #fff; }
   .deck-ctl input:focus { border-color: var(--violet); }
   .pal { display: flex; gap: 6px; }
   .pal button { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--hairline); cursor: pointer; padding: 0; }
@@ -602,10 +619,14 @@
         </div>
         <div class="meta" id="deck-reason" style="margin-bottom:20px;"></div>
         <div class="deck-ctl" id="deck-ctl">
-          <input id="deck-h1" placeholder="헤드라인 윗줄" oninput="DECKHL[0]=this.value;DECKHL.edited=true;paintDeck()">
-          <input id="deck-h2" placeholder="헤드라인 아랫줄(강조)" oninput="DECKHL[1]=this.value;DECKHL.edited=true;paintDeck()">
-          <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
-          <div class="pal"><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button></div>
+          <div class="deck-hl">
+            <input id="deck-h1" placeholder="헤드라인 윗줄" oninput="DECKHL[0]=this.value;DECKHL.edited=true;paintDeck()">
+            <input id="deck-h2" placeholder="헤드라인 아랫줄(강조)" oninput="DECKHL[1]=this.value;DECKHL.edited=true;paintDeck()">
+          </div>
+          <div class="deck-bar">
+            <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
+            <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button></div>
+          </div>
         </div>
         <div class="decks" id="deck-grid"></div>
       </div>
@@ -682,7 +703,7 @@
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
-    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', ''];
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null;
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
@@ -751,22 +772,43 @@
     });
   }
 
+  // 검색어별 결과 카드 수. 0건인 검색어는 흐리게 → 10개가 찼을 때 바꿀 후보가 보인다
+  function termHits(t) {
+    var k = String(t).toLowerCase();
+    return (S.results || []).filter(function (r) { return (r.matched || []).some(function (m) { return String(m).toLowerCase() === k; }); }).length;
+  }
+  var SWAP = null;   // 10개가 찬 상태에서 새 검색어를 넣으려 할 때 { term, sug: AI 추천 번호 }
   function renderTerms() {
     var fromRfp = (S.rfp && S.rfp.terms) || [];
+    var counted = (S.results || []).length > 0;
     $('terms').innerHTML = S.terms.map(function (t, i) {
-      return '<span class="chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + '"' + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) + '<button aria-label="' + esc(t) + ' 삭제" onclick="removeTerm(' + i + ')">×</button></span>';
+      var n = counted ? termHits(t) : -1, cls = 'chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + (n === 0 ? ' weak' : '') + (SWAP ? ' swap' : '');
+      return '<span class="' + cls + '"' + (SWAP ? ' role="button" onclick="swapTerm(' + i + ')"' : '') + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) +
+        (SWAP && n >= 0 ? '<span class="n">' + n + '건</span>' : '') +
+        '<button aria-label="' + esc(t) + ' 삭제" onclick="event.stopPropagation();removeTerm(' + i + ')">×</button></span>';
     }).join('') +
-      '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="검색어 추가" aria-label="검색어 추가"></form>' +
+      '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="' + (S.terms.length >= MAX_TERMS ? '검색어 교체' : '검색어 추가') + '" aria-label="검색어 추가"></form>' +
       '<button class="ai-btn" id="ai-terms-btn" onclick="aiTerms()">AI 검색어 추천</button><span class="ai-msg" id="ai-terms-msg"></span>' +
-      '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>';
+      '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>' +
+      (SWAP ? '<span class="swap-note">검색어는 ' + MAX_TERMS + '개까지입니다. ‘' + esc(SWAP.term) + '’ 대신 뺄 검색어를 누르세요 (건수 = 지금 결과에서 그 검색어가 걸린 카드 수)<button onclick="cancelSwap()">취소</button></span>' : '');
   }
-  function removeTerm(i) { S.terms.splice(i, 1); runEvidence(false); }
+  function removeTerm(i) { SWAP = null; S.terms.splice(i, 1); runEvidence(false); }
   function addTerm(e) {
     e.preventDefault();
     var v = $('term-input').value.trim();
-    if (S.terms.length >= MAX_TERMS) { $('term-input').value = ''; $('term-input').placeholder = MAX_TERMS + '개까지'; return; }
-    if (v && S.terms.indexOf(v) < 0) { S.terms.push(v); runEvidence(false); }
+    if (!v || S.terms.indexOf(v) >= 0) { $('term-input').value = ''; return; }
+    if (S.terms.length >= MAX_TERMS) { SWAP = { term: v, sug: -1 }; renderTerms(); return; }
+    S.terms.push(v); runEvidence(false);
   }
+  function swapTerm(i) {
+    if (!SWAP) return;
+    var t = SWAP.term, k = SWAP.sug;
+    SWAP = null;
+    if (k >= 0 && AI.sug[k] && AI.sug[k].term === t) { AI.sug.splice(k, 1); renderSug(); }
+    if (S.terms.indexOf(t) < 0) S.terms[i] = t;
+    runEvidence(false);
+  }
+  function cancelSwap() { SWAP = null; renderTerms(); }
   function setScope(v) { if (S.scope !== v) { S.scope = v; runEvidence(false); } }
 
   function mark(text, terms) {
@@ -937,7 +979,7 @@
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
-    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', ''];
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null;
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();
     $('search-main').style.display = ''; setState('');
@@ -982,8 +1024,9 @@
       var m = $(msgId); if (!m) return;
       if (!d.ok) { m.className = 'ai-msg err'; m.textContent = d.error || 'AI 처리에 실패했습니다.'; return; }
       var drop = d.dropped || [];
-      m.textContent = (onOk(d) || '') + (drop.length ? ' · 검증에서 뺀 항목 ' + drop.length + '개' : '');
-      m.title = drop.map(function (x) { return (x.where || x.term || x.id) + ': ' + x.reason; }).join('\n');
+      // 뺀 항목은 눌러서 펼친다(마우스 올림만으로는 모바일에서 안 보인다)
+      m.innerHTML = esc(onOk(d) || '') + (drop.length ? ' · <details class="ai-drop"><summary>검증에서 뺀 항목 ' + drop.length + '개</summary><ul>' +
+        drop.map(function (x) { return '<li>' + esc((x.where || x.term || x.id || '') + ': ' + x.reason) + '</li>'; }).join('') + '</ul></details>' : '');
     });
   }
   function aiTerms() {
@@ -998,7 +1041,7 @@
     }).join('');
   }
   function addSug(i) {
-    if (S.terms.length >= MAX_TERMS) { $('ai-terms-msg').textContent = '검색어는 ' + MAX_TERMS + '개까지입니다'; return; }
+    if (S.terms.length >= MAX_TERMS) { SWAP = { term: AI.sug[i].term, sug: i }; renderTerms(); return; }
     var t = AI.sug[i].term; AI.sug.splice(i, 1); renderSug();
     if (S.terms.indexOf(t) < 0) { S.terms.push(t); runEvidence(false); }
   }
@@ -1270,10 +1313,12 @@
             '<div class="rm-c"><div>' + tx(st.top) + '</div></div>' +
             '<div class="rm-c g"><div>' + (st.bottom ? esc(st.bottom.text) : '<span class="ph">정책의 의미 한 줄</span>') + '</div></div></div>';
         }).join('') +
+        (s.need.only ? '<div class="rm-card need"><span class="rm-dot"></span><div class="rm-h">' + esc(s.need.title) + '</div>' +
+          '<div class="rm-c g"><div>' + (s.need.top ? tx(s.need.top) : '<span class="ph">수렴점(사업 추진의 필요성) 입력 전</span>') + '</div></div></div>' :
         '<div class="rm-card need"><span class="rm-dot"></span>' +
           '<div class="rm-h">' + ph(s.need.title, '현장 수요 헤드라인') + '</div>' +
           '<div class="rm-c"><div>' + (s.need.top ? tx(s.need.top) : '<span class="ph">현장 수요 근거</span>') + '</div></div>' +
-          '<div class="rm-c g"><div>' + (s.need.bottom ? esc(s.need.bottom.text) : '<span class="ph">사업 추진의 필요성</span>') + '</div></div></div>' +
+          '<div class="rm-c g"><div>' + (s.need.bottom ? esc(s.need.bottom.text) : '<span class="ph">사업 추진의 필요성</span>') + '</div></div></div>') +
         '<div class="rm-lab" style="grid-row:2;grid-column:1;">' + esc(s.proposer.label) + '</div>' +
         '<div class="rm-pro" style="grid-row:2;grid-column:2 / ' + (n > 2 ? 4 : 3) + ';"><div class="sl-bar sub" style="font-size:1.15cqw;padding:.35cqw;">' + esc(s.proposer.listTitle) + '</div>' +
           [1, 2, 3, 4].map(function (i) { return '<div class="rm-slot">수행 실적 ' + i + ' (연도 · 사업명)</div>'; }).join('') + '</div>' +
