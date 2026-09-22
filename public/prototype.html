@@ -237,6 +237,12 @@
   .pages { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; max-width: 760px; margin-bottom: 28px; }
   .page-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 14px; height: 150px; }
   .line { background: var(--bg); border-radius: 4px; height: 8px; margin-bottom: 6px; }
+  .deck-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .deck-tabs button { font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--slate); background: #fff; border: 1px solid var(--hairline); border-radius: 500px; padding: 7px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .deck-tabs button:hover { border-color: var(--violet); color: var(--violet); }
+  .deck-tabs button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .deck-tabs .rec { font-size: 10.5px; font-weight: 700; color: var(--violet); background: var(--violet-tint); border-radius: 4px; padding: 1px 5px; }
+  .deck-tabs button.on .rec { background: rgba(255,255,255,.18); color: #fff; }
   .decks { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; max-width: 900px; margin-bottom: 18px; }
   .deck-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding-right: 50px; }
   .deck-head .doc-title { margin: 0; }
@@ -409,6 +415,9 @@
     .actions .btn.outline { margin-left: 0 !important; width: 100%; }
   }
   @media (max-width: 480px) {
+    .brand > :not(.brand-mark) { display: none; }   /* 좁은 폭: 로고 글자를 숨겨 메뉴 세 개가 한 줄에 들어가게 */
+    .brand { padding-right: 8px; }
+    .nav { padding: 8px 9px; gap: 6px; }
     .pages { grid-template-columns: 1fr; }
     .page-card { height: auto; min-height: 110px; }
   }
@@ -735,7 +744,7 @@
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
-    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null;
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
     setState('공고를 조회하고 있습니다.');
@@ -786,7 +795,7 @@
     var html = l.chain.map(function (c, i) {
       var x = cov[c.name], badge = '';
       if (x) {
-        var school = /학교$|대학$|대학교$/.test(c.name);
+        var school = /학교$|대학$|대학교$|산학협력단$/.test(c.name) || /학교|대학/.test(c.role || '');
         if (x.count) badge = '<span class="cov">색인 문서 ' + x.count + '건' + (x.latest ? ' · 최신 ' + esc(x.latest) : '') + '</span>';
         else if (!school) { badge = '<span class="cov none">색인 문서 없음</span>'; missing.push(c.name); }
       }
@@ -859,7 +868,10 @@
   function mark(text, terms) {
     var out = esc(text);
     terms.slice().sort(function (a, b) { return b.length - a.length; }).forEach(function (t) {
-      var re = new RegExp('(' + esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?![^<]*>)', 'gi');
+      // 띄어쓰기를 무시하고 칠한다("디지털새싹" 검색어가 원문 "디지털 새싹"에도 칠해지게. 검색도 같은 방식)
+      var pat = Array.from(String(t).replace(/\s+/g, '')).map(function (ch) { return esc(ch).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('\\s*');
+      if (!pat) return;
+      var re = new RegExp('(' + pat + ')(?![^<]*>)', 'gi');
       out = out.replace(re, '<span class="hl">$1</span>');
     });
     return cells(out);
@@ -1027,7 +1039,7 @@
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
-    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null;
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();
     $('search-main').style.display = ''; setState('');
@@ -1065,9 +1077,12 @@
       .catch(function () { return { ok: false, error: '서버에 연결하지 못했습니다.' }; });
   }
   function aiRun(btnId, msgId, body, onOk) {
-    var btn = $(btnId), label = btn.textContent;
+    var btn = $(btnId), label = btn.textContent, t0 = Date.now();
     btn.disabled = true; btn.textContent = 'AI 작업 중'; $(msgId).textContent = ''; $(msgId).className = 'ai-msg';
+    // 기다리는 동안 경과 초를 보여 준다(관련도 정렬·초안은 10초 안팎 걸린다)
+    var tick = setInterval(function () { var b = $(btnId); if (b && b.disabled) b.textContent = 'AI 작업 중 ' + Math.round((Date.now() - t0) / 1000) + '초'; }, 1000);
     return aiPost(body).then(function (d) {
+      clearInterval(tick);
       var b = $(btnId); if (b) { b.disabled = false; b.textContent = label; }
       var m = $(msgId); if (!m) return;
       if (!d.ok) { m.className = 'ai-msg err'; m.textContent = d.error || 'AI 처리에 실패했습니다.'; return; }
@@ -1088,7 +1103,7 @@
     if (!S.notice || !S.lineage || !S.terms.length) return;
     var my = seq, btn = $('ai-rank-btn');
     btn.disabled = true; btn.textContent = '후보 모으는 중'; $('ai-rank-msg').textContent = ''; $('ai-rank-msg').className = 'ai-msg';
-    var params = evParams(); params.terms = S.terms.join(','); params.limit = 30;
+    var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
     return api('/api/evidence', params).then(function (ev) {
       btn.disabled = false; btn.textContent = 'AI 관련도 정렬';
       if (my !== seq) return;
@@ -1359,9 +1374,16 @@
     paintDeck();
   }
   function setPal(p) { PAL = p; $('pal-coral').classList.toggle('on', p === 'coral'); $('pal-navy').classList.toggle('on', p === 'navy'); paintDeck(); }
+  // 구도는 탭으로 하나씩 본다(5장을 세로로 늘어놓으면 비교가 어렵다). 기본은 추천안
+  var DECKSEL = '';
+  function pickDeck(k) { DECKSEL = k; paintDeck(); }
   function paintDeck() {
     if (!DECK) return;
-    $('deck-grid').innerHTML = DECK.options.map(function (o) {
+    if (!DECK.options.some(function (o) { return o.key === DECKSEL; })) DECKSEL = DECK.recommended;
+    var tabs = '<div class="deck-tabs" role="tablist">' + DECK.options.map(function (o) {
+      return '<button role="tab" class="' + (o.key === DECKSEL ? 'on' : '') + '" onclick="pickDeck(\'' + o.key + '\')">' + esc(o.name) + (o.key === DECK.recommended ? '<span class="rec">추천</span>' : '') + '</button>';
+    }).join('') + '</div>';
+    $('deck-grid').innerHTML = tabs + DECK.options.filter(function (o) { return o.key === DECKSEL; }).map(function (o) {
       var rec = o.key === DECK.recommended;
       return '<div class="card deck-card' + (rec ? ' rec' : '') + '" style="padding:20px;">' + (rec ? '<span class="rec-tag">추천</span>' : '') +
         '<div class="deck-head"><div class="doc-title">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div>' + (DECK.aiUsed && o.key !== 'voices' ? '<span class="ai-tag">AI 문구</span>' : '') + '</div>' +

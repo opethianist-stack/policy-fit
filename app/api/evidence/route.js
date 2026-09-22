@@ -10,8 +10,8 @@ export async function GET(req) {
   const sp = new URL(req.url).searchParams;
   const title = (sp.get('title') || '').trim();
   const list = (k) => (sp.get(k) || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const terms = sp.has('terms') ? list('terms') : extractTerms(title);
   const orgs = list('orgs');
+  const terms = sp.has('terms') ? list('terms') : extractTerms(title, orgs);
   const ministry = (sp.get('ministry') || '').trim();
   const scope = sp.get('scope') === 'all' ? 'all' : 'lineage';
   const limit = Math.min(30, Math.max(1, parseInt(sp.get('limit') || '10', 10) || 10));

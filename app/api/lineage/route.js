@@ -30,6 +30,11 @@ function byRule(name) {
       // "서울특별시중부교육지원청" → "서울특별시교육청"
       const m = compact.match(/^(.+?(특별자치시|특별자치도|특별시|광역시|도))/);
       if (m) { chain.push({ name: m[1] + '교육청', role: '시도교육청' }); orgs.push(m[1] + '교육청'); }
+    } else if (r.type === '시도교육청' && !/교육청$/.test(compact) && /^.+?교육청/.test(compact) && !/\s/.test(name)) {
+      // "세종특별자치시교육청평생교육원"처럼 소속기관 이름이 붙여 쓰여 오는 경우
+      const head = compact.match(/^(.+?교육청)/)[1];
+      chain = [{ name, role: '교육청 소속기관' }, { name: head, role: '시도교육청' }];
+      orgs.push(head);
     } else if (r.type === '시도교육청') {
       const head = name.split(' ')[0];
       // "경기도교육청 경기도교육청남부연수원"처럼 소속기관이 붙어 오는 경우
@@ -71,12 +76,16 @@ export async function GET(req) {
     const hit = rows.find((x) => x.instNm === q) || rows.sort((a, b) => a.instNm.length - b.instNm.length)[0];
     const chain = [{ name: hit.instNm, role: hit.instTypeNm || '공공기관' }];
     const orgs = [hit.instNm];
-    if (hit.sprvsnInstNm) { chain.push({ name: hit.sprvsnInstNm, role: '주관부처' }); orgs.push(hit.sprvsnInstNm); }
+    // API에 주관부처가 비어 오는 기관은 org-rules.json의 knownParents로 보완한다(예: 세종학당재단 → 문화체육관광부)
+    const parent = hit.sprvsnInstNm || (rules.knownParents || {})[hit.instNm] || '';
+    if (parent) { chain.push({ name: parent, role: '주관부처' }); orgs.push(parent); }
     return Response.json({
-      ok: true, source: 'api', chain, ministry: hit.sprvsnInstNm || '', orgs,
+      ok: true, source: 'api', chain, ministry: parent, orgs,
       inst: { code: hit.instCd, stdCode: hit.pbadmsStdInstCd, field: hit.instClsfNm, siteUrl: hit.siteUrl || '' },
       alternatives: rows.length > 1 ? rows.slice(0, 5).map((x) => x.instNm) : [],
     });
   }
+  const known = (rules.knownParents || {})[name.replace(/\s+/g, '')];
+  if (known) return Response.json({ ok: true, source: 'rule', chain: [{ name, role: '발주처' }, { name: known, role: '주관부처' }], ministry: known, orgs: [name, known] });
   return Response.json({ ok: true, source: 'none', chain: [{ name, role: '발주처' }], ministry: '', orgs: [name] });
 }
