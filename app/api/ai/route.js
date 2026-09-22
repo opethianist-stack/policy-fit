@@ -3,7 +3,7 @@ import { LlmError, llmReady, MODEL } from '../../../lib/llm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 45;   // 초안은 건너뛴 카드를 한 번 더 요청할 수 있다(첫 호출 ~6초 + 재요청 ≤15초)
 
 // POST { task: 'terms'|'roles'|'draft'|'deck', ... } → 검증을 통과한 칸만. GET → 사용 가능 여부.
 const TASKS = { terms: suggestTerms, roles: classifyRoles, draft: draftText, deck: deckCopy };
