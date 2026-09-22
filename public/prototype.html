@@ -1217,7 +1217,7 @@
           if (!c.sel || c.role !== r.key) return '';
           return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
             '<div class="wquote">' + esc(c.quote) + '</div>' +
-            '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 비우면 발췌문을 그대로 싣습니다" oninput="CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
+            '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 줄마다 불릿 하나 · 비우면 발췌문을 그대로 싣습니다" oninput="fitArea(this);CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
             '<div class="wwarn" id="warn-' + esc(c.r.id) + '"></div></div>';
         }).join('') + '</div>';
     }).join('');
@@ -1226,7 +1226,10 @@
         '<textarea class="logic' + (AIF.concl ? ' ai' : '') + '" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장" oninput="CONCL=this.value;AIF.concl=false;this.classList.remove(\'ai\');queueDraft()">' + esc(CONCL) + '</textarea></div>';
     }
     $('ex-work').innerHTML = html;
+    Array.prototype.forEach.call($('ex-work').querySelectorAll('textarea.logic'), fitArea);
   }
+  // 불릿이 여러 줄이어도 다 보이게 높이를 내용에 맞춘다
+  function fitArea(el) { el.style.height = 'auto'; el.style.height = Math.max(58, el.scrollHeight + 2) + 'px'; }
   function queueDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(loadDraft, 350); }
 
   function loadDraft() {

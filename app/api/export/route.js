@@ -37,7 +37,7 @@ function argument(b) {
     out.push(para([
       run('- '),
       run(x.quoted ? `“${x.text}”` : x.text),
-      run(` ${x.cite}`, { color: MUTED, size: 18 }),
+      ...(x.cite ? [run(` ${x.cite}`, { color: MUTED, size: 18 })] : []),   // 한 카드가 여러 불릿이면 마지막 불릿에만 출처
     ], { indent: { left: 440, hanging: 200 }, spacing: { after: 80, line: 320 } }));
   }
   return out;
