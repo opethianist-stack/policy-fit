@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const TABS = [
   { href: '/', label: '개요' },
   { href: '/prototype', label: '프로토타입' },
+  { href: '/api-test', label: 'API 연결 테스트' },
 ];
 
 export default function Nav() {

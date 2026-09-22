@@ -73,6 +73,11 @@
   .step.done .n { background: var(--violet-tint); color: var(--violet); }
   .step.now .n { background: var(--violet); color: #fff; }
   .step.now .l { color: var(--ink); font-weight: 600; }
+  .step.link { cursor: pointer; border-radius: 500px; padding: 2px 8px 2px 2px; margin: -2px -8px -2px -2px; }
+  .step.link:hover { background: var(--violet-tint); }
+  .step.link:hover .l { color: var(--violet); }
+  .step.off { cursor: not-allowed; opacity: .45; }
+  .cs { display: inline-block; font-size: 0; width: 1px; height: 12px; background: #C7CCD4; margin: 0 8px; vertical-align: -1px; }
   .step-line { width: 28px; height: 1px; background: var(--hairline); flex-shrink: 0; }
 
   h2.title { font-size: clamp(18px, 2.2vw, 22px); font-weight: 600; color: var(--ink); margin: 0 0 20px; }
@@ -648,6 +653,27 @@
     if (name === 'chat') loadSrc();
     if (name === 'export') renderWork();
     if (name === 'export' || name === 'deck') loadDraft();
+    paintSteps(name);
+  }
+  // 단계 표시(1 정책 근거 · 2 선택 · 3 산출 · 4 구도 추천)를 눌러 오갈 수 있게 한다. 앞 단계 재료가 없으면 흐리게 두고 막는다
+  var STEP_KEYS = ['search', 'chat', 'export', 'deck'];
+  function stepOk(k) {
+    if (k === 'search') return !!(S && S.notice);
+    if (k === 'chat') return CARDS.length > 0;
+    return CARDS.some(function (c) { return c.sel; });
+  }
+  function stepWhy(k) { return k === 'search' ? '공고번호를 먼저 입력해 주세요' : k === 'chat' ? '정책 근거 검색을 먼저 진행해 주세요' : '정책 근거를 1건 이상 선택해 주세요'; }
+  function repaintSteps() { var on = STEP_KEYS.filter(function (k) { return $('s-' + k).classList.contains('on'); })[0]; if (on) paintSteps(on); }
+  function paintSteps(name) {
+    var at = STEP_KEYS.indexOf(name);
+    Array.prototype.forEach.call(document.querySelectorAll('.steps'), function (box) {
+      Array.prototype.forEach.call(box.querySelectorAll('.step'), function (el, i) {
+        var k = STEP_KEYS[i], ok = stepOk(k), here = at === i;
+        el.className = 'step' + (here ? ' now' : at > i ? ' done' : '') + (here ? '' : ok ? ' link' : ' off');
+        el.title = here || ok ? '' : stepWhy(k);
+        el.onclick = here || !ok ? null : function () { if (k === 'chat') startReview(); else go(k); };
+      });
+    });
   }
   function $(id) { return document.getElementById(id); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -817,8 +843,10 @@
       var re = new RegExp('(' + esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?![^<]*>)', 'gi');
       out = out.replace(re, '<span class="hl">$1</span>');
     });
-    return out;
+    return cells(out);
   }
+  // 표 행의 칸 구분(색인의 EN SPACE)을 얇은 세로선으로 그린다. 글자 위치는 그대로라 발췌·대조에 영향 없음
+  function cells(html) { return String(html).replace(/\u2002/g, '<span class="cs">\u2002</span>'); }
   function pageLabel(r) { return 'p.' + r.page + (r.pageEstimated ? ' (추정)' : ''); }
   function sourceButtons(r) {
     return r.url
@@ -834,7 +862,7 @@
         (d.scopeDocs ? '일치하는 근거가 없습니다. 검색어를 바꾸거나 관련 정책문서 전체로 넓혀 보세요.' : '유관기관 문서가 아직 없습니다. 관련 정책문서 전체로 넓혀 보세요.') + '</div>';
       return;
     }
-    renderGrid();
+    renderGrid(); repaintSteps();
   }
   function renderGrid() {
     $('result-grid').innerHTML = S.results.map(function (r, i) {
@@ -1097,7 +1125,7 @@
   function toggleSel(id) {
     var c = cardOf(id); if (!c) return;
     c.sel = !c.sel;
-    renderGrid();
+    renderGrid(); repaintSteps();
     if ($('s-chat').classList.contains('on')) renderReview();
   }
   function startReview() {
@@ -1160,9 +1188,9 @@
       if (!d.ok) { V.data = null; $('src-body').innerHTML = '<span class="state-msg err">' + esc(d.error || '원문을 불러오지 못했습니다.') + '</span>'; return; }
       V.data = d; V.page = d.page;
       var t = d.text;
-      $('src-body').innerHTML = d.hit
+      $('src-body').innerHTML = cells(d.hit
         ? esc(t.slice(0, d.hit[0])) + '<mark id="src-mark">' + esc(t.slice(d.hit[0], d.hit[1])) + '</mark>' + esc(t.slice(d.hit[1]))
-        : esc(t);
+        : esc(t));
       $('src-body').scrollTop = 0;
       var m = $('src-mark'); if (m) m.scrollIntoView({ block: 'center' });
       $('src-page').textContent = 'p.' + d.page;
@@ -1216,7 +1244,7 @@
         CARDS.map(function (c, ci) {
           if (!c.sel || c.role !== r.key) return '';
           return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
-            '<div class="wquote">' + esc(c.quote) + '</div>' +
+            '<div class="wquote">' + cells(esc(c.quote)) + '</div>' +
             '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 줄마다 불릿 하나 · 비우면 발췌문을 그대로 싣습니다" oninput="fitArea(this);CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
             '<div class="wwarn" id="warn-' + esc(c.r.id) + '"></div></div>';
         }).join('') + '</div>';

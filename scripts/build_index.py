@@ -24,6 +24,9 @@ MIN_CHARS = 40  # 이보다 짧은 쪽은 표지·간지로 보고 색인하지 
 def clean(t):
     t = t.encode('utf-16-le', 'surrogatepass').decode('utf-16-le', 'ignore')  # HWP의 짝 없는 서로게이트 제거
     t = re.sub(r'[\ue000-\uf8ff]', '', t)  # 한글 전용 사용자 영역 문자(글머리 기호 등) 제거
+    # 한글 보충 사용자 영역 글머리: U+F02B1~ 는 문서 안에서 차례로 쓰이는 번호 기호(1·2·3…)라 ❶❷❸…로 바꾸고, 나머지는 지운다
+    t = re.sub('[\U000F02B1-\U000F02BA]', lambda m: chr(0x2776 + ord(m.group()) - 0xF02B1), t)
+    t = re.sub('[\U000F0000-\U000FFFFD]', '', t)
     t = t.replace(' ', ' ').replace('\r', '\n')
     t = re.sub(r'[ \t　]+', ' ', t)
     t = re.sub(r' *\n *', '\n', t)
@@ -58,13 +61,40 @@ def pdf_pages(path):
     return pages, len(doc), scanned
 
 
+CELL_SEP = '\u2002'  # 표 칸 구분(EN SPACE). 공백으로 취급돼 검색·대조에는 영향이 없고, 화면은 칸 구분선으로 그린다
+
+
 def para_text(p):
-    """문단의 글자를 모은다. 표 안의 문단·칸은 줄바꿈으로 나눠 붙지 않게 한다."""
+    """문단의 글자를 모은다. 표는 행 하나를 한 줄로, 칸은 CELL_SEP로 잇는다(칸마다 줄이 갈리면 "계속" 같은 일정 칸이 따로 떠서 읽기 어렵다)."""
     out = []
+
+    def cell_text(tc, sep):
+        buf = []
+
+        def w(el):
+            if el.tag == HP + 't':
+                buf.append(''.join(el.itertext())); return
+            for ch in el:
+                w(ch)
+            if el.tag == HP + 'p':
+                buf.append(sep)
+        w(tc)
+        lines = [re.sub(r'[ \t\u2002]+', ' ', x).strip() for x in ''.join(buf).split('\n')]
+        return '\n'.join(x for x in lines if x) if sep == '\n' else re.sub(r'\s+', ' ', ''.join(buf)).strip()
 
     def walk(el):
         if el.tag == HP + 't':
             out.append(''.join(el.itertext()))
+            return
+        if el.tag == HP + 'tbl':
+            out.append('\n')
+            for tr in [x for x in el if x.tag == HP + 'tr']:
+                tcs = [tc for tc in tr if tc.tag == HP + 'tc']
+                cells = [c for c in (cell_text(tc, ' ') for tc in tcs) if c]
+                if len(cells) >= 2:
+                    out.append(CELL_SEP.join(cells) + '\n')
+                elif cells:   # 칸이 하나뿐인 행(글상자처럼 쓰는 표)은 문단 줄을 그대로 둔다
+                    out.append('\n'.join(cell_text(tc, '\n') for tc in tcs if cell_text(tc, '\n')) + '\n')
             return
         for ch in el:
             walk(ch)

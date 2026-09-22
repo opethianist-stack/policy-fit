@@ -20,17 +20,6 @@ export default function Home() {
           정책 문장만 정책 근거 카드로 정리합니다.
         </p>
 
-        <div className="tiles">
-          <a className="tile" href="/prototype">
-            <div className="t">프로토타입</div>
-            <div className="d">홈 · 정책 근거 검색 · 정책 근거 선택 · 문서 산출 · 구도 추천 5개 화면</div>
-          </a>
-          <a className="tile" href="/api-test">
-            <div className="t">API 연결 테스트</div>
-            <div className="d">활용신청 완료된 오픈API 4종의 실제 호출·응답 형태 확인</div>
-          </a>
-        </div>
-
         <div className="steplist">
           <h2 style={{ marginBottom: 4 }}>처리 흐름</h2>
           {STEPS.map(([n, t, d]) => (
