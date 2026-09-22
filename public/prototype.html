@@ -948,8 +948,8 @@
     if (!d.ok) { $('msit-box').innerHTML = head + '<div class="state-msg err" style="padding:8px 0 12px;">' + esc(d.error || '불러오지 못했습니다.') + '</div>'; return; }
     var body = MSIT.items.length ? MSIT.items.map(function (it, i) { return msitRow(it, i, 'items'); }).join('')
       : '<div class="meta" style="padding:6px 0 12px;">최근 게시물 ' + (d.pool || 0) + '건 중 검색어와 제목이 맞는 게시물이 없습니다.</div>';
-    // 느슨한 일치: 흔한 말(디지털·AI·전략 등) 하나만 겹친 게시물. 관련이 약할 수 있어 접어 둔다
-    if (MSIT.loose.length) body += '<details class="msit-loose"><summary>느슨한 일치 ' + MSIT.loose.length + '건 · 흔한 말 하나만 겹침</summary>' +
+    // 느슨한 일치: 흔한 말(디지털·AI·전략 등)만 겹친 게시물. 관련이 약할 수 있어 접어 둔다
+    if (MSIT.loose.length) body += '<details class="msit-loose"><summary>느슨한 일치 ' + MSIT.loose.length + '건 · 흔한 말만 겹침</summary>' +
       MSIT.loose.map(function (it, i) { return msitRow(it, i, 'loose'); }).join('') + '</details>';
     $('msit-box').innerHTML = head + body;
   }
