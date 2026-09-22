@@ -155,6 +155,9 @@
   .msit-t a:hover { text-decoration: underline; }
   .src-badge { font-size: 10.5px; font-weight: 700; color: var(--indigo); background: var(--blue-tint); border-radius: 4px; padding: 1px 6px; flex-shrink: 0; }
   .msit-f { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  .msit-loose { margin: 4px 0 10px; }
+  .msit-loose summary { cursor: pointer; font-size: 12px; color: var(--muted); padding: 6px 0; }
+  .msit-loose .msit-row { opacity: .85; }
   .msit-f .chip { padding: 4px 10px; font-size: 11px; }
   .linkish { font-size: 12.5px; font-weight: 600; color: var(--violet); padding: 4px 2px; margin-top: 14px; }
   .manual { max-width: 640px; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin: 0 0 32px; display: none; }
@@ -743,7 +746,7 @@
   function openNotice(no) {
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
-    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
     AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     $('search-main').style.display = 'none';
@@ -913,7 +916,7 @@
   /* ---------- 과기정통부 게시판(주요정책·사업공고·보도자료·보도설명) ---------- */
   // 계보에 과학기술정보통신부가 있으면, 최근 게시물 중 제목이 검색어와 맞는 것을 상세페이지·첨부와 함께 보여 준다.
   // 첨부(hwpx·hwp·pdf·odt·docx)는 "검색어 보강"으로 제안요청서처럼 본문을 읽어 검색어를 더할 수 있다.
-  var MSIT = { key: '', items: [] };
+  var MSIT = { key: '', items: [], loose: [] };
   function isMsitLine() {
     return !!(S.lineage && (S.lineage.chain || []).some(function (c) { return /과학기술정보통신부|과기정통부/.test(c.name); }));
   }
@@ -927,26 +930,32 @@
     $('msit-box').innerHTML = '<div class="msit-head"><span class="k">과기정통부 게시물</span><span class="meta">불러오는 중</span></div>';
     api('/api/msit', { terms: key }).then(function (d) {
       if (my !== seq || key !== MSIT.key) return;
-      MSIT.items = d.ok ? d.items : [];
+      MSIT.items = d.ok ? d.items : []; MSIT.loose = d.ok ? (d.loose || []) : [];
       renderMsit(d);
     }).catch(function () { if (my === seq) renderMsit({ ok: false, error: '서버에 연결하지 못했습니다.' }); });
+  }
+  function msitRow(it, i, list) {
+    return '<div class="msit-row"><div class="msit-t"><span class="src-badge">' + esc(it.sourceLabel) + '</span>' +
+      (it.viewUrl ? '<a href="' + esc(it.viewUrl) + '" target="_blank" rel="noopener">' + mark(it.title, it.matched) + '</a>' : '<b>' + mark(it.title, it.matched) + '</b>') +
+      '<span class="meta">' + esc(it.date) + (it.dept ? ' · ' + esc(it.dept) : '') + '</span></div>' +
+      (it.files.length ? '<div class="msit-f">' + it.files.map(function (f, j) {
+        return '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + ICON_FILE + '<span>' + esc(f.name) + '</span></a>' +
+          (f.readable ? '<button class="btn soft mini" onclick="msitTerms(\'' + list + '\',' + i + ',' + j + ')">검색어 보강</button>' : '');
+      }).join('') + '</div>' : '') + '</div>';
   }
   function renderMsit(d) {
     var head = '<div class="msit-head"><span class="k">과기정통부 게시물</span><span class="meta">주요정책 · 사업공고 · 보도자료 · 보도설명</span></div>';
     if (!d.ok) { $('msit-box').innerHTML = head + '<div class="state-msg err" style="padding:8px 0 12px;">' + esc(d.error || '불러오지 못했습니다.') + '</div>'; return; }
-    if (!MSIT.items.length) { $('msit-box').innerHTML = head + '<div class="meta" style="padding:6px 0 12px;">검색어와 제목이 맞는 최근 게시물이 없습니다.</div>'; return; }
-    $('msit-box').innerHTML = head + MSIT.items.map(function (it, i) {
-      return '<div class="msit-row"><div class="msit-t"><span class="src-badge">' + esc(it.sourceLabel) + '</span>' +
-        (it.viewUrl ? '<a href="' + esc(it.viewUrl) + '" target="_blank" rel="noopener">' + mark(it.title, it.matched) + '</a>' : '<b>' + mark(it.title, it.matched) + '</b>') +
-        '<span class="meta">' + esc(it.date) + (it.dept ? ' · ' + esc(it.dept) : '') + '</span></div>' +
-        (it.files.length ? '<div class="msit-f">' + it.files.map(function (f, j) {
-          return '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + ICON_FILE + '<span>' + esc(f.name) + '</span></a>' +
-            (f.readable ? '<button class="btn soft mini" onclick="msitTerms(' + i + ',' + j + ')">검색어 보강</button>' : '');
-        }).join('') + '</div>' : '') + '</div>';
-    }).join('');
+    var body = MSIT.items.length ? MSIT.items.map(function (it, i) { return msitRow(it, i, 'items'); }).join('')
+      : '<div class="meta" style="padding:6px 0 12px;">최근 게시물 ' + (d.pool || 0) + '건 중 검색어와 제목이 맞는 게시물이 없습니다.</div>';
+    // 느슨한 일치: 흔한 말(디지털·AI·전략 등) 하나만 겹친 게시물. 관련이 약할 수 있어 접어 둔다
+    if (MSIT.loose.length) body += '<details class="msit-loose"><summary>느슨한 일치 ' + MSIT.loose.length + '건 · 흔한 말 하나만 겹침</summary>' +
+      MSIT.loose.map(function (it, i) { return msitRow(it, i, 'loose'); }).join('') + '</details>';
+    $('msit-box').innerHTML = head + body;
   }
-  function msitTerms(i, j) {
-    var f = MSIT.items[i] && MSIT.items[i].files[j]; if (!f || !S.notice) return;
+  function msitTerms(list, i, j) {
+    var src = MSIT[list] || [];
+    var f = src[i] && src[i].files[j]; if (!f || !S.notice) return;
     var my = seq;
     var prev = (S.rfp && (S.rfp.terms || S.rfp.prev)) || [];
     S.rfp = { state: 'loading', name: f.name, prev: prev, src: 'msit' }; renderRfp();
@@ -1039,7 +1048,7 @@
     var my = ++seq;
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
-    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [] }; $('msit-box').style.display = 'none';
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
     AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
     $('no-view').textContent = name; $('no-label').textContent = '제안요청서';
     renderNotice(); renderRfp();

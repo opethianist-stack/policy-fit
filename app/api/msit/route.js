@@ -11,5 +11,9 @@ export async function GET(req) {
   const terms = (sp.get('terms') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const all = await recentMsit();
   if (!all.ok) return Response.json({ ok: false, error: all.error }, { status: 502 });
-  return Response.json({ ok: true, fetchedAt: all.fetchedAt, pool: all.items.length, partial: all.partial, items: matchMsit(all.items, terms) });
+  return Response.json({
+    ok: true, fetchedAt: all.fetchedAt, pool: all.items.length, partial: all.partial,
+    items: matchMsit(all.items, terms),
+    loose: matchMsit(all.items, terms, 5, { loose: true }),   // 흔한 말 하나만 겹친 것(화면에서 접어서 표시)
+  });
 }
