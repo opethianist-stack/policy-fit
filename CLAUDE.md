@@ -1,7 +1,7 @@
 # Policy Fit — 작업 핸드오프
 
 레포 루트의 `CLAUDE.md`. Codespace의 Claude Code가 세션 시작 시 자동으로 읽는다.
-최종 갱신: 2026-09-22 (STEP17 — 공개 링크 확인·AI 호출 한도, 과기부 게시물 흔한 말만 겹치면 느슨한 일치, 시연 흐름 점검 반영, 직전 커밋 `4d47ad8`)
+최종 갱신: 2026-09-23 (STEP18 — 나라장터 사전규격 입구, 직전 커밋 `e3a1e93`)
 
 ---
 
@@ -51,6 +51,7 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 | `/api/evidence?title=&orgs=&ministry=&terms=&scope=&limit=` | `app/api/evidence/route.js` → `lib/search.js` | 색인에서 쪽 단위 검색 후 발췌문 반환. 결과마다 역할 기본값(`role`)을 붙인다(`lib/roles.js`). `limit` 기본 10, 최대 30(AI 관련도 정렬 후보용). `coverage`: 계보 기관별 색인 문서 수·최신 연도(`coverageOf`). 외부 호출·LLM 없음 |
 | `/api/page?doc=&page=&quote=` | `app/api/page/route.js` | 색인의 한 쪽 원문 전체 + 발췌문 위치(`hit`) + 앞뒤 쪽 번호. 검토 화면의 원문 쪽 보기가 쓴다 |
 | `/api/rfp` | `app/api/rfp/route.js` → `lib/extract.js`, `lib/rfp.js` | 제안요청서 → 본문 텍스트 + 검색어 + 사업명·발주기관 추정. `GET ?url=&name=&title=`은 나라장터·과기정통부 첨부파일을 서버가 받아 읽고, `POST ?name=&title=`(본문=파일 바이트)은 올린 파일을 읽는다. 파일은 저장하지 않는다 |
+| `/api/prespec?days=&q=&orgs=&limit=` | `app/api/prespec/route.js` → `lib/prespec.js` | 나라장터 **사전규격**(용역) 중 규격명·기관이 맞는 것. 공고 전 단계라 제안요청서·과업지시서가 먼저 공개된다. 각 건: 사전규격등록번호·규격명·수요기관·배정예산·의견등록 마감·규격서 파일 주소·이어진 입찰공고번호. 30분 캐시 |
 | `/api/msit?terms=` | `app/api/msit/route.js` → `lib/msit.js` | 과기정통부 게시판 4종(주요정책·사업공고·보도자료·보도설명)의 최근 게시물 중 제목이 검색어와 맞는 것. 게시물마다 출처 구분·제목·게시일·담당부서·상세페이지 URL·첨부(이름·다운로드 URL·본문 읽기 가능 여부). 30분 캐시 |
 | `/api/draft` (POST) | `app/api/draft/route.js` → `lib/draft.js` | 선택한 카드(역할·문서 문장) + 헤드라인 + 수렴점 → 논증 블록 문서 모델(JSON)과 구도 추천. 화면 미리보기가 이걸 그린다 |
 | `/api/ai` (POST·GET) | `app/api/ai/route.js` → `lib/ai.js`, `lib/llm.js` | LLM 보조 4종(`task`: terms·roles·draft·deck). 검증을 통과한 칸만 돌려주고 버린 칸은 `dropped`로 알린다. GET은 키 등록 여부·모델명 |
@@ -168,6 +169,18 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 - 제목 매칭 점수(`msitScore`): 맞는 검색어 수 × 10 + 계획·전략·로드맵·방안·공고류 제목 +3 + 읽을 수 있는 첨부 +1 + 주요정책·사업공고 게시판 +4 − 장·차관 동정(방문·간담회·축사·협약식 등) 12, 동점이면 최신
 - **LibreOffice 24.2는 HWP 5.0·HWPX를 열지 못한다**("source file could not be loaded" 실측). HWP→PDF 변환은 이 경로로는 안 되고, odt→PDF는 된다. 과기부 문서를 색인에 넣을 때는 odt를 PDF로 바꾸면 쪽 번호가 정확하다
 - 공공누리: 과기부 누리집 하단 표시는 출처표시·상업용금지·변경금지(+인공지능 학습 가능). 게시물별 유형과 제안서 인용 가능 범위 확인 필요
+
+**⑦-4 사전규격 입구 (STEP18, 2026-09-23)**
+
+공고가 뜨기 전 단계인 **사전규격**에도 제안요청서·과업지시서가 붙는다. 홈 화면 "공고 전 사전규격에서 찾기"에서 규격명으로 찾아 바로 시작할 수 있다.
+
+- API: `조달청_나라장터 사전규격정보서비스`(2026-09-23 활용신청 승인, 통합 인증키 그대로). 베이스 `https://apis.data.go.kr/1230000/ao/HrcspSsstndrdInfoService` — **`/ao/` 세그먼트**(입찰공고정보는 `/ad/`). 용역 목록은 `getPublicPrcureThngInfoServc`
+- **검색 조건이 등록일시·변경일시·사전규격등록번호뿐이다**(참고자료 1.0 확인. `…PPSSrch`·기관별 조회 오퍼레이션도 파라미터가 같다). 기관명·규격명 필터가 없어 `dminsttNm` 같은 값을 넣어도 무시된다 → **최근 며칠치를 통째로 받아 서버에서 거른다**(`recentPrespec`: 한 번에 999건, 최대 3쪽, 30분 캐시 / `matchPrespec`: 띄어쓰기 무시 대조, 맞은 검색어 수 → 의견마감 남은 것 → 최근 등록순)
+- 실측(2026-09-23): 최근 9일 용역 사전규격 1,499건, 999건 한 번에 5.2초. 교육·연수·컨설팅·AI 관련 130건
+- 응답의 `bidNtceNoList`가 **이어진 입찰공고번호**다. 이미 공고가 났으면 화면에서 그 공고로 바로 넘어간다
+- `specDocFileUrl1~5`는 `www.g2b.go.kr/pn/pnz/pnza/UntyAtchFile/downloadFile.do` — `/api/rfp`의 허용 호스트와 같아 그대로 읽힌다. 파일 이름은 응답에 없어 앞 바이트로 종류를 판정한다. 실측 4건·첨부 7개 모두 성공(2~5초), 내용은 과업내용서·제안요청서였다
+- 화면: `startSpec()`이 규격서 첫 파일을 제안요청서처럼 읽고(`rfp.src = 'spec'`, 줄 제목 "규격서") 사업명·수요기관으로 계보를 조회한 뒤 검색까지 이어 간다. 공고번호가 없으므로 산출 문서의 사업 개요 표는 사업명·발주기관만 남는다(수동 입력과 같은 처리)
+- 한계: 규격서에서 뽑은 검색어 품질은 제안요청서와 같은 문제를 그대로 안는다(실측: 무대·공연·설치, 설문 문항 글자). 8장 1번과 함께 풀 것
 
 **⑦-2 제안요청서 입력 (STEP 3-4)**
 
@@ -287,6 +300,7 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 
 | 소관 | API | 엔드포인트 | 상태 |
 |---|---|---|---|
+| 조달청 | 나라장터 사전규격정보 | `/1230000/ao/HrcspSsstndrdInfoService/getPublicPrcureThngInfoServc` | 활용신청 승인(2026-09-23). 검색 조건은 등록일시·변경일시·사전규격등록번호뿐 |
 | 조달청 | 나라장터 입찰공고정보 | `/1230000/ad/BidPublicInfoService/getBidPblancListInfoServcPPSSrch` | 활용신청 완료. 베이스에 `/ad/` 세그먼트가 들어간다. 업무구분(물품·용역·공사·외자)마다 오퍼레이션이 다르다 |
 | 과기정통부 | 주요정책 | `/1721000/msitmainpolicyinfo/mainPolicyList` | 사용 중(`/api/msit`). ⑦-3 참고 |
 | 과기정통부 | 사업공고 · 보도자료 · 보도설명 | `/1721000/msitannouncementinfo/businessAnnouncMentList` · `/msitpressreleaseinfo/pressReleaseList` · `/msitpressexplaininfo/pressExplainList` | 2026-09-21 승인, 사용 중(`/api/msit`) |

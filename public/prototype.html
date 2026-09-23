@@ -162,6 +162,14 @@
   .linkish { font-size: 12.5px; font-weight: 600; color: var(--violet); padding: 4px 2px; margin-top: 14px; }
   .manual { max-width: 640px; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin: 0 0 32px; display: none; }
   .manual.on { display: block; }
+  .spec-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .spec-row input[type=text] { flex: 1 1 220px; }
+  .spec-row select { border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 13px; color: var(--ink); background: #fff; }
+  .spec-item { border-top: 1px solid var(--hairline); padding: 11px 0; }
+  .spec-item:first-child { border-top: 0; }
+  .spec-item .nm { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; margin-bottom: 3px; }
+  .spec-item .meta { display: block; margin-bottom: 7px; }
+  .spec-item .acts { display: flex; gap: 6px; flex-wrap: wrap; }
   .manual label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
   .manual input[type=text] { width: 100%; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 10px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; }
   .manual input[type=text]:focus { border-color: var(--violet); }
@@ -494,6 +502,17 @@
           <label for="mn-org">발주기관</label>
           <input type="text" id="mn-org" autocomplete="off" placeholder="예: 한국교육학술정보원">
           <button class="btn primary" id="mn-go" style="margin-top:16px;" onclick="startManual()" disabled>정책 근거 검색</button>
+        </div>
+
+        <button class="linkish" id="spec-toggle" onclick="toggleSpec()" style="display:block;margin:-20px 0 18px;">공고 전 사전규격에서 찾기</button>
+        <div class="manual" id="spec">
+          <div class="spec-row">
+            <input type="text" id="spec-q" autocomplete="off" placeholder="규격명 검색어 (예: 교육, 연수)" onkeydown="if(event.key==='Enter')loadSpec()">
+            <select id="spec-days"><option value="7">최근 7일</option><option value="14">최근 14일</option><option value="21">최근 21일</option></select>
+            <button class="btn primary" onclick="loadSpec()">조회</button>
+          </div>
+          <div class="meta" id="spec-state" style="margin-top:10px;">나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다</div>
+          <div id="spec-list" style="margin-top:6px;"></div>
         </div>
 
         <div id="home-recent"></div>
@@ -982,7 +1001,7 @@
       ok: '<span class="msg">' + ICON_OK + ' ' + esc(r.name) + ' · 검색어 ' + (r.terms || []).length + '개 반영</span>',
       err: '<span class="msg err">' + esc(r.error || '읽지 못했습니다.') + '</span>'
     }[r.state];
-    $('rfp-row').innerHTML = '<span class="k">' + (r.src === 'msit' ? '과기정통부 문서' : '제안요청서') + '</span>' + msg + (r.state === 'loading' ? '' : up);
+    $('rfp-row').innerHTML = '<span class="k">' + (r.src === 'msit' ? '과기정통부 문서' : r.src === 'spec' ? '규격서' : '제안요청서') + '</span>' + msg + (r.state === 'loading' ? '' : up);
   }
   function autoRfp(my) {
     var f = pickRfpFile(S.notice.files);
@@ -1030,6 +1049,58 @@
   /* 나라장터 밖 사업: 제안요청서 + 사업명·발주기관으로 시작 */
   var MN = null;
   function toggleManual() { $('manual').classList.toggle('on'); }
+
+  /* ---------- 사전규격(공고 전 단계) ---------- */
+  // 나라장터 사전규격에는 공고 전에 제안요청서·과업지시서가 붙는다. 규격서를 읽어 공고번호 없이 바로 시작할 수 있다.
+  var SPEC = [];
+  function toggleSpec() { $('spec').classList.toggle('on'); if ($('spec').classList.contains('on') && !SPEC.length) loadSpec(); }
+  function loadSpec() {
+    var q = $('spec-q').value.trim(), days = $('spec-days').value;
+    $('spec-state').className = 'meta'; $('spec-state').textContent = '사전규격을 불러오는 중';
+    $('spec-list').innerHTML = '';
+    api('/api/prespec', { q: q, days: days, limit: '15' }).then(function (d) {
+      if (!d.ok) { $('spec-state').className = 'state-msg err'; $('spec-state').textContent = d.error || '불러오지 못했습니다.'; return; }
+      SPEC = d.items;
+      $('spec-state').textContent = '최근 ' + days + '일 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : '');
+      renderSpec();
+    });
+  }
+  function renderSpec() {
+    $('spec-list').innerHTML = SPEC.map(function (x, i) {
+      return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
+        '<span class="meta">' + esc(x.org) + (x.budget ? ' \u00b7 ' + Number(x.budget).toLocaleString('ko-KR') + '\uc6d0' : '') +
+        (x.opinionCloseAt ? ' \u00b7 \uc758\uacac\ub9c8\uac10 ' + esc(x.opinionCloseAt.slice(0, 10)) : '') + ' \u00b7 ' + esc(x.no) + '</span>' +
+        '<div class="acts">' +
+        (x.files.length ? '<button class="btn soft mini" onclick="startSpec(' + i + ')">\uc774 \uaddc\uaca9\uc73c\ub85c \uc2dc\uc791</button>' : '<span class="meta">\uaddc\uaca9\uc11c \ucca8\ubd80 \uc5c6\uc74c</span>') +
+        x.notices.map(function (no) { return '<button class="btn soft mini" onclick="openNotice(\'' + esc(no) + '\')">\uacf5\uace0 ' + esc(no) + '</button>'; }).join('') +
+        '</div></div>';
+    }).join('') || '<div class="meta">\ub9de\ub294 \uc0ac\uc804\uaddc\uaca9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</div>';
+  }
+  // 규격서 첫 파일을 제안요청서처럼 읽어 검색까지 이어 간다. 공고번호가 없으므로 산출 문서의 사업 개요는 사업명·발주기관만 남는다
+  function startSpec(i) {
+    var x = SPEC[i]; if (!x || !x.files.length) return;
+    var my = ++seq;
+    S = { no: '', notice: { no: '', name: x.name, demandOrg: x.org, files: [], manual: true, prespec: x.no }, lineage: null, terms: [], scope: 'lineage', results: [],
+      rfp: { state: 'loading', name: '\uaddc\uaca9\uc11c', prev: [], src: 'spec' } };
+    CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
+    AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
+    $('no-view').textContent = x.name; $('no-label').textContent = '\uc0ac\uc804\uaddc\uaca9 ' + x.no;
+    renderNotice(); renderRfp();
+    $('search-main').style.display = ''; setState('');
+    $('lineage-card').innerHTML = '<div class="meta">\ud655\uc778 \uc911</div>';
+    $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
+    go('search');
+    api('/api/rfp', { url: x.files[0], name: '', title: x.name }).then(function (d) {
+      if (my !== seq) return;
+      gotRfp(d, '\uaddc\uaca9\uc11c', 'spec');
+      return api('/api/lineage', { name: x.org });
+    }).then(function (l) {
+      if (my !== seq || !l) return;
+      S.lineage = l.ok ? l : { chain: [{ name: x.org, role: '\ubc1c\uc8fc\ucc98' }], orgs: [x.org], source: 'none', error: l.error };
+      renderLineage();
+      return runEvidence(true);
+    }).catch(function () { if (my === seq) setState('\uc11c\ubc84\uc5d0 \uc5f0\uacb0\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.', true); });
+  }
   function manualFile(file) {
     if (!file) return;
     $('mn-state').textContent = file.name + ' 읽는 중'; $('mn-go').disabled = true;
