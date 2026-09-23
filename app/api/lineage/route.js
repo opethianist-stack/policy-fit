@@ -15,6 +15,27 @@ function candidates(name) {
   return [...new Set(out)].filter((s) => s.length >= 2);
 }
 
+// 대학 소속기관: "한국기술교육대학교산학협력단", "○○대학교 평생교육원" → 대학을 부모로 넣는다
+const UNIV_UNIT = /^(.+?(?:대학교|대학원대학교|대학))\s*(산학협력단|평생교육원)$/;
+
+function byUniversity(name) {
+  const compact = name.replace(/\s+/g, '');
+  const unit = compact.match(UNIV_UNIT);
+  const univ = unit ? unit[1] : (/(대학교|대학|대학원)$/.test(compact) ? compact : '');
+  if (!univ) return null;
+  // 교육부 소관이 아닌 대학(한국기술교육대학교 → 고용노동부 등)은 knownParents가 우선
+  const known = (rules.knownParents || {})[univ];
+  const ministry = known || '교육부';
+  const relation = known ? '주관부처' : '소관 부처';
+  const chain = unit
+    ? [{ name, role: unit[2] === '산학협력단' ? '대학 산학협력단' : '대학 소속기관' }, { name: univ, role: '대학' }]
+    : [{ name, role: '대학' }];
+  const orgs = unit ? [name, univ] : [name];
+  chain.push({ name: ministry, role: relation });
+  orgs.push(ministry);
+  return { source: 'rule', chain, ministry, orgs };
+}
+
 function byRule(name) {
   const compact = name.replace(/\s+/g, '');
   for (const m of rules.centralMinistries) {
@@ -22,6 +43,8 @@ function byRule(name) {
       return { source: 'rule', chain: [{ name: m, role: '중앙부처' }], ministry: m, orgs: [m] };
     }
   }
+  const univ = byUniversity(name);
+  if (univ) return univ;
   for (const r of rules.rules) {
     if (!new RegExp(r.pattern).test(name)) continue;
     let chain = [{ name, role: r.type }];

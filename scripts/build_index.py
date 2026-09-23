@@ -12,6 +12,8 @@
 - HWP  : 본문 스트림의 문단 레코드를 같은 방식으로 처리한다.
   HWPX/HWP의 쪽 번호는 추정값이라 pageEstimated=true 로 표시한다.
 - 같은 번호·문서명의 PDF가 있으면 HWP/HWPX는 색인하지 않는다(쪽 번호가 정확한 쪽을 쓴다).
+- 이름이 달라도 본문이 같은 문서(한글 8글자 조각 90% 이상 겹침)는 하나만 색인한다.
+  PDF를 남기고, 둘 다 같은 형식이면 번호가 앞선 쪽을 남긴다(검색 결과에 같은 쪽이 두 번 나오지 않게).
 """
 import json, os, re, struct, sys, zipfile, zlib
 from datetime import datetime, timezone
@@ -19,6 +21,32 @@ from xml.etree import ElementTree as ET
 
 HP = '{http://www.hancom.co.kr/hwpml/2011/paragraph}'
 MIN_CHARS = 40  # 이보다 짧은 쪽은 표지·간지로 보고 색인하지 않는다
+DUP_SHARE = 0.9  # 본문 조각이 양쪽 모두 이 비율 이상 겹치면 같은 문서로 본다
+
+
+def shingles(texts, n=8):
+    h = ''.join(re.findall(r'[가-힣]', ''.join(texts)))
+    return {h[i:i + n] for i in range(0, max(0, len(h) - n + 1), 2)}
+
+
+def drop_duplicates(parsed, report):
+    """parsed: [(file, meta, got)] → 본문이 같은 문서 중 하나만 남긴다"""
+    rank = lambda item: (item[1]['ext'] != 'pdf', item[1]['id'])
+    keep, sigs = [], []
+    for item in sorted(parsed, key=rank):
+        sig = shingles(t for _, t in item[2])
+        dup = None
+        if len(sig) >= 200:
+            for (kf, km, _), ks in zip(keep, sigs):
+                common = len(sig & ks)
+                if common >= DUP_SHARE * len(sig) and common >= DUP_SHARE * len(ks):
+                    dup = km['id']; break
+        if dup:
+            report.append((item[0], f'건너뜀: 본문이 {dup}번 문서와 같음'))
+        else:
+            keep.append(item); sigs.append(sig)
+    order = {f: i for i, (f, _, _) in enumerate(parsed)}
+    return sorted(keep, key=lambda item: order[item[0]])
 
 
 def clean(t):
@@ -186,7 +214,7 @@ def main():
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'data', 'corpus-index.json')
     files = sorted(f for f in os.listdir(src) if f.lower().endswith(('.pdf', '.hwpx', '.hwp')))
     pdf_keys = {os.path.splitext(f)[0] for f in files if f.lower().endswith('.pdf')}
-    docs, pages, report = [], [], []
+    docs, pages, report, parsed = [], [], [], []
     for f in files:
         meta = parse_name(f)
         stem = os.path.splitext(f)[0]
@@ -199,13 +227,15 @@ def main():
         except Exception as ex:  # 한 파일이 깨져도 나머지는 색인한다
             report.append((f, f'실패: {type(ex).__name__}: {ex}')); continue
         meta.update({'pages': total, 'indexedPages': len(got), 'pageEstimated': meta['ext'] != 'pdf'})
-        docs.append(meta)
-        for n, t in got:
-            pages.append({'doc': meta['id'], 'page': n, 'text': t})
+        parsed.append((f, meta, got))
         note = f'{len(got)}/{total}쪽'
         if scanned: note += f' · 스캔 {scanned}쪽 제외'
         if not got: note += ' · 텍스트 없음(OCR 필요)'
         report.append((f, note))
+    for f, meta, got in drop_duplicates(parsed, report):
+        docs.append(meta)
+        for n, t in got:
+            pages.append({'doc': meta['id'], 'page': n, 'text': t})
     result = {'builtAt': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'docs': docs, 'pages': pages}
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with open(out, 'w', encoding='utf-8') as fp:
