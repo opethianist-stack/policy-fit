@@ -50,6 +50,7 @@ python3 scripts/build_index.py <정책문서 폴더>
 | `ALIO_EVENT_KEY` | 알리오플러스 **행사정보** 인증키. |
 | `ANTHROPIC_API_KEY` | Claude API 키. `/api/ai`가 쓴다. 없으면 AI 버튼만 "키 미설정"으로 안내하고 나머지는 그대로 동작한다. |
 | `ANTHROPIC_MODEL` | 선택. 비우면 `claude-haiku-4-5-20251001`. |
+| `POLICYFIT_ANTHROPIC_KEY` | `ANTHROPIC_API_KEY` 대신 쓰는 이름. Claude Code 클라우드 작업 환경은 `ANTHROPIC_*` 이름을 쓸 수 없어 거기서는 이걸로 넣는다. |
 
 알리오플러스(alioplus.go.kr)는 포털과 발급처가 다르고, **API 4종마다 인증키를 따로 발급**한다.
 프록시는 요청 본문의 `keySource`(`data` · `alio-apba` · `alio-biz` · `alio-facility` · `alio-event`)로

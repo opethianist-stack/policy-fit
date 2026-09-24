@@ -269,7 +269,7 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 
 원칙: **버튼을 눌렀을 때만 부르고, LLM은 정해진 칸에 들어갈 짧은 글만 낸다. 코드가 칸마다 검증해 통과한 것만 화면에 넣는다.** 발췌·원문 대조·문서 조립은 계속 규칙 기반이다.
 
-- 호출(`lib/llm.js`): Messages API를 `fetch`로 직접 부른다(SDK 없음). 답은 자유 글이 아니라 **도구 입력 JSON**(`tools` + `tool_choice` 강제)으로 받는다. `temperature 0.2`, 25초 제한, `maxDuration 30`. 키는 서버 환경변수에서만 읽고 응답·오류에 싣지 않는다. `ANTHROPIC_BASE_URL`은 시험용(가짜 서버)
+- 호출(`lib/llm.js`): Messages API를 `fetch`로 직접 부른다(SDK 없음). 답은 자유 글이 아니라 **도구 입력 JSON**(`tools` + `tool_choice` 강제)으로 받는다. `temperature 0.2`, 25초 제한, `maxDuration 30`. 키는 서버 환경변수에서만 읽고 응답·오류에 싣지 않는다. 주소를 바꾸는 `POLICYFIT_ANTHROPIC_BASE_URL`은 시험용(가짜 서버). 예전 이름 `ANTHROPIC_BASE_URL`은 Claude Code 클라우드 환경이 자기 값으로 채워 두므로 읽지 않는다(2026-09-24)
 - 공통 지시(`SYSTEM`): 원문 발췌에 있는 사실만, 원문에 없는 숫자·연도·기관명·정책명 금지, 개조식 명사형 종결, 과장 수식어 금지
 - 카드는 LLM에 보내기 전에 `verifyQuote`로 다시 대조한다(조작된 발췌는 LLM에도 안 간다). 요청당 카드 12장, 제안요청서 본문 8천 자 상한
 - **검증**(`checkText`): 글자 수 한도 → `missingNumbers`(원문 쪽에 없는 두 자리 이상 숫자) → 기관명처럼 생긴 말(…부·청·원·재단·위원회·교육청 등)이 원문 쪽·계보·카드 기관명에 없으면 버림
@@ -371,6 +371,7 @@ Codespace ──(git push)──▶ GitHub(정본) ──(자동)──▶ Verce
 | `ALIO_APBA_KEY` · `ALIO_BIZ_KEY` · `ALIO_FACILITY_KEY` · `ALIO_EVENT_KEY` | 등록됨 (2026-09-20) |
 | `ANTHROPIC_API_KEY` | 멘토에게 받은 Claude API 키. 사용자가 등록 (등록 여부는 `GET /api/ai`의 `ready`) |
 | `ANTHROPIC_MODEL` | 선택. 비우면 `claude-haiku-4-5-20251001` |
+| `POLICYFIT_ANTHROPIC_KEY` | `ANTHROPIC_API_KEY`와 같은 키의 다른 이름. **Claude Code 클라우드 작업 환경**은 `ANTHROPIC_API_KEY`를 "요청 인증에 사용되지 않습니다"로 걸러 내 세션에 넘기지 않는다 → 거기서는 이 이름으로 넣는다. Vercel은 기존 이름 그대로 |
 
 등록 여부는 배포본의 `GET /api/proxy` 응답(`configured`)으로 확인할 수 있다. 변수 이름 템플릿은 `.env.example`.
 
