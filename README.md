@@ -9,20 +9,27 @@ KMA AI 스프린트 과제. 공고번호를 입력하면 발주처 소속 계보
 |---|---|
 | `/` | 과제 개요와 8단계 처리 흐름 |
 | `/prototype` | 사용자 화면 (홈 · 정책 근거 검색 · 정책 근거 선택 · 문서 산출 · 구도 추천) |
-| `/api-test` | 오픈API 연결 테스트. 상단 탭에는 없고 주소로 접근한다 |
+| `/api-test` | 오픈API 연결 테스트 (상단 탭 "API 연결 테스트") |
 | `/api/notice` | 입찰공고번호 → 공고 요약 |
 | `/api/lineage` | 수요기관명 → 발주처 계보 |
 | `/api/evidence` | 정책문서 색인 검색 → 근거 발췌 |
 | `/api/page` | 색인의 한 쪽 원문 + 발췌 위치 |
 | `/api/rfp` | 제안요청서(첨부 URL 또는 업로드) → 본문·검색어 |
+| `/api/prespec` | 나라장터 사전규격(용역) 중 규격명·기관이 맞는 건 |
+| `/api/msit` | 과기정통부 게시판 4종(주요정책·사업공고·보도자료·보도설명) 중 제목이 검색어와 맞는 게시물 |
 | `/api/draft` | 선택한 정책 근거 → 논증 블록 문서 모델 · 장표 구도 추천 |
+| `/api/ai` | LLM 보조(검색어 추천·역할 분류·관련도 정렬·문서 초안·장표 문구). 검증을 통과한 칸만 반환 |
 | `/api/export` | 문서 모델 → docx |
 | `/api/health` | 나라장터·공공기관 정보 API 연결 상태 확인 |
 | `/api/proxy` | 오픈API 서버사이드 프록시 |
 
 ## 정책문서 색인
 
-근거 검색은 `data/corpus-index.json` 하나만 읽는다. 문서를 추가·교체하면 색인을 다시 만든다.
+근거 검색은 `data/corpus-index.json` 하나만 읽는다. 색인은 GitHub Actions(`.github/workflows/sync-corpus.yml`)가
+매일 03:00(KST) 구글드라이브 정책문서 폴더에서 파일을 받아 다시 만들고, 바뀐 게 있으면 커밋한다.
+드라이브 폴더에 파일을 넣으면 다음 날 반영되고, 급하면 Actions에서 "정책문서 색인 갱신"을 직접 실행한다.
+
+로컬에서 직접 만들 때:
 
 ```
 pip install pymupdf olefile
@@ -35,11 +42,13 @@ python3 scripts/build_index.py <정책문서 폴더>
 
 | 이름 | 설명 |
 |---|---|
-| `DATA_GO_KR_KEY` | 공공데이터포털(data.go.kr) 일반 인증키. 이 키 하나로 포털 계열 4종을 모두 호출한다. Decoding/Encoding 어느 쪽을 넣어도 프록시에서 정규화한다. |
+| `DATA_GO_KR_KEY` | 공공데이터포털(data.go.kr) 일반 인증키. 이 키 하나로 포털 계열 API를 모두 호출한다. Decoding/Encoding 어느 쪽을 넣어도 프록시에서 정규화한다. |
 | `ALIO_APBA_KEY` | 알리오플러스 **기관정보** 인증키. |
 | `ALIO_BIZ_KEY` | 알리오플러스 **사업정보** 인증키. |
 | `ALIO_FACILITY_KEY` | 알리오플러스 **시설정보** 인증키. |
 | `ALIO_EVENT_KEY` | 알리오플러스 **행사정보** 인증키. |
+| `ANTHROPIC_API_KEY` | Claude API 키. `/api/ai`가 쓴다. 없으면 AI 버튼만 "키 미설정"으로 안내하고 나머지는 그대로 동작한다. |
+| `ANTHROPIC_MODEL` | 선택. 비우면 `claude-haiku-4-5-20251001`. |
 
 알리오플러스(alioplus.go.kr)는 포털과 발급처가 다르고, **API 4종마다 인증키를 따로 발급**한다.
 프록시는 요청 본문의 `keySource`(`data` · `alio-apba` · `alio-biz` · `alio-facility` · `alio-event`)로
@@ -65,7 +74,11 @@ python3 scripts/build_index.py <정책문서 폴더>
 | 소관기관 | API | End Point | 키 |
 |---|---|---|---|
 | 조달청 | 나라장터 입찰공고정보서비스 | `https://apis.data.go.kr/1230000/ad/BidPublicInfoService` | `DATA_GO_KR_KEY` |
+| 조달청 | 나라장터 사전규격정보서비스 | `https://apis.data.go.kr/1230000/ao/HrcspSsstndrdInfoService` | `DATA_GO_KR_KEY` |
 | 과학기술정보통신부 | 주요정책 | `https://apis.data.go.kr/1721000/msitmainpolicyinfo` | `DATA_GO_KR_KEY` |
+| 과학기술정보통신부 | 사업공고 | `https://apis.data.go.kr/1721000/msitannouncementinfo` | `DATA_GO_KR_KEY` |
+| 과학기술정보통신부 | 보도자료 | `https://apis.data.go.kr/1721000/msitpressreleaseinfo` | `DATA_GO_KR_KEY` |
+| 과학기술정보통신부 | 보도설명 | `https://apis.data.go.kr/1721000/msitpressexplaininfo` | `DATA_GO_KR_KEY` |
 | 재정경제부 | 공공기관 정보 조회 서비스 | `https://apis.data.go.kr/1051000/public_inst` | `DATA_GO_KR_KEY` |
 | 재정경제부 | 공공기관 사업정보 조회서비스 | `https://apis.data.go.kr/1051000/biz` | `DATA_GO_KR_KEY` |
 | 기획재정부 | 알리오플러스 기관정보 | `http://openapi.alioplus.go.kr/api/apba` | `ALIO_APBA_KEY` |
