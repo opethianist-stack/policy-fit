@@ -101,6 +101,14 @@
   .field:focus-within { border-color: var(--violet); }
   .field input { flex: 1; min-width: 0; border: none; outline: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--ink); background: none; padding: 8px 0; }
   .field input::placeholder { color: var(--muted); font-weight: 400; }
+  .find-by { display: flex; align-items: center; gap: 2px; flex-shrink: 0; padding-right: 10px; border-right: 1px solid var(--hairline); }
+  .find-by select { border: none; outline: none; background: none; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink); padding: 8px 2px; cursor: pointer; }
+  .find-opts { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .find-opts.on { display: flex; }
+  .find-opts select { border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 8px; font-family: inherit; font-size: 12px; color: var(--ink); background: #fff; }
+  .find-opts .state-msg.err, #find-state.err { color: #B42318; }
+  #find-list { margin-top: 6px; }
+  #find-list:empty { display: none; }
   .health { display: flex; align-items: center; gap: 16px; margin-top: 10px; padding-left: 2px; }
   .sig { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
   .sig i { width: 8px; height: 8px; border-radius: 50%; background: #C7CCD4; flex-shrink: 0; }
@@ -431,6 +439,8 @@
     .nav { padding: 8px 9px; gap: 6px; }
     .pages { grid-template-columns: 1fr; }
     .page-card { height: auto; min-height: 110px; }
+    .field { flex-wrap: wrap; padding-left: 12px; }
+    .find-by { width: 100%; border-right: 0; border-bottom: 1px solid var(--hairline); padding: 0 0 4px; }
   }
 </style>
 </head>
@@ -477,13 +487,21 @@
     <!-- HOME -->
     <div class="screen" id="s-home">
       <div class="scroll" style="padding-top:44px;">
-        <h2 class="title">입찰공고번호</h2>
+        <h2 class="title">공고 찾기</h2>
         <div class="entry">
-          <form class="field" onsubmit="submitNo(event)">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#66717E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <form class="field" onsubmit="submitFind(event)">
+            <div class="find-by">
+              <select id="f-target" aria-label="검색 대상" onchange="findMode(true)"><option value="bid">입찰공고</option><option value="spec">사전규격</option></select>
+              <select id="f-mode" aria-label="검색 방법" onchange="findMode(true)"><option value="no">공고번호</option><option value="kw">키워드</option></select>
+            </div>
             <input id="no-input" type="text" inputmode="text" autocomplete="off" placeholder="예: R26BK00412587" aria-label="입찰공고번호">
             <button class="btn primary" type="submit">조회</button>
           </form>
+          <div class="find-opts" id="find-opts">
+            <select id="f-days" aria-label="조회 기간"></select>
+            <span class="meta" id="find-state"></span>
+          </div>
+          <div id="find-list"></div>
           <div class="health" aria-live="polite">
             <span class="sig" id="sig-g2b"><i></i><span>나라장터</span></span>
             <span class="sig" id="sig-inst"><i></i><span>공공기관 정보</span></span>
@@ -502,17 +520,6 @@
           <label for="mn-org">발주기관</label>
           <input type="text" id="mn-org" autocomplete="off" placeholder="예: 한국교육학술정보원">
           <button class="btn primary" id="mn-go" style="margin-top:16px;" onclick="startManual()" disabled>정책 근거 검색</button>
-        </div>
-
-        <button class="linkish" id="spec-toggle" onclick="toggleSpec()" style="display:block;margin:-20px 0 18px;">공고 전 사전규격에서 찾기</button>
-        <div class="manual" id="spec">
-          <div class="spec-row">
-            <input type="text" id="spec-q" autocomplete="off" placeholder="규격명 검색어 (예: 교육, 연수)" onkeydown="if(event.key==='Enter')loadSpec()">
-            <select id="spec-days"><option value="7">최근 7일</option><option value="14">최근 14일</option><option value="21">최근 21일</option></select>
-            <button class="btn primary" onclick="loadSpec()">조회</button>
-          </div>
-          <div class="meta" id="spec-state" style="margin-top:10px;">나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다</div>
-          <div id="spec-list" style="margin-top:6px;"></div>
         </div>
 
         <div id="home-recent"></div>
@@ -539,7 +546,7 @@
           <div class="meta" id="no-label" style="margin-left:auto;flex-shrink:0;">공고번호</div>
         </div>
 
-        <div id="search-state" class="state-msg">홈에서 입찰공고번호를 입력해 주세요.</div>
+        <div id="search-state" class="state-msg">홈에서 공고를 찾아 주세요.</div>
 
         <div id="search-main" style="display:none;">
           <div class="card notice" id="notice-card"></div>
@@ -699,7 +706,7 @@
     if (k === 'chat') return CARDS.length > 0;
     return CARDS.some(function (c) { return c.sel; });
   }
-  function stepWhy(k) { return k === 'search' ? '공고번호를 먼저 입력해 주세요' : k === 'chat' ? '정책 근거 검색을 먼저 진행해 주세요' : '정책 근거를 1건 이상 선택해 주세요'; }
+  function stepWhy(k) { return k === 'search' ? '홈에서 공고를 먼저 찾아 주세요' : k === 'chat' ? '정책 근거 검색을 먼저 진행해 주세요' : '정책 근거를 1건 이상 선택해 주세요'; }
   function repaintSteps() { var on = STEP_KEYS.filter(function (k) { return $('s-' + k).classList.contains('on'); })[0]; if (on) paintSteps(on); }
   function paintSteps(name) {
     var at = STEP_KEYS.indexOf(name);
@@ -751,10 +758,51 @@
   var S = { no: '', notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
   var seq = 0;
 
-  function submitNo(e) {
+  /* ---------- 공고 찾기: 대상(입찰공고·사전규격) × 방법(번호·키워드) ---------- */
+  var FIND = {
+    bid: { no: ['공고번호', '예: R26BK00412587'], kw: '공고명 키워드 (예: AI 교육, 연수)', days: [7, 14, 30] },
+    spec: { no: ['규격번호', '사전규격등록번호'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] }
+  };
+  var BIDS = [];
+  function findMode(reset) {
+    var t = $('f-target').value, m = $('f-mode'), f = FIND[t];
+    m.options[0].textContent = f.no[0];
+    var kw = m.value === 'kw', inp = $('no-input');
+    inp.placeholder = kw ? f.kw : f.no[1];
+    inp.setAttribute('aria-label', kw ? '검색어' : f.no[0]);
+    var keep = $('f-days').value;
+    $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('');
+    $('f-days').value = f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    $('find-opts').classList.toggle('on', kw);
+    $('f-days').style.display = kw ? '' : 'none';
+    if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다') : ''); }
+  }
+  function findState(msg, isErr) {
+    $('find-state').textContent = msg || '';
+    $('find-state').className = 'meta' + (isErr ? ' err' : '');
+    if ($('f-mode').value !== 'kw') $('find-opts').classList.toggle('on', !!msg);
+  }
+  function submitFind(e) {
     e.preventDefault();
-    var v = $('no-input').value.trim();
-    if (v) openNotice(v);
+    var t = $('f-target').value, kw = $('f-mode').value === 'kw', v = $('no-input').value.trim();
+    if (!kw && !v) return;
+    if (t === 'bid') { if (kw) loadBids(v); else openNotice(v); }
+    else { if (kw) loadSpec(v); else openSpecNo(v); }
+  }
+  function loadBids(q) {
+    var days = $('f-days').value;
+    findState('입찰공고를 찾는 중'); $('find-list').innerHTML = '';
+    api('/api/bids', { q: q, days: days, limit: '20' }).then(function (d) {
+      if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
+      BIDS = d.items;
+      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.capped ? ' · 검색어마다 최근 100건까지만 봅니다' : ''));
+      $('find-list').innerHTML = BIDS.map(function (x) {
+        return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
+          '<span class="meta">' + esc(x.org) + (x.budget ? ' \u00b7 ' + won(x.budget) : '') +
+          (x.closeAt ? ' \u00b7 마감 ' + esc(x.closeAt.slice(0, 10)) : '') + ' \u00b7 ' + esc(x.no) + '</span>' +
+          '<div class="acts"><button class="btn soft mini" onclick="openNotice(\'' + esc(x.no) + '\')">이 공고로 시작</button></div></div>';
+      }).join('') || '<div class="meta">맞는 입찰공고가 없습니다.</div>';
+    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   function setState(msg, isErr) {
     $('search-state').style.display = msg ? '' : 'none';
@@ -1053,20 +1101,29 @@
   /* ---------- 사전규격(공고 전 단계) ---------- */
   // 나라장터 사전규격에는 공고 전에 제안요청서·과업지시서가 붙는다. 규격서를 읽어 공고번호 없이 바로 시작할 수 있다.
   var SPEC = [];
-  function toggleSpec() { $('spec').classList.toggle('on'); if ($('spec').classList.contains('on') && !SPEC.length) loadSpec(); }
-  function loadSpec() {
-    var q = $('spec-q').value.trim(), days = $('spec-days').value;
-    $('spec-state').className = 'meta'; $('spec-state').textContent = '사전규격을 불러오는 중';
-    $('spec-list').innerHTML = '';
+  function loadSpec(q) {
+    var days = $('f-days').value;
+    findState('사전규격을 불러오는 중'); $('find-list').innerHTML = '';
     api('/api/prespec', { q: q, days: days, limit: '15' }).then(function (d) {
-      if (!d.ok) { $('spec-state').className = 'state-msg err'; $('spec-state').textContent = d.error || '불러오지 못했습니다.'; return; }
+      if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       SPEC = d.items;
-      $('spec-state').textContent = '최근 ' + days + '일 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : '');
+      findState('최근 ' + days + '일 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : ''));
       renderSpec();
-    });
+    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+  }
+  // 규격번호로 찾으면 규격서가 있고 이어진 공고가 없을 때 바로 시작한다. 공고가 이미 났거나 규격서가 없으면 목록에 한 건을 보여 고르게 한다
+  function openSpecNo(no) {
+    findState('사전규격을 찾는 중'); $('find-list').innerHTML = '';
+    api('/api/prespec', { no: no }).then(function (d) {
+      if (!d.ok) { findState(d.error || '찾지 못했습니다.', true); return; }
+      SPEC = [d.item];
+      if (d.item.files.length && !d.item.notices.length) { findState(''); startSpec(0); return; }
+      findState(d.item.notices.length ? '이미 입찰공고가 난 사전규격입니다. 공고로 시작하면 제안요청서·첨부를 함께 봅니다.' : '');
+      renderSpec();
+    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   function renderSpec() {
-    $('spec-list').innerHTML = SPEC.map(function (x, i) {
+    $('find-list').innerHTML = SPEC.map(function (x, i) {
       return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
         '<span class="meta">' + esc(x.org) + (x.budget ? ' \u00b7 ' + Number(x.budget).toLocaleString('ko-KR') + '\uc6d0' : '') +
         (x.opinionCloseAt ? ' \u00b7 \uc758\uacac\ub9c8\uac10 ' + esc(x.opinionCloseAt.slice(0, 10)) : '') + ' \u00b7 ' + esc(x.no) + '</span>' +
@@ -1570,6 +1627,7 @@
 
   renderRecent();
   renderReview();
+  findMode(true);
   go('home');
   checkHealth();
 </script>
