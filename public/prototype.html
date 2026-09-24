@@ -761,7 +761,7 @@
   /* ---------- 공고 찾기: 대상(입찰공고·사전규격) × 방법(번호·키워드) ---------- */
   var FIND = {
     bid: { no: ['공고번호', '예: R26BK00412587'], kw: '공고명 키워드 (예: AI 교육, 연수)', days: [7, 14, 30] },
-    spec: { no: ['규격번호', '사전규격등록번호'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] }
+    spec: { no: ['규격번호', '예: R26BD00276609'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] }
   };
   var BIDS = [];
   function findMode(reset) {
@@ -795,7 +795,7 @@
     api('/api/bids', { q: q, days: days, limit: '20' }).then(function (d) {
       if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       BIDS = d.items;
-      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.capped ? ' · 검색어마다 최근 100건까지만 봅니다' : ''));
+      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : ''));
       $('find-list').innerHTML = BIDS.map(function (x) {
         return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
           '<span class="meta">' + esc(x.org) + (x.budget ? ' \u00b7 ' + won(x.budget) : '') +
