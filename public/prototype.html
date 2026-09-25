@@ -637,7 +637,7 @@
 
         <div class="actions" style="margin-bottom:20px;">
           <button class="fmt on" id="fmt-docx" onclick="setFmt('docx')">docx</button>
-          <button class="fmt" id="fmt-hwpx" disabled style="opacity:0.4;cursor:default;">hwpx</button>
+          <button class="fmt" id="fmt-pdf" onclick="setFmt('pdf')">pdf</button>
           <button class="btn primary" id="dl-btn" onclick="download()" disabled>docx 다운로드</button>
           <button class="ai-btn" id="ai-draft-btn" onclick="aiDraft()">AI 초안</button><span class="ai-msg" id="ai-draft-msg"></span>
           <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
@@ -1593,8 +1593,35 @@
       '<div class="sl-body">' + body + '</div>' + (s.foot ? '<div class="sl-foot">' + esc(s.foot) + '</div>' : '') + '<div class="sl-pg">- 4 -</div></div>';
   }
 
-  function setFmt(f) { $('fmt-docx').classList.toggle('on', f === 'docx'); }
+  var FMT = 'docx';
+  function setFmt(f) {
+    FMT = f;
+    $('fmt-docx').classList.toggle('on', f === 'docx'); $('fmt-pdf').classList.toggle('on', f === 'pdf');
+    $('dl-btn').textContent = f === 'pdf' ? 'PDF로 저장' : 'docx 다운로드';
+  }
+  // PDF는 오른쪽 미리보기(같은 문서 모델)를 A4로 인쇄한다. 브라우저 인쇄 창에서 "PDF로 저장"을 고르면 된다.
+  // 서버에서 PDF를 만들려면 한글 글꼴을 싣고 쪽 배치를 새로 짜야 해서, 미리보기와 똑같이 나오는 인쇄 쪽을 쓴다
+  function printPdf() {
+    var paper = $('ex-paper'); if (!paper.innerHTML) return;
+    var old = document.getElementById('print-frame'); if (old) old.remove();
+    var f = document.createElement('iframe');
+    f.id = 'print-frame'; f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(f);
+    var head = Array.prototype.map.call(document.querySelectorAll('head style, head link[rel=stylesheet]'), function (n) { return n.outerHTML; }).join('');
+    var doc = f.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc('사업이해도_' + (S.notice.no || S.notice.name || 'draft')) + '</title>' + head +
+      '<style>@page{size:A4;margin:18mm 16mm}html,body{background:#fff!important;margin:0}' +
+      '.paper{border:0!important;border-radius:0!important;padding:0!important;max-width:none!important;box-shadow:none!important}' +
+      '.paper .arg li,.paper tr{break-inside:avoid}.paper h4{break-after:avoid}' +
+      '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body><div class="paper">' + paper.innerHTML + '</div></body></html>');
+    doc.close();
+    var go = function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} };
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { setTimeout(go, 50); }); else setTimeout(go, 300);
+  }
   function download() {
+    if (FMT === 'pdf') { printPdf(); return; }
     var btn = $('dl-btn'); btn.disabled = true; btn.textContent = '만드는 중';
     fetch('/api/export', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload()) })
       .then(function (r) { if (!r.ok) return r.json().then(function (d) { throw new Error(d.error); }); return r.blob(); })
