@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 
 const TABS = [
   { href: '/', label: '개요' },
-  { href: '/prototype', label: '프로토타입' },
   { href: '/api-test', label: 'API 연결 테스트' },
 ];
 
@@ -13,7 +12,7 @@ export default function Nav() {
   const path = usePathname();
   return (
     <div className="topbar">
-      <div className="mark">
+      <Link href="/" className="mark">
         <div className="sq">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 11l3 3L22 4" />
@@ -21,7 +20,7 @@ export default function Nav() {
           </svg>
         </div>
         <b>Policy Fit</b>
-      </div>
+      </Link>
       <nav className="tabs">
         {TABS.map((t) => (
           <Link key={t.href} href={t.href} className={`tab ${path === t.href ? 'on' : ''}`}>

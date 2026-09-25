@@ -1,5 +1,6 @@
-export const metadata = { title: 'Policy Fit · 프로토타입' };
+import { redirect } from 'next/navigation';
 
+// 예전 주소. 공유된 링크가 깨지지 않게 새 주소로 넘긴다.
 export default function PrototypePage() {
-  return <iframe className="frame" src="/prototype.html" title="Policy Fit 프로토타입" />;
+  redirect('/search');
 }

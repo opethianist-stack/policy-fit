@@ -3,7 +3,7 @@ import Nav from './Nav';
 
 export const metadata = {
   title: 'Policy Fit',
-  description: 'KMA AI 스프린트 · 공고번호 기반 정책 근거 도구',
+  description: '공고번호 기반 정책 근거 도구',
 };
 
 export default function RootLayout({ children }) {
