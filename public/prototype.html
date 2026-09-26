@@ -664,7 +664,7 @@
         <div class="entry">
           <form class="field" onsubmit="submitFind(event)">
             <div class="find-by">
-              <select id="f-target" aria-label="검색 대상" onchange="findMode(true)"><option value="bid">입찰공고</option><option value="spec">사전규격</option></select>
+              <select id="f-target" aria-label="검색 대상" onchange="findMode(true)"><option value="bid">입찰공고</option><option value="spec">사전규격</option><option value="agency">기관 사업공고</option></select>
               <select id="f-mode" aria-label="검색 방법" onchange="findMode(true)"><option value="no">공고번호</option><option value="kw">키워드</option></select>
             </div>
             <input id="no-input" type="text" inputmode="text" autocomplete="off" placeholder="예: R26BK00412587" aria-label="입찰공고번호">
@@ -1043,7 +1043,9 @@
   /* ---------- 공고 찾기: 대상(입찰공고·사전규격) × 방법(번호·키워드) ---------- */
   var FIND = {
     bid: { no: ['공고번호', '예: R26BK00412587'], kw: '공고명 키워드 (예: AI 교육, 연수)', days: [7, 14, 30] },
-    spec: { no: ['규격번호', '예: R26BD00276609'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] }
+    spec: { no: ['규격번호', '예: R26BD00276609'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] },
+    // 나라장터에 올라오지 않는 산하기관 자체 사업공고(운영기관·수행기관 공모). 지금은 한국과학창의재단(KOSAC)만
+    agency: { no: ['공고번호', '예: 2026-P094 (한국과학창의재단)'], kw: '사업명 키워드 (비우면 최근 공고, 쉼표로 여러 개)', opts: [['open', '접수중·예정만'], ['all', '마감 포함']] }
   };
   var BIDS = [];
   function findMode(reset) {
@@ -1053,11 +1055,16 @@
     inp.placeholder = kw ? f.kw : f.no[1];
     inp.setAttribute('aria-label', kw ? '검색어' : f.no[0]);
     var keep = $('f-days').value;
-    $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('');
-    $('f-days').value = f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    if (f.opts) {
+      $('f-days').innerHTML = f.opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+      $('f-days').value = f.opts.some(function (o) { return o[0] === keep; }) ? keep : f.opts[0][0];
+    } else {
+      $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('');
+      $('f-days').value = f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    }
     $('find-opts').classList.toggle('on', kw);
     $('f-days').style.display = kw ? '' : 'none';
-    if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다') : ''); }
+    if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : t === 'spec' ? '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다' : '한국과학창의재단 사업공고 · 나라장터에 올라오지 않는 운영기관·수행기관 공모') : ''); }
   }
   function findState(msg, isErr) {
     $('find-state').textContent = msg || '';
@@ -1069,6 +1076,7 @@
     var t = $('f-target').value, kw = $('f-mode').value === 'kw', v = $('no-input').value.trim();
     if (!kw && !v) return;
     if (t === 'bid') { if (kw) loadBids(v); else startNotice(v); }
+    else if (t === 'agency') loadAgency(kw ? v : '', kw ? '' : v);
     else { if (kw) loadSpec(v); else openSpecNo(v); }
   }
   function loadBids(q) {
@@ -1129,7 +1137,7 @@
     var files = n.files.map(function (f) {
       return '<a class="chip" href="' + esc(f.url) + '" target="_blank" rel="noopener">' + ICON_FILE + '<span>' + esc(f.name) + '</span></a>';
     }).join('');
-    var link = n.detailUrl ? '<a class="chip" href="' + esc(n.detailUrl) + '" target="_blank" rel="noopener">' + ICON_OPEN + '<span>나라장터 공고</span></a>' : '';
+    var link = n.detailUrl ? '<a class="chip" href="' + esc(n.detailUrl) + '" target="_blank" rel="noopener">' + ICON_OPEN + '<span>' + esc(n.detailLabel || '나라장터 공고') + '</span></a>' : '';
     $('notice-card').innerHTML =
       '<div><div class="k">공고명</div><div class="v">' + esc(n.name) + '</div></div>' +
       '<div><div class="k">' + (n.manual ? '발주기관' : '수요기관') + '</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
@@ -1416,6 +1424,57 @@
         '</div></div>';
     }).join('') || '<div class="meta">\ub9de\ub294 \uc0ac\uc804\uaddc\uaca9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</div>';
   }
+  /* ---------- 기관 사업공고(한국과학창의재단) ---------- */
+  // 나라장터에 없는 운영기관·수행기관 공모. 첨부의 제안요청서(없으면 공고문)를 읽어 사전규격처럼 공고번호 없이 시작한다
+  var AGN = [];
+  function loadAgency(q, no) {
+    findState('한국과학창의재단 사업공고를 불러오는 중'); $('find-list').innerHTML = '';
+    var open = $('f-days').value === 'open' && !no;
+    api('/api/kosac', { q: q, open: open ? '1' : '', limit: '30' }).then(function (d) {
+      if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
+      AGN = no ? d.items.filter(function (x) { return x.no.toUpperCase() === no.toUpperCase(); }) : d.items;
+      findState('한국과학창의재단 사업공고 최근 ' + d.pool + '건 중 ' + AGN.length + '건' + (q ? ' (검색어: ' + q + ')' : no ? ' (공고번호: ' + no + ')' : '') + (open ? ' · 접수중·예정만' : ''));
+      renderAgency();
+    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+  }
+  function renderAgency() {
+    $('find-list').innerHTML = AGN.map(function (x, i) {
+      return '<div class="spec-item"><div class="nm">' + esc(x.title) + '</div>' +
+        '<span class="meta">한국과학창의재단 \u00b7 ' + esc(x.no) + (x.from ? ' \u00b7 접수 ' + esc(x.from) + ' ~ ' + esc(x.to) : '') + (x.status ? ' \u00b7 <b>' + esc(x.status) + '</b>' : '') + '</span>' +
+        '<div class="acts"><button class="btn soft mini" onclick="startAgency(' + i + ')">이 공고로 시작</button>' +
+        '<a class="btn soft mini" href="' + esc(x.url) + '" target="_blank" rel="noopener">원문</a></div></div>';
+    }).join('') || '<div class="meta">맞는 사업공고가 없습니다.</div>';
+  }
+  function startAgency(i) {
+    var x = AGN[i]; if (!x) return;
+    findState('첨부파일을 확인하는 중');
+    api('/api/kosac', { id: x.id }).then(function (d) {
+      if (!d.ok) { findState(d.error || '공고 상세를 열지 못했습니다.', true); return; }
+      var files = d.files.filter(function (f) { return f.readable; });
+      var pick = files.filter(function (f) { return RFP_NAME.test(f.name); })[0] || files.filter(function (f) { return /공고문|공고/.test(f.name); })[0] || files[0];
+      findState('');
+      saveWork(); lastWork = '';
+      var my = ++seq;
+      S = { no: '', notice: { no: '', name: x.title, demandOrg: '한국과학창의재단', files: d.files, manual: true, agency: x.no, detailUrl: x.url, detailLabel: '한국과학창의재단 공고' },
+        lineage: null, terms: [], scope: 'lineage', results: [], rfp: pick ? { state: 'loading', name: pick.name, prev: [] } : { state: 'none' } };
+      CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
+      AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
+      $('no-view').textContent = x.title; $('no-label').textContent = '한국과학창의재단 사업공고 ' + x.no;
+      renderNotice(); renderRfp();
+      $('search-main').style.display = ''; setState('');
+      $('lineage-card').innerHTML = '<div class="meta">확인 중</div>';
+      $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
+      go('search');
+      var rfp = pick ? api('/api/rfp', { url: pick.url, name: pick.name, title: x.title }).then(function (r) { if (my === seq) gotRfp(r, pick.name, 'rfp'); }) : Promise.resolve();
+      return rfp.then(function () { return api('/api/lineage', { name: '한국과학창의재단' }); }).then(function (l) {
+        if (my !== seq || !l) return;
+        S.lineage = l.ok ? l : { chain: [{ name: '한국과학창의재단', role: '발주처' }], orgs: ['한국과학창의재단'], source: 'none', error: l.error };
+        renderLineage();
+        return runEvidence(true);
+      });
+    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+  }
+
   // 규격서 첫 파일을 제안요청서처럼 읽어 검색까지 이어 간다. 공고번호가 없으므로 산출 문서의 사업 개요는 사업명·발주기관만 남는다
   function startSpec(i) {
     var x = SPEC[i]; if (!x || !x.files.length) return;
