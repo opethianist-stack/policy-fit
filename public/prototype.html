@@ -56,6 +56,13 @@
   .side-label { font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; padding: 0 10px; margin-bottom: 8px; }
   .recent { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 12px; color: var(--slate); width: 100%; border-radius: 4px; text-align: left; }
   .recent:hover { background: var(--tint); }
+  /* 최근 검색 확인 창 */
+  .ask { position: fixed; inset: 0; background: rgba(25,31,40,.38); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .ask[hidden] { display: none; }
+  .ask-box { background: #fff; border-radius: 12px; padding: 22px 22px 18px; width: 100%; max-width: 420px; box-shadow: 0 12px 32px rgba(25,31,40,.18); display: flex; flex-direction: column; gap: 10px; }
+  .ask-t { font-weight: 700; font-size: 15px; color: var(--ink); line-height: 1.45; }
+  .ask-d { font-size: 12.5px; color: var(--slate); line-height: 1.6; white-space: pre-line; }
+  .ask-b { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
   .me { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--hairline); }
   .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--violet-tint); color: var(--violet); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
@@ -860,6 +867,7 @@
     if (name === 'export') renderWork();
     if (name === 'export' || name === 'deck') loadDraft();
     paintSteps(name);
+    CURSTEP = name; saveWork();
   }
   // 단계 표시(1 정책 근거 · 2 선택 · 3 산출 · 4 구도 추천)를 눌러 오갈 수 있게 한다. 앞 단계 재료가 없으면 흐리게 두고 막는다
   var STEP_KEYS = ['search', 'chat', 'export', 'deck'];
@@ -901,18 +909,126 @@
   function saveRecent(n) {
     var list = loadRecent().filter(function (x) { return x.no !== n.no; });
     list.unshift({ no: n.no, name: n.name, org: n.demandOrg });
-    try { localStorage.setItem('pf-recent', JSON.stringify(list.slice(0, 8))); } catch (e) {}
+    list = list.slice(0, 8);
+    try { localStorage.setItem('pf-recent', JSON.stringify(list)); } catch (e) {}
+    pruneWork(list);
     renderRecent();
+  }
+
+  /* ---------- 작업 저장 (이 브라우저에만) ----------
+     공고마다 검색 결과·선택·역할·작성칸·장표 설정을 localStorage 'pf-work:<공고번호>'에 둔다. 최근 검색 8건과 같이 간다.
+     4초마다 바뀐 게 있으면 저장하고, 다른 공고로 넘어가기 전·화면을 옮길 때·창을 닫을 때도 저장한다 */
+  var WORK = 'pf-work:', CURSTEP = 'home', lastWork = '';
+  var STEP_NAME = { search: '정책 근거', chat: '선택', export: '산출', deck: '구도 추천' };
+  function loadWork(no) { try { return JSON.parse(localStorage.getItem(WORK + no) || 'null'); } catch (e) { return null; } }
+  function workInfo(no) {
+    var w = loadWork(no); if (!w) return null;
+    var n = (w.CARDS || []).filter(function (c) { return c.sel; }).length;
+    var d = new Date(w.at), t = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return { w: w, sel: n, label: (STEP_NAME[w.step] || '정책 근거') + ' 단계 · 선택 ' + n + '건 · ' + t };
+  }
+  function snapshot() {
+    if (!S.no || !S.notice) return null;   // 입찰공고만 저장한다(최근 검색에 공고번호로 남는 것)
+    var rfp = S.rfp || { state: 'none' };
+    if (rfp.text && rfp.text.length > 20000) rfp = Object.assign({}, rfp, { text: rfp.text.slice(0, 20000) });
+    return { v: 1, no: S.no, step: CURSTEP === 'home' ? 'search' : CURSTEP, S: Object.assign({}, S, { rfp: rfp }), CARDS: CARDS, cur: cur, HEAD: HEAD, CONCL: CONCL,
+      AIF: AIF, COPY: COPY, DECKHL: [DECKHL[0], DECKHL[1]], hlEdited: !!DECKHL.edited, DECKSEL: DECKSEL, PAL: PAL, MSIT: MSIT, sug: AI.sug };
+  }
+  function saveWork() {
+    var w = snapshot(); if (!w) return;
+    var body = JSON.stringify(Object.assign({}, w, { at: 0 }));
+    if (body === lastWork) return;
+    w.at = Date.now();
+    var txt = JSON.stringify(w);
+    try { localStorage.setItem(WORK + w.no, txt); }
+    catch (e) {   // 저장 공간이 차면 최근 검색에서 가장 오래된 작업부터 지우고 한 번 더
+      var old = loadRecent().filter(function (x) { return x.no !== w.no; }).reverse();
+      for (var i = 0; i < old.length; i++) { try { localStorage.removeItem(WORK + old[i].no); localStorage.setItem(WORK + w.no, txt); break; } catch (e2) {} }
+    }
+    lastWork = body;
+  }
+  function pruneWork(list) {
+    try {
+      var keep = {}; list.forEach(function (x) { keep[WORK + x.no] = 1; });
+      for (var i = localStorage.length - 1; i >= 0; i--) { var k = localStorage.key(i); if (k && k.indexOf(WORK) === 0 && !keep[k]) localStorage.removeItem(k); }
+    } catch (e) {}
+  }
+  setInterval(saveWork, 4000);
+  window.addEventListener('pagehide', saveWork);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveWork(); });
+
+  // 최근 검색을 누르면 바로 조회하지 않고 한 번 묻는다. 저장된 작업이 있으면 이어서 할지 처음부터 할지 고른다
+  function pickRecent(no) {
+    no = String(no).toUpperCase();
+    if (S.no === no && S.notice) { go(CURSTEP === 'home' ? 'search' : CURSTEP); return; }   // 지금 열려 있는 공고는 묻지 않는다
+    var r = loadRecent().filter(function (x) { return x.no === no; })[0] || {};
+    var info = workInfo(no);
+    var desc = no + (r.name ? '\n' + r.name : '') + (info ? '\n\n저장된 작업: ' + info.label : '');
+    if (S.no && S.notice) desc += '\n지금 작업 중인 공고(' + S.no + ')는 저장해 두었다가 다시 이어서 할 수 있습니다.';
+    showAsk('해당 공고를 기반으로 다시 작업을 시작하시겠습니까?', desc, info ? [
+      { label: '아니오' },
+      { label: '처음부터 다시', fn: function () { openNotice(no); } },
+      { label: '저장된 작업 이어서', primary: true, fn: function () { resumeWork(no); } }
+    ] : [
+      { label: '아니오' },
+      { label: '예', primary: true, fn: function () { openNotice(no); } }
+    ]);
+  }
+  // 번호 입력·키워드 목록에서 여는 경우: 저장된 작업이 있을 때만 묻고, 없으면 바로 조회한다(사용자가 직접 고른 공고라서)
+  function startNotice(no) {
+    no = String(no).trim().toUpperCase();
+    var info = workInfo(no);
+    if (!info || (S.no === no && S.notice)) { if (S.no === no && S.notice) go(CURSTEP === 'home' ? 'search' : CURSTEP); else openNotice(no); return; }
+    showAsk('이 공고로 저장된 작업이 있습니다. 이어서 하시겠습니까?', no + '\n저장된 작업: ' + info.label, [
+      { label: '취소' },
+      { label: '처음부터 다시', fn: function () { openNotice(no); } },
+      { label: '저장된 작업 이어서', primary: true, fn: function () { resumeWork(no); } }
+    ]);
+  }
+  var ASK = [];
+  function showAsk(title, desc, btns) {
+    ASK = btns;
+    $('ask-t').textContent = title; $('ask-d').textContent = desc;
+    $('ask-b').innerHTML = btns.map(function (b, i) { return '<button class="btn ' + (b.primary ? 'primary' : 'soft') + '" style="flex:0 0 auto;" onclick="askDo(' + i + ')">' + esc(b.label) + '</button>'; }).join('');
+    $('ask').hidden = false;
+    var last = $('ask-b').lastChild; if (last) last.focus();
+  }
+  function closeAsk() { $('ask').hidden = true; ASK = []; }
+  function askDo(i) { var b = ASK[i]; closeAsk(); if (b && b.fn) b.fn(); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('ask').hidden) closeAsk(); });
+
+  // 저장된 작업 복원. 서버를 부르지 않고 저장해 둔 공고·계보·검색 결과·선택·작성칸을 그대로 되살린다
+  function resumeWork(no) {
+    var w = loadWork(no);
+    if (!w) { openNotice(no); return; }
+    saveWork();
+    ++seq;
+    S = w.S; CARDS = w.CARDS || []; cur = w.cur || 0; HEAD = w.HEAD || {}; CONCL = w.CONCL || '';
+    AIF = w.AIF || { head: {}, concl: false }; COPY = w.COPY || null; SWAP = null;
+    DECKHL = w.DECKHL || ['', '']; if (w.hlEdited) DECKHL.edited = true; DECKSEL = w.DECKSEL || '';
+    MSIT = w.MSIT || { key: '', items: [], loose: [] }; AI.sug = w.sug || [];
+    DECK = null; DRAFT = null; draftKey = ''; V = { key: '', data: null, page: 0 };
+    lastWork = JSON.stringify(Object.assign({}, w, { at: 0 }));
+    $('deck-h1').value = DECKHL[0]; $('deck-h2').value = DECKHL[1];
+    if (w.PAL) setPal(w.PAL);
+    $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
+    renderNotice(); renderRfp(); renderLineage(); renderTerms(); renderSug();
+    renderResults({ scopeDocs: S.scopeDocs || 0 });
+    if (MSIT.key && isMsitLine()) { $('msit-box').style.display = ''; renderMsit({ ok: true, pool: MSIT.pool }); } else $('msit-box').style.display = 'none';
+    $('search-main').style.display = ''; setState('');
+    saveRecent(S.notice);
+    go(w.step || 'search');
   }
   function renderRecent() {
     var list = loadRecent();
     $('side-recent-label').style.display = list.length ? '' : 'none';
     $('side-recent').innerHTML = list.slice(0, 5).map(function (x) {
-      return '<button class="recent" onclick="openNotice(\'' + esc(x.no) + '\')">' + ICON_SEARCH + esc(x.no) + '</button>';
+      return '<button class="recent" onclick="pickRecent(\'' + esc(x.no) + '\')">' + ICON_SEARCH + esc(x.no) + '</button>';
     }).join('');
     $('home-recent').innerHTML = !list.length ? '' :
       '<div class="sec-label">최근 검색</div><div class="rows">' + list.map(function (x) {
-        return '<button class="row" onclick="openNotice(\'' + esc(x.no) + '\')"><span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st"></span></button>';
+        var w = workInfo(x.no);
+        return '<button class="row" onclick="pickRecent(\'' + esc(x.no) + '\')"><span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st">' + (w ? '<span class="meta">저장된 작업 · ' + esc(w.label) + '</span>' : '') + '</span></button>';
       }).join('') + '</div>';
   }
 
@@ -948,7 +1064,7 @@
     e.preventDefault();
     var t = $('f-target').value, kw = $('f-mode').value === 'kw', v = $('no-input').value.trim();
     if (!kw && !v) return;
-    if (t === 'bid') { if (kw) loadBids(v); else openNotice(v); }
+    if (t === 'bid') { if (kw) loadBids(v); else startNotice(v); }
     else { if (kw) loadSpec(v); else openSpecNo(v); }
   }
   function loadBids(q) {
@@ -962,7 +1078,7 @@
         return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
           '<span class="meta">' + esc(x.org) + (x.budget ? ' \u00b7 ' + won(x.budget) : '') +
           (x.closeAt ? ' \u00b7 마감 ' + esc(x.closeAt.slice(0, 10)) : '') + ' \u00b7 ' + esc(x.no) + '</span>' +
-          '<div class="acts"><button class="btn soft mini" onclick="openNotice(\'' + esc(x.no) + '\')">이 공고로 시작</button></div></div>';
+          '<div class="acts"><button class="btn soft mini" onclick="startNotice(\'' + esc(x.no) + '\')">이 공고로 시작</button></div></div>';
       }).join('') || '<div class="meta">맞는 입찰공고가 없습니다.</div>';
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
@@ -973,6 +1089,7 @@
   }
 
   function openNotice(no) {
+    saveWork(); lastWork = '';
     var my = ++seq;
     S = { no: no.toUpperCase(), notice: null, lineage: null, terms: [], scope: 'lineage', results: [], rfp: { state: 'none' } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
@@ -1050,7 +1167,7 @@
     return api('/api/evidence', params).then(function (d) {
       if (my !== seq) return;
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
-      S.terms = d.terms; S.results = d.results;
+      S.terms = d.terms; S.results = d.results; S.scopeDocs = d.scopeDocs;
       if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
       renderTerms(); renderResults(d);
       loadMsit();
@@ -1159,7 +1276,7 @@
     $('msit-box').innerHTML = '<div class="msit-head"><span class="k">과기정통부 게시물</span><span class="meta">불러오는 중</span></div>';
     api('/api/msit', { terms: key }).then(function (d) {
       if (my !== seq || key !== MSIT.key) return;
-      MSIT.items = d.ok ? d.items : []; MSIT.loose = d.ok ? (d.loose || []) : [];
+      MSIT.items = d.ok ? d.items : []; MSIT.loose = d.ok ? (d.loose || []) : []; MSIT.pool = d.pool;
       renderMsit(d);
     }).catch(function () { if (my === seq) renderMsit({ ok: false, error: '서버에 연결하지 못했습니다.' }); });
   }
@@ -1291,13 +1408,14 @@
         (x.opinionCloseAt ? ' \u00b7 \uc758\uacac\ub9c8\uac10 ' + esc(x.opinionCloseAt.slice(0, 10)) : '') + ' \u00b7 ' + esc(x.no) + '</span>' +
         '<div class="acts">' +
         (x.files.length ? '<button class="btn soft mini" onclick="startSpec(' + i + ')">\uc774 \uaddc\uaca9\uc73c\ub85c \uc2dc\uc791</button>' : '<span class="meta">\uaddc\uaca9\uc11c \ucca8\ubd80 \uc5c6\uc74c</span>') +
-        x.notices.map(function (no) { return '<button class="btn soft mini" onclick="openNotice(\'' + esc(no) + '\')">\uacf5\uace0 ' + esc(no) + '</button>'; }).join('') +
+        x.notices.map(function (no) { return '<button class="btn soft mini" onclick="startNotice(\'' + esc(no) + '\')">\uacf5\uace0 ' + esc(no) + '</button>'; }).join('') +
         '</div></div>';
     }).join('') || '<div class="meta">\ub9de\ub294 \uc0ac\uc804\uaddc\uaca9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</div>';
   }
   // 규격서 첫 파일을 제안요청서처럼 읽어 검색까지 이어 간다. 공고번호가 없으므로 산출 문서의 사업 개요는 사업명·발주기관만 남는다
   function startSpec(i) {
     var x = SPEC[i]; if (!x || !x.files.length) return;
+    saveWork(); lastWork = '';
     var my = ++seq;
     S = { no: '', notice: { no: '', name: x.name, demandOrg: x.org, files: [], manual: true, prespec: x.no }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'loading', name: '\uaddc\uaca9\uc11c', prev: [], src: 'spec' } };
@@ -1335,6 +1453,7 @@
   function startManual() {
     var name = $('mn-name').value.trim(), org = $('mn-org').value.trim();
     if (!MN || !name || !org) { $('mn-state').textContent = '파일, 사업명, 발주기관을 모두 넣어 주세요.'; return; }
+    saveWork(); lastWork = '';
     var my = ++seq;
     S = { no: '', notice: { no: '', name: name, demandOrg: org, files: [], manual: true }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'ok', name: MN.name, terms: MN.d.terms, text: MN.d.text, merged: false } };
@@ -1858,5 +1977,6 @@
   go('home');
   checkHealth();
 </script>
+<div id="ask" class="ask" hidden onclick="if(event.target===this)closeAsk()"><div class="ask-box" role="dialog" aria-modal="true" aria-labelledby="ask-t"><div id="ask-t" class="ask-t"></div><div id="ask-d" class="ask-d"></div><div id="ask-b" class="ask-b"></div></div></div>
 </body>
 </html>
