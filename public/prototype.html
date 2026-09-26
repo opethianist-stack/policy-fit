@@ -267,6 +267,10 @@
   .deck-tabs button { font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--slate); background: #fff; border: 1px solid var(--hairline); border-radius: 500px; padding: 7px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .deck-tabs button:hover { border-color: var(--violet); color: var(--violet); }
   .deck-tabs button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .deck-hidden { font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+  .deck-hidden summary { cursor: pointer; }
+  .deck-hidden ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }
+  .deck-hidden b { color: var(--slate); font-weight: 600; }
   .deck-tabs .rec { font-size: 10.5px; font-weight: 700; color: var(--violet); background: var(--violet-tint); border-radius: 4px; padding: 1px 5px; }
   .deck-tabs button.on .rec { background: rgba(255,255,255,.18); color: #fff; }
   .decks { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; max-width: 900px; margin-bottom: 18px; }
@@ -1802,7 +1806,9 @@
     if (!DECK.options.some(function (o) { return o.key === DECKSEL; })) DECKSEL = DECK.recommended;
     var tabs = '<div class="deck-tabs" role="tablist">' + DECK.options.map(function (o) {
       return '<button role="tab" class="' + (o.key === DECKSEL ? 'on' : '') + '" onclick="pickDeck(\'' + o.key + '\')">' + esc(o.name) + (o.key === DECK.recommended ? '<span class="rec">추천</span>' : '') + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div>' +
+      (DECK.hidden && DECK.hidden.length ? '<details class="deck-hidden"><summary>선택한 근거로는 만들지 않은 구도 ' + DECK.hidden.length + '개</summary><ul>' +
+        DECK.hidden.map(function (h) { return '<li><b>' + esc(h.name) + '</b> · ' + esc(h.need) + '</li>'; }).join('') + '</ul></details>' : '');
     $('deck-grid').innerHTML = tabs + DECK.options.filter(function (o) { return o.key === DECKSEL; }).map(function (o) {
       var rec = o.key === DECK.recommended;
       return '<div class="card deck-card' + (rec ? ' rec' : '') + '" style="padding:20px;">' + (rec ? '<span class="rec-tag">추천</span>' : '') +
@@ -1899,6 +1905,48 @@
       }).join('') + '</div></div>' +
         '<div class="dl-bot"><div class="dl-chk">' + s.checks.map(function (c) { return '<div class="it"><span class="bx">✔</span><div><b>' + esc(c.label) + '</b><span>' + ph(c.headline, '헤드라인 입력 전') + '</span></div></div>'; }).join('') + '</div>' +
         '<div class="dl-arrow"></div><div class="dl-need"><small>사업 추진의 필요성</small>' + ph(s.bottom, '수렴점 입력 전') + '</div></div></div>';
+    } else if (s.layout === 'survey') {
+      var widths = [88, 76, 62, 52, 44];
+      body = '<div class="sv"><div class="sv-l"><div class="sv-q"><span class="i">?</span><span class="ph">설문 문항 (제안사 사전 조사 또는 한 조사의 같은 문항)</span></div>' +
+        '<div class="sv-chart">' + widths.slice(0, s.bars).map(function (w, i) {
+          return '<div class="sv-row"><span class="ph">응답 항목 ' + (i + 1) + '</span><div class="sv-bar' + (i === 0 ? ' top' : '') + '" style="width:' + w + '%;">00.0%</div></div>';
+        }).join('') + '</div><div class="sl-src ph">출처 · 조사 기관, 연도, 대상</div>' +
+        (s.ref ? '<div class="sv-ref"><small>참고 수치</small>' + tx(s.ref) + ' <span class="sl-src">' + esc(s.ref.source) + '</span></div>' : '') + '</div>' +
+        '<div class="sv-r"><div class="sl-bar">시사점</div>' + s.checks.map(function (c) {
+          return '<div class="dv-chk"><span class="m">✔</span><span class="k">' + esc(c.label) + '</span><span class="v">' + ph(c.headline, '헤드라인 입력 전') + '</span>' +
+            (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
+        }).join('') +
+        '<div class="dv-bottom">' + (s.bottom ? esc(s.bottom) : '<span style="opacity:.7;">사업 추진의 필요성 입력 전</span>') + '</div></div></div>';
+    } else if (s.layout === 'link') {
+      body = '<div class="lk-cols" style="grid-template-columns:repeat(' + s.cards.length + ',1fr);">' + s.cards.map(function (c, i) {
+        return '<div class="lk-card"><div class="lk-top"><div class="lk-lab">' + esc(c.label) + '</div><div class="lk-h"><span class="lk-ic">' + (i + 1) + '</span><span>' + esc(c.title) + '</span></div>' +
+          '<div class="lk-b">' + tx(c.body) + '</div><div class="sl-src" style="margin-top:auto;">' + esc(c.source) + '</div></div>' +
+          '<div class="lk-con"><span class="k">본 사업 연결</span><span class="ph">제안사 연계 방안 한두 줄</span></div></div>';
+      }).join('') + '</div>' +
+        '<div class="lk-box"><div class="k">제안 방향 ' + s.keywords + '대 키워드</div><div class="lk-kw">' +
+        [1, 2, 3, 4].slice(0, s.keywords).map(function (i) { return '<div><b class="ph">Keyword ' + i + '</b><span class="ph">한 줄 설명</span></div>'; }).join('') + '</div></div>' +
+        '<div class="lk-need"><span class="k">사업 추진의 필요성</span><span class="p">' + ph(s.bottom, '수렴점 입력 전') + '</span></div>';
+    } else if (s.layout === 'plan') {
+      body = '<div class="pl"><div class="pl-l">' +
+        '<div class="pl-title"><div class="t">' + esc(s.planYear) + ' ' + esc(s.planOrg) + ' ' + esc(s.planTitle) + '</div><div class="v">' + ph(s.vision, '발주기관 계획 헤드라인') + '</div></div>' +
+        '<div class="pl-k">세부과제</div><div class="pl-tasks" style="grid-template-columns:repeat(' + s.tasks.length + ',1fr);">' +
+        s.tasks.map(function (t) { return '<div class="pl-task">' + esc(t.text) + '</div>'; }).join('') + '</div>' +
+        '<div class="pl-k">주요 내용</div><ul class="pl-pts">' + s.points.map(function (x) { return '<li>' + tx(x) + ' <span class="sl-src">' + esc(x.source) + '</span></li>'; }).join('') + '</ul></div>' +
+        '<div class="pl-r">' + (s.upper.length ? '<div class="sl-bar sub">' + esc(s.upperTitle) + '</div>' +
+          s.upper.map(function (u) { return '<div class="pl-up"><small>' + esc(u.label) + '</small><div>' + tx(u) + '</div><div class="sl-src">' + esc(u.source) + '</div></div>'; }).join('') :
+          '<div class="sl-bar sub">본 사업 연결</div><div class="pl-up"><span class="ph">제안사 연계 방안</span></div>') +
+        '<div class="pl-bottom" style="margin-top:auto;">' + ph(s.bottom, '사업 추진의 필요성 입력 전') + '</div></div></div>';
+    } else if (s.layout === 'pillars') {
+      var nc = s.columns.length;
+      body = '<div class="pi" style="grid-template-columns:repeat(' + nc + ',1fr);"><div class="pi-band"></div>' +
+        s.columns.map(function (c) { return '<div class="pi-c"><small>' + esc(c.label) + '</small><b>' + ph(c.headline, '헤드라인 입력 전') + '</b></div>'; }).join('') +
+        s.columns.map(function (c) {
+          return '<div class="pi-col">' + c.docs.map(function (d) { return '<span class="pi-doc">' + esc(d.label) + '</span>' + ul(d.bullets); }).join('') + '</div>';
+        }).join('') + '</div>';
+    } else if (s.layout === 'spotlight') {
+      body = '<div class="sp">' + s.quotes.map(function (q) {
+        return '<div class="sp-q"><div class="q">' + tx(q) + '</div>' + (q.sub ? '<div class="s">' + esc(q.sub) + '</div>' : '') + '<div class="src">' + esc(q.source) + '</div></div>';
+      }).join('') + (s.bottom ? '<div class="sp-bottom">' + esc(s.bottom) + '</div>' : '') + '</div>';
     } else if (s.layout === 'numeric') {
       body = '<div class="sl-bar dk">' + esc(s.title) + '</div><div class="nm-stats" style="grid-template-columns:repeat(' + s.stats.length + ',1fr);">' + s.stats.map(function (x) {
         return '<div class="nm-stat"><div class="n">' + esc(x.value) + '</div><div class="t">' + esc(x.label) + '</div><div class="sl-src">' + esc(x.source) + '</div></div>';
