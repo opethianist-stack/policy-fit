@@ -309,6 +309,7 @@
   /* 부서 Template 폴더 제안서 색: 보라(KOSAC AI동행·디지털새싹) · 파랑(울산 수업혁신) · 분홍(기업 연계 정보교원) */
   .sl.purple { --p: #733E98; --p2: #9B6BC0; --hd: #733E98; --dk: #404040; --gy: #EBDEF1; --tile: #EBDEF1; --tileT: #733E98; }
   .sl.blue { --p: #0E70F2; --p2: #4A93F5; --hd: #0E70F2; --dk: #002060; --gy: #E8EFFC; --tile: #DDEDFB; --tileT: #002060; }
+  .sl.orange { --p: #ED7D31; --p2: #F4B183; --hd: #ED7D31; --dk: #404040; --gy: #E7E6E6; --tile: #FFF2CC; --tileT: #C55A11; }
   .sl.pink { --p: #FE2D81; --p2: #FF6FA8; --hd: #FE2D81; --dk: #374151; --gy: #F3F4F6; --tile: #FFE0EC; --tileT: #B0105A; }
   /* 어두운 바탕(정책 인용형) */
   .sl.dark { background: #111; color: #F2F2F2; border-color: #111; }
@@ -352,6 +353,25 @@
   .rm-res .t { font-weight: 700; font-size: 1.35cqw; text-align: center; }
   .rm-up { grid-column: 5 / 6; position: relative; }
   .rm-up:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 30%; width: 38%; transform: translateX(-50%); background: var(--p2); clip-path: polygon(50% 0, 100% 35%, 72% 35%, 72% 100%, 28% 100%, 28% 35%, 0 35%); }
+  /* 로드맵·근거문서형: 제안사 행 왼쪽을 정책 근거 문서 표지로 */
+  .rm-docs { display: grid; gap: 1cqw; flex: 1; align-items: stretch; padding-top: .3cqw; }
+  .rm-doc { display: flex; flex-direction: column; gap: .4cqw; text-align: center; font-size: .95cqw; color: #404040; min-width: 0; }
+  .rm-cover { flex: 1; background: #fff; border: 1px solid #BFBFBF; box-shadow: 0 .15cqw .35cqw rgba(0,0,0,.12); display: flex; flex-direction: column; min-height: 8cqw; }
+  .rm-cover .band { height: .8cqw; background: var(--p2); }
+  .rm-cover .t { flex: 1; display: flex; align-items: center; justify-content: center; padding: .5cqw; font-weight: 700; font-size: 1.05cqw; line-height: 1.3; color: #262626; }
+  .rm-cover .y { font-size: .85cqw; color: #7F7F7F; padding-bottom: .4cqw; }
+  .rm-pro.docs { background: #EDEDED; }
+  /* 설문 막대형 */
+  .sv { display: grid; grid-template-columns: 1.25fr 1fr; gap: 3cqw; flex: 1; min-height: 0; }
+  .sv-l, .sv-r { display: flex; flex-direction: column; gap: 1cqw; min-height: 0; }
+  .sv-q { display: flex; align-items: center; gap: .7cqw; font-size: 1.4cqw; font-weight: 500; }
+  .sv-q .i { width: 2.2cqw; height: 2.2cqw; border-radius: 50%; background: #262626; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3cqw; font-weight: 700; }
+  .sv-chart { border-left: .2cqw solid #7F7F7F; padding-left: .6cqw; display: flex; flex-direction: column; gap: .9cqw; }
+  .sv-row { display: flex; flex-direction: column; gap: .25cqw; font-size: 1.1cqw; }
+  .sv-bar { height: 1.7cqw; background: #D9D9D9; display: flex; align-items: center; justify-content: flex-end; padding-right: .5cqw; font-size: 1cqw; color: #7F7F7F; }
+  .sv-bar.top { background: var(--p2); color: #fff; }
+  .sv-ref { border: 1px solid #BFBFBF; border-radius: .5cqw; padding: .7cqw 1cqw; font-size: 1.05cqw; }
+  .sv-ref small { display: block; color: var(--p); font-weight: 700; font-size: .95cqw; margin-bottom: .2cqw; }
   /* 수렴형 */
   .cv-cols { display: grid; gap: 1.2cqw; flex: 1; min-height: 0; }
   .cv-col { display: flex; flex-direction: column; border: 1px solid #BFBFBF; }
@@ -738,7 +758,7 @@
           </div>
           <div class="deck-bar">
             <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
-            <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button><button id="pal-purple" style="background:#733E98" onclick="setPal('purple')" aria-label="보라"></button><button id="pal-blue" style="background:#0E70F2" onclick="setPal('blue')" aria-label="파랑"></button><button id="pal-pink" style="background:#FE2D81" onclick="setPal('pink')" aria-label="분홍"></button></div>
+            <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-orange" style="background:#ED7D31" onclick="setPal('orange')" aria-label="주황"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button><button id="pal-purple" style="background:#733E98" onclick="setPal('purple')" aria-label="보라"></button><button id="pal-blue" style="background:#0E70F2" onclick="setPal('blue')" aria-label="파랑"></button><button id="pal-pink" style="background:#FE2D81" onclick="setPal('pink')" aria-label="분홍"></button></div>
           </div>
         </div>
         <div class="decks" id="deck-grid"></div>
@@ -1575,7 +1595,7 @@
     $('deck-reason').textContent = deck.reason;
     paintDeck();
   }
-  var PALS = ['coral', 'navy', 'purple', 'blue', 'pink'];
+  var PALS = ['coral', 'orange', 'navy', 'purple', 'blue', 'pink'];
   function setPal(p) { PAL = p; PALS.forEach(function (k) { $('pal-' + k).classList.toggle('on', k === p); }); paintDeck(); }
   // 구도는 탭으로 하나씩 본다(5장을 세로로 늘어놓으면 비교가 어렵다). 기본은 추천안
   var DECKSEL = '';
@@ -1618,8 +1638,11 @@
           '<div class="rm-c"><div>' + (s.need.top ? tx(s.need.top) : '<span class="ph">현장 수요 근거</span>') + '</div></div>' +
           '<div class="rm-c g"><div>' + (s.need.bottom ? esc(s.need.bottom.text) : '<span class="ph">사업 추진의 필요성</span>') + '</div></div></div>') +
         '<div class="rm-lab" style="grid-row:2;grid-column:1;">' + esc(s.proposer.label) + '</div>' +
-        '<div class="rm-pro" style="grid-row:2;grid-column:2 / ' + (n > 2 ? 4 : 3) + ';"><div class="sl-bar sub" style="font-size:1.15cqw;padding:.35cqw;">' + esc(s.proposer.listTitle) + '</div>' +
-          [1, 2, 3, 4].map(function (i) { return '<div class="rm-slot">수행 실적 ' + i + ' (연도 · 사업명)</div>'; }).join('') + '</div>' +
+        '<div class="rm-pro' + (s.docs ? ' docs' : '') + '" style="grid-row:2;grid-column:2 / ' + (n > 2 ? 4 : 3) + ';"><div class="sl-bar' + (s.docs ? '' : ' sub') + '" style="font-size:1.15cqw;padding:.35cqw;">' + esc(s.proposer.listTitle) + '</div>' +
+          (s.docs ? '<div class="rm-docs" style="grid-template-columns:repeat(' + s.docs.length + ',1fr);">' + s.docs.map(function (d) {
+            return '<div class="rm-doc"><div class="rm-cover"><div class="band"></div><div class="t">' + esc(d.title) + '</div><div class="y">' + esc(d.year) + '</div></div><div>' + esc(d.org) + '</div></div>';
+          }).join('') + '</div>' :
+          [1, 2, 3, 4].map(function (i) { return '<div class="rm-slot">수행 실적 ' + i + ' (연도 · 사업명)</div>'; }).join('')) + '</div>' +
         '<div class="rm-res" style="grid-row:2;grid-column:' + (n > 2 ? 4 : 3) + ' / ' + (n + 2) + ';"><div class="t">' + ph(s.proposer.boxTitle, '제안사 대응 헤드라인') + '</div>' +
           '<div style="text-align:center;"><span class="hl" style="font-weight:700;"><span class="ph" style="color:#7F7F7F;">핵심 대응 한 줄</span></span></div>' +
           [1, 2, 3].map(function (i) { return '<div class="ph">→ 대응 방향 ' + i + '</div>'; }).join('') + '</div>' +
@@ -1641,6 +1664,18 @@
         s.items.map(function (it) { return '<div class="dv-item"><small>' + esc(it.label) + '</small>' + tx(it) + '</div>'; }).join('') + '</div>' +
         '<div class="dv-r"><div class="sl-bar">' + esc(s.rightTitle) + '</div>' +
         s.checks.map(function (c) {
+          return '<div class="dv-chk"><span class="m">✔</span><span class="k">' + esc(c.label) + '</span><span class="v">' + ph(c.headline, '헤드라인 입력 전') + '</span>' +
+            (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
+        }).join('') +
+        '<div class="dv-bottom">' + (s.bottom ? esc(s.bottom) : '<span style="opacity:.7;">사업 추진의 필요성 입력 전</span>') + '</div></div></div>';
+    } else if (s.layout === 'survey') {
+      var widths = [88, 76, 62, 52, 44];
+      body = '<div class="sv"><div class="sv-l"><div class="sv-q"><span class="i">?</span><span class="ph">설문 문항 (제안사 사전 조사 또는 한 조사의 같은 문항)</span></div>' +
+        '<div class="sv-chart">' + widths.slice(0, s.bars).map(function (w, i) {
+          return '<div class="sv-row"><span class="ph">응답 항목 ' + (i + 1) + '</span><div class="sv-bar' + (i === 0 ? ' top' : '') + '" style="width:' + w + '%;">00.0%</div></div>';
+        }).join('') + '</div><div class="sl-src ph">출처 · 조사 기관, 연도, 대상</div>' +
+        (s.ref ? '<div class="sv-ref"><small>참고 수치</small>' + tx(s.ref) + ' <span class="sl-src">' + esc(s.ref.source) + '</span></div>' : '') + '</div>' +
+        '<div class="sv-r"><div class="sl-bar">시사점</div>' + s.checks.map(function (c) {
           return '<div class="dv-chk"><span class="m">✔</span><span class="k">' + esc(c.label) + '</span><span class="v">' + ph(c.headline, '헤드라인 입력 전') + '</span>' +
             (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
         }).join('') +
