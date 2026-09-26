@@ -1,9 +1,6 @@
 name: 산하기관 게시판 중복 조사(일회성)
 on:
-  workflow_dispatch:
-  push:
-    branches: [claude/bold-bardeen-l00afw]
-    paths: [scripts/probe_board_overlap.mjs, .github/workflows/probe-boards.yml]
+  workflow_dispatch:   # Actions 탭에서 수동 실행. 클라우드 작업 환경은 기관 사이트가 막혀 여기서 돌린다
 permissions:
   contents: read
 jobs:
