@@ -304,8 +304,17 @@
   .sl-wrap { container-type: inline-size; min-width: 600px; }
   .sl { --p: #FF5647; --p2: #FF887E; --hd: #FF5647; --dk: #595959; --gy: #E7E6E6; --tile: #FFC000; --tileT: #222; --txt: #262626;
         aspect-ratio: 1.4 / 1; background: #fff; border: 1px solid #D5D9E0; box-shadow: 0 1px 3px rgba(25,31,40,0.06); position: relative;
-        padding: 1.4cqw 2.6cqw 2.4cqw; display: flex; flex-direction: column; overflow: hidden; color: var(--txt); font-size: 1.25cqw; line-height: 1.35; }
+        padding: 1.4cqw 2.6cqw 2.4cqw; display: flex; flex-direction: column; overflow: hidden; color: var(--txt); font-size: 1.25cqw; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
   .sl.navy { --p: #2E5597; --p2: #4472C4; --hd: #E8412C; --dk: #404040; --gy: #E7E6E6; --tile: #DAE3F3; --tileT: #2E5597; }
+  /* 부서 Template 폴더 제안서 색: 보라(KOSAC AI동행·디지털새싹) · 파랑(울산 수업혁신) · 분홍(기업 연계 정보교원) */
+  .sl.purple { --p: #733E98; --p2: #9B6BC0; --hd: #733E98; --dk: #404040; --gy: #EBDEF1; --tile: #EBDEF1; --tileT: #733E98; }
+  .sl.blue { --p: #0E70F2; --p2: #4A93F5; --hd: #0E70F2; --dk: #002060; --gy: #E8EFFC; --tile: #DDEDFB; --tileT: #002060; }
+  .sl.pink { --p: #FE2D81; --p2: #FF6FA8; --hd: #FE2D81; --dk: #374151; --gy: #F3F4F6; --tile: #FFE0EC; --tileT: #B0105A; }
+  /* 어두운 바탕(정책 인용형) */
+  .sl.dark { background: #111; color: #F2F2F2; border-color: #111; }
+  .sl.dark .sl-crumb, .sl.dark .sl-proj, .sl.dark .sl-hl .l1 { color: #D9D9D9; }
+  .sl.dark .sl-foot, .sl.dark .sl-pg { color: #8C8C8C; }
+  .sl.dark .ph { color: #6B7280; }
   .sl .ph { color: #A8AFB9; font-weight: 400; }
   .sl .hl { background: #FFFF00; border-radius: 0; color: inherit; }
   .sl-head { display: flex; align-items: flex-start; gap: 1cqw; }
@@ -382,6 +391,61 @@
   .nm-tab { width: 100%; border-collapse: collapse; font-size: 1.1cqw; }
   .nm-tab td { border: 1px solid #BFBFBF; padding: .6cqw .8cqw; vertical-align: middle; }
   .nm-tab td:first-child { background: var(--gy); font-weight: 700; text-align: center; white-space: nowrap; width: 11cqw; }
+
+  /* 정책-연결형 */
+  .lk-cols { display: grid; gap: 1.4cqw; flex: 1; min-height: 0; }
+  .lk-card { border: 1px solid #D6DEEA; border-radius: .5cqw; display: flex; flex-direction: column; box-shadow: 0 .15cqw .4cqw rgba(0,0,0,.07); overflow: hidden; }
+  .lk-top { padding: 1.1cqw 1.3cqw .8cqw; display: flex; flex-direction: column; gap: .6cqw; flex: 1; }
+  .lk-h { display: flex; align-items: center; gap: .9cqw; font-weight: 700; font-size: 1.4cqw; color: var(--dk); line-height: 1.3; }
+  .lk-ic { width: 3cqw; height: 3cqw; border-radius: 50%; background: var(--dk); color: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2cqw; }
+  .lk-lab { font-size: .95cqw; color: var(--p); font-weight: 700; }
+  .lk-b { font-size: 1.3cqw; line-height: 1.5; color: #404040; }
+  .lk-con { background: var(--gy); padding: .9cqw 1.3cqw; font-size: 1.05cqw; min-height: 5cqw; }
+  .lk-con .k { display: block; font-weight: 700; color: var(--hd); font-size: 1.05cqw; margin-bottom: .3cqw; }
+  .lk-box { border: 1px solid #D6DEEA; border-radius: .5cqw; padding: .8cqw 1.3cqw; }
+  .lk-box .k { font-weight: 700; font-size: 1.1cqw; color: var(--dk); margin-bottom: .5cqw; }
+  .lk-kw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1cqw; text-align: center; font-size: 1.05cqw; }
+  .lk-kw b { display: block; color: var(--p); font-size: 1.3cqw; }
+  .lk-need { display: flex; align-items: center; gap: 1.4cqw; border: 1px solid #D6DEEA; border-radius: .5cqw; padding: .8cqw 1.3cqw; font-size: 1.3cqw; font-weight: 700; }
+  .lk-need .k { font-size: 1.1cqw; color: var(--dk); flex-shrink: 0; }
+  .lk-need .p { background: var(--tile); color: var(--tileT); border-radius: 500px; padding: .4cqw 1.4cqw; flex: 1; text-align: center; }
+  /* 발주기관 계획형 */
+  .pl { display: grid; grid-template-columns: 1.55fr 1fr; gap: 2cqw; flex: 1; min-height: 0; }
+  .pl-l, .pl-r { display: flex; flex-direction: column; gap: 1.2cqw; min-height: 0; }
+  .pl-title { text-align: center; }
+  .pl-title .t { font-size: 1.7cqw; font-weight: 500; color: #404040; }
+  .pl-title .v { font-size: 1.9cqw; font-weight: 700; color: var(--p); }
+  .pl-k { font-weight: 700; font-size: 1.25cqw; display: flex; align-items: center; gap: .5cqw; }
+  .pl-k:before { content: '✔'; color: var(--p); font-size: 1.4cqw; }
+  .pl-tasks { display: grid; gap: 1cqw; }
+  .pl-task { background: var(--p); color: #fff; border-radius: 1.2cqw; padding: 1.2cqw; text-align: center; font-size: 1.3cqw; line-height: 1.3; min-height: 5.4cqw; display: flex; align-items: center; justify-content: center; }
+  .pl-pts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .9cqw; font-size: 1.25cqw; line-height: 1.45; }
+  .pl-pts li { padding-left: 1.1cqw; text-indent: -1.1cqw; }
+  .pl-pts li:before { content: '• '; color: var(--p); }
+  .pl-up { border: 1px solid #BFBFBF; border-radius: .6cqw; padding: 1cqw 1.2cqw; font-size: 1.2cqw; line-height: 1.45; display: flex; flex-direction: column; gap: .3cqw; }
+  .pl-up small { color: var(--p); font-weight: 700; font-size: .95cqw; }
+  .pl-bottom { background: var(--tile); color: var(--tileT); font-weight: 700; text-align: center; padding: .8cqw 1.2cqw; font-size: 1.35cqw; border-radius: 500px; }
+  /* 측면 원형형 */
+  .pi { position: relative; flex: 1; min-height: 0; display: grid; gap: 2cqw; grid-template-rows: auto 1fr; }
+  .pi-band { position: absolute; left: -2.6cqw; right: -2.6cqw; top: 6.5cqw; height: 6cqw; background: #D9D9D9; }
+  .pi-c { position: relative; justify-self: center; width: 15cqw; height: 15cqw; border-radius: 50%; background: var(--p); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.6cqw; box-sizing: border-box; }
+  .pi-c small { font-size: 1cqw; opacity: .85; margin-bottom: .4cqw; }
+  .pi-c b { font-size: 1.45cqw; line-height: 1.3; font-weight: 500; }
+  .pi-c .ph { color: rgba(255,255,255,.6); }
+  .pi-col { display: flex; flex-direction: column; gap: 1cqw; min-height: 0; }
+  .pi-doc { background: var(--gy); color: var(--tileT); font-weight: 700; padding: .3cqw .7cqw; align-self: flex-start; font-size: 1.2cqw; }
+  .pi-col .sl-ul { font-size: 1.2cqw; line-height: 1.45; gap: .7cqw; }
+  .pi-col .sl-ul li:before { content: '• '; }
+  /* 정책 인용형 */
+  .sp { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 3cqw; padding: 0 4cqw; }
+  .sp-q { display: flex; flex-direction: column; gap: .8cqw; }
+  .sp-q:nth-child(2) { align-items: flex-end; text-align: right; }
+  .sp-q .q { font-size: 2.3cqw; line-height: 1.45; font-weight: 500; color: #fff; max-width: 70cqw; }
+  .sp-q .q .hl { background: none; color: var(--p2); }
+  .sp-q .s { font-size: 1.2cqw; color: #D9D9D9; }
+  .sp-q .src { font-size: .95cqw; color: #8C8C8C; }
+  .sp-bottom { text-align: center; font-size: 2.2cqw; font-weight: 700; color: var(--p); }
+  .sl.navy .sp-bottom, .sl.navy .sp-q .q .hl { color: #F4B183; }
 
   .wire { background: var(--bg); border-radius: 8px; padding: 12px; height: 180px; display: flex; flex-direction: column; gap: 8px; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -674,7 +738,7 @@
           </div>
           <div class="deck-bar">
             <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
-            <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button></div>
+            <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button><button id="pal-purple" style="background:#733E98" onclick="setPal('purple')" aria-label="보라"></button><button id="pal-blue" style="background:#0E70F2" onclick="setPal('blue')" aria-label="파랑"></button><button id="pal-pink" style="background:#FE2D81" onclick="setPal('pink')" aria-label="분홍"></button></div>
           </div>
         </div>
         <div class="decks" id="deck-grid"></div>
@@ -1511,7 +1575,8 @@
     $('deck-reason').textContent = deck.reason;
     paintDeck();
   }
-  function setPal(p) { PAL = p; $('pal-coral').classList.toggle('on', p === 'coral'); $('pal-navy').classList.toggle('on', p === 'navy'); paintDeck(); }
+  var PALS = ['coral', 'navy', 'purple', 'blue', 'pink'];
+  function setPal(p) { PAL = p; PALS.forEach(function (k) { $('pal-' + k).classList.toggle('on', k === p); }); paintDeck(); }
   // 구도는 탭으로 하나씩 본다(5장을 세로로 늘어놓으면 비교가 어렵다). 기본은 추천안
   var DECKSEL = '';
   function pickDeck(k) { DECKSEL = k; paintDeck(); }
@@ -1524,7 +1589,7 @@
     $('deck-grid').innerHTML = tabs + DECK.options.filter(function (o) { return o.key === DECKSEL; }).map(function (o) {
       var rec = o.key === DECK.recommended;
       return '<div class="card deck-card' + (rec ? ' rec' : '') + '" style="padding:20px;">' + (rec ? '<span class="rec-tag">추천</span>' : '') +
-        '<div class="deck-head"><div class="doc-title">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div>' + (DECK.aiUsed && o.key !== 'voices' ? '<span class="ai-tag">AI 문구</span>' : '') + '</div>' +
+        '<div class="deck-head"><div class="doc-title">' + esc(o.name) + '</div><div class="meta">' + esc(o.when) + '</div>' + (DECK.aiUsed && o.key !== 'voices' && o.key !== 'spotlight' ? '<span class="ai-tag">AI 문구</span>' : '') + '</div>' +
         '<div class="sl-scroll"><div class="sl-wrap">' + slideHtml(o.slide) + '</div></div></div>';
     }).join('');
   }
@@ -1580,6 +1645,36 @@
             (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
         }).join('') +
         '<div class="dv-bottom">' + (s.bottom ? esc(s.bottom) : '<span style="opacity:.7;">사업 추진의 필요성 입력 전</span>') + '</div></div></div>';
+    } else if (s.layout === 'link') {
+      body = '<div class="lk-cols" style="grid-template-columns:repeat(' + s.cards.length + ',1fr);">' + s.cards.map(function (c, i) {
+        return '<div class="lk-card"><div class="lk-top"><div class="lk-lab">' + esc(c.label) + '</div><div class="lk-h"><span class="lk-ic">' + (i + 1) + '</span><span>' + esc(c.title) + '</span></div>' +
+          '<div class="lk-b">' + tx(c.body) + '</div><div class="sl-src" style="margin-top:auto;">' + esc(c.source) + '</div></div>' +
+          '<div class="lk-con"><span class="k">본 사업 연결</span><span class="ph">제안사 연계 방안 한두 줄</span></div></div>';
+      }).join('') + '</div>' +
+        '<div class="lk-box"><div class="k">제안 방향 ' + s.keywords + '대 키워드</div><div class="lk-kw">' +
+        [1, 2, 3, 4].slice(0, s.keywords).map(function (i) { return '<div><b class="ph">Keyword ' + i + '</b><span class="ph">한 줄 설명</span></div>'; }).join('') + '</div></div>' +
+        '<div class="lk-need"><span class="k">사업 추진의 필요성</span><span class="p">' + ph(s.bottom, '수렴점 입력 전') + '</span></div>';
+    } else if (s.layout === 'plan') {
+      body = '<div class="pl"><div class="pl-l">' +
+        '<div class="pl-title"><div class="t">' + esc(s.planYear) + ' ' + esc(s.planOrg) + ' ' + esc(s.planTitle) + '</div><div class="v">' + ph(s.vision, '발주기관 계획 헤드라인') + '</div></div>' +
+        '<div class="pl-k">세부과제</div><div class="pl-tasks" style="grid-template-columns:repeat(' + s.tasks.length + ',1fr);">' +
+        s.tasks.map(function (t) { return '<div class="pl-task">' + esc(t.text) + '</div>'; }).join('') + '</div>' +
+        '<div class="pl-k">주요 내용</div><ul class="pl-pts">' + s.points.map(function (x) { return '<li>' + tx(x) + ' <span class="sl-src">' + esc(x.source) + '</span></li>'; }).join('') + '</ul></div>' +
+        '<div class="pl-r">' + (s.upper.length ? '<div class="sl-bar sub">' + esc(s.upperTitle) + '</div>' +
+          s.upper.map(function (u) { return '<div class="pl-up"><small>' + esc(u.label) + '</small><div>' + tx(u) + '</div><div class="sl-src">' + esc(u.source) + '</div></div>'; }).join('') :
+          '<div class="sl-bar sub">본 사업 연결</div><div class="pl-up"><span class="ph">제안사 연계 방안</span></div>') +
+        '<div class="pl-bottom" style="margin-top:auto;">' + ph(s.bottom, '사업 추진의 필요성 입력 전') + '</div></div></div>';
+    } else if (s.layout === 'pillars') {
+      var nc = s.columns.length;
+      body = '<div class="pi" style="grid-template-columns:repeat(' + nc + ',1fr);"><div class="pi-band"></div>' +
+        s.columns.map(function (c) { return '<div class="pi-c"><small>' + esc(c.label) + '</small><b>' + ph(c.headline, '헤드라인 입력 전') + '</b></div>'; }).join('') +
+        s.columns.map(function (c) {
+          return '<div class="pi-col">' + c.docs.map(function (d) { return '<span class="pi-doc">' + esc(d.label) + '</span>' + ul(d.bullets); }).join('') + '</div>';
+        }).join('') + '</div>';
+    } else if (s.layout === 'spotlight') {
+      body = '<div class="sp">' + s.quotes.map(function (q) {
+        return '<div class="sp-q"><div class="q">' + tx(q) + '</div>' + (q.sub ? '<div class="s">' + esc(q.sub) + '</div>' : '') + '<div class="src">' + esc(q.source) + '</div></div>';
+      }).join('') + (s.bottom ? '<div class="sp-bottom">' + esc(s.bottom) + '</div>' : '') + '</div>';
     } else if (s.layout === 'numeric') {
       body = '<div class="sl-bar dk">' + esc(s.title) + '</div><div class="nm-stats" style="grid-template-columns:repeat(' + s.stats.length + ',1fr);">' + s.stats.map(function (x) {
         return '<div class="nm-stat"><div class="n">' + esc(x.value) + '</div><div class="t">' + esc(x.label) + '</div><div class="sl-src">' + esc(x.source) + '</div></div>';
@@ -1587,7 +1682,7 @@
         (s.rows.length ? '<table class="nm-tab">' + s.rows.map(function (r) { return '<tr><td>' + esc(r.label) + '</td><td>' + tx(r) + ' <span class="sl-src">' + esc(r.source) + '</span></td></tr>'; }).join('') + '</table>' : '');
     }
     var h1 = DECKHL[0], h2 = DECKHL[1];
-    return '<div class="sl' + (PAL === 'navy' ? ' navy' : '') + '">' +
+    return '<div class="sl' + (PAL !== 'coral' ? ' ' + PAL : '') + (s.theme === 'dark' ? ' dark' : '') + '">' +
       '<div class="sl-head"><div class="sl-no">01</div><div class="sl-crumb">Ⅰ. 제안 개요<b>' + esc(s.section) + '</b></div><div class="sl-proj">' + esc(s.project) + '</div></div>' +
       '<div class="sl-hl"><div class="l1">' + ph(h1, '헤드라인 윗줄') + '</div><div class="l2">' + ph(h2, '헤드라인 아랫줄(강조)') + '</div></div>' +
       '<div class="sl-body">' + body + '</div>' + (s.foot ? '<div class="sl-foot">' + esc(s.foot) + '</div>' : '') + '<div class="sl-pg">- 4 -</div></div>';
