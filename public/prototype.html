@@ -1073,11 +1073,10 @@
     else { if (kw) loadSpec(v); else openSpecNo(v); }
   }
   // 나라장터 용역 입찰공고와 산하기관 게시판 공고(나라장터에 올라오지 않는 운영기관·수행기관 공모, 연수 사업 모집)를 함께 찾아 날짜순으로 섞는다.
-  // 게시판 공고는 기간 안에 올라왔거나 아직 접수 중인 것만. 사업공고를 못 불러와도 입찰공고는 그대로 보여 준다
+  // 게시판 공고는 선택한 기간과 상관없이 최근 6개월치(서버에서 자름). 지난 공고도 참고로 본다. 사업공고를 못 불러와도 입찰공고는 그대로 보여 준다
   function loadBids(q) {
     var days = $('f-days').value;
     findState('입찰공고를 찾는 중'); $('find-list').innerHTML = '';
-    var cut = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
     Promise.all([
       api('/api/bids', { q: q, days: days, limit: '20' }),
       api('/api/boards', { q: q, limit: '50' }).catch(function () { return { ok: false }; })
@@ -1085,11 +1084,11 @@
       var d = r[0], k = r[1];
       if (!d.ok && !k.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       BIDS = d.ok ? d.items : [];
-      AGN = k.ok ? k.items.filter(function (x) { return x.postedAt >= cut || /접수중|접수예정/.test(x.status); }) : [];
+      AGN = k.ok ? k.items : [];
       var rows = BIDS.map(function (x) { return { at: x.postedAt || '', html: bidRow(x) }; })
         .concat(AGN.map(function (x, i) { return { at: x.postedAt || '', html: agencyRow(x, i) }; }))
         .sort(function (a, b) { return b.at.localeCompare(a.at); });
-      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고 ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
+      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고(최근 6개월) ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
         (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')));
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
