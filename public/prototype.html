@@ -353,14 +353,6 @@
   .rm-res .t { font-weight: 700; font-size: 1.35cqw; text-align: center; }
   .rm-up { grid-column: 5 / 6; position: relative; }
   .rm-up:before { content: ''; position: absolute; left: 50%; top: 0; bottom: 30%; width: 38%; transform: translateX(-50%); background: var(--p2); clip-path: polygon(50% 0, 100% 35%, 72% 35%, 72% 100%, 28% 100%, 28% 35%, 0 35%); }
-  /* 로드맵·근거문서형: 제안사 행 왼쪽을 정책 근거 문서 표지로 */
-  .rm-docs { display: grid; gap: 1cqw; flex: 1; align-items: stretch; padding-top: .3cqw; }
-  .rm-doc { display: flex; flex-direction: column; gap: .4cqw; text-align: center; font-size: .95cqw; color: #404040; min-width: 0; }
-  .rm-cover { flex: 1; background: #fff; border: 1px solid #BFBFBF; box-shadow: 0 .15cqw .35cqw rgba(0,0,0,.12); display: flex; flex-direction: column; min-height: 8cqw; }
-  .rm-cover .band { height: .8cqw; background: var(--p2); }
-  .rm-cover .t { flex: 1; display: flex; align-items: center; justify-content: center; padding: .5cqw; font-weight: 700; font-size: 1.05cqw; line-height: 1.3; color: #262626; }
-  .rm-cover .y { font-size: .85cqw; color: #7F7F7F; padding-bottom: .4cqw; }
-  .rm-pro.docs { background: #EDEDED; }
   /* 설문 막대형 */
   .sv { display: grid; grid-template-columns: 1.25fr 1fr; gap: 3cqw; flex: 1; min-height: 0; }
   .sv-l, .sv-r { display: flex; flex-direction: column; gap: 1cqw; min-height: 0; }
@@ -389,12 +381,7 @@
   .vo-col .sl-bar { font-size: 1.3cqw; }
   .vo-h { font-weight: 700; text-align: center; font-size: 1.3cqw; }
   .vo-card { border: 1px solid #BFBFBF; border-radius: .6cqw; padding: 1cqw 1.1cqw; font-size: 1.15cqw; display: flex; flex-direction: column; gap: .4cqw; box-shadow: 0 .15cqw .3cqw rgba(0,0,0,.08); }
-  /* 근거-도출형 */
-  .dv { display: grid; grid-template-columns: 1fr 1.15fr; gap: 3cqw; flex: 1; min-height: 0; }
-  .dv-l, .dv-r { display: flex; flex-direction: column; gap: .9cqw; min-height: 0; }
-  .dv-item { border: 1px solid #BFBFBF; border-radius: .6cqw; padding: .8cqw 1cqw; text-align: center; font-size: 1.15cqw; box-shadow: 0 .15cqw .3cqw rgba(0,0,0,.08); }
-  .dv-item small { display: block; font-size: .95cqw; color: #7F7F7F; margin-bottom: .2cqw; }
-  .dv-r .sl-bar { font-size: 1.9cqw; padding: .7cqw; }
+  /* 체크 시사점(설문 막대형) */
   .dv-chk { display: grid; grid-template-columns: 2.4cqw 1fr; gap: .2cqw .8cqw; font-size: 1.2cqw; }
   .dv-chk .m { font-size: 2cqw; line-height: 1; font-weight: 700; color: #262626; }
   .dv-chk .k { font-weight: 700; font-size: 1.35cqw; }
@@ -402,6 +389,97 @@
   .sl.navy .dv-chk .v { color: #2E75B6; }
   .dv-chk .s { grid-column: 2; font-size: 1.05cqw; color: #595959; }
   .dv-bottom { margin-top: auto; background: var(--p); color: #fff; font-weight: 700; padding: .8cqw 1.2cqw; font-size: 1.35cqw; text-align: center; }
+  /* 원문 쪽 발췌 창(정책 접근형·근거 도출형): 원문 줄 그대로, 발췌 줄은 강조색 테두리 */
+  .pw { font-size: .95cqw; line-height: 1.45; color: #404040; background: #fff; }
+  .pw > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pw .hitbox { border: .22cqw solid var(--p); padding: .2cqw .4cqw; margin: .2cqw -.4cqw; white-space: normal; }
+  .pw .hitbox > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 근거 도출형 */
+  .dr { display: grid; grid-template-columns: 1fr 1.3fr; gap: 2.4cqw; flex: 1; min-height: 0; }
+  .dr-l { background: #3A3A3A; border-radius: 2cqw; padding: 1.6cqw 1.6cqw 1.2cqw; display: flex; flex-direction: column; gap: .5cqw; min-height: 0; color: #fff; text-align: center; }
+  .dr-t { font-weight: 700; font-size: 1.55cqw; }
+  .dr-m { font-size: 1cqw; color: #D9D9D9; }
+  .dr-paper { flex: 1; min-height: 0; background: #fff; padding: 1cqw 1.2cqw; text-align: left; overflow: hidden; margin-top: .4cqw; }
+  .dr-cap { font-size: .9cqw; color: #BFBFBF; }
+  .dr-r { border: .18cqw dashed #A6A6A6; border-radius: 2cqw; padding: 1.4cqw; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1.2cqw; min-height: 0; }
+  .dr-c { border: 1px solid #D9D9D9; padding: .9cqw 1cqw; display: flex; flex-direction: column; gap: .5cqw; min-height: 0; overflow: hidden; }
+  .dr-tag { font-weight: 700; font-size: 1.2cqw; }
+  .dr-tag b { color: var(--p); }
+  .dr-step { background: #F2F2F2; text-align: center; font-size: .92cqw; padding: .4cqw .5cqw; line-height: 1.3; }
+  .dr-step b { display: block; font-size: 1cqw; }
+  .dr-step.own { background: var(--tile); border: .18cqw solid var(--p); color: var(--tileT); }
+  .dr-down { width: 0; height: 0; margin: -.2cqw auto; flex-shrink: 0; border-left: .7cqw solid transparent; border-right: .7cqw solid transparent; border-top: .7cqw solid #7F7F7F; }
+  .dr-aim { display: grid; grid-template-columns: 7.5cqw 1fr; gap: .8cqw; align-items: center; font-size: 1.1cqw; }
+  .dr-aim .pl { background: #404040; color: #fff; border-radius: 500px; text-align: center; padding: .45cqw .3cqw; font-weight: 700; font-size: 1cqw; }
+  .dr-aim:nth-child(3) .pl { background: var(--p); }
+  .dr-stat { display: grid; grid-template-columns: 1fr auto; gap: .1cqw .8cqw; align-items: center; font-size: 1cqw; padding: .3cqw .5cqw; }
+  .dr-stat .n { font-weight: 700; font-size: 1.5cqw; }
+  .dr-stat .lb { grid-column: 1 / 3; color: #595959; }
+  .dr-stat:last-child { border: .18cqw solid var(--p); }
+  .dr-stat:last-child .n { color: var(--p); }
+  .dr-dir { border: .18cqw solid var(--p); padding: .6cqw .8cqw; font-weight: 700; font-size: 1.1cqw; }
+  .dr-dir.g { border: 1px solid #BFBFBF; background: #F2F2F2; font-weight: 500; }
+  .dr-note { text-align: right; font-size: .85cqw; color: #7F7F7F; }
+  /* 정책 접근형 */
+  .ap { display: grid; grid-template-columns: 1fr 1.25fr; gap: 3cqw; flex: 1; min-height: 0; }
+  .ap-l { display: flex; flex-direction: column; gap: .6cqw; min-height: 0; }
+  .ap-bgt { font-weight: 700; font-size: 1.5cqw; color: #7F7F7F; letter-spacing: .02em; }
+  .ap-box { flex: 1; min-height: 0; border: 1px solid #BFBFBF; border-radius: 1.6cqw; padding: 1.2cqw 1.4cqw; display: flex; flex-direction: column; gap: .8cqw; box-shadow: 0 .2cqw .5cqw rgba(0,0,0,.08); overflow: hidden; }
+  .ap-sec { display: flex; flex-direction: column; gap: .5cqw; flex: 1; min-height: 0; }
+  .ap-h { display: flex; align-items: center; gap: 1cqw; border-bottom: 1px solid #404040; padding-bottom: .6cqw; }
+  .ap-h .pill { background: #404040; color: #fff; border-radius: 500px; padding: .4cqw 1.4cqw; font-weight: 700; font-size: 1.05cqw; flex-shrink: 0; }
+  .ap-h b { font-size: 1.2cqw; }
+  .ap-sec .pw { border: 1px solid #D9D9D9; padding: .5cqw .7cqw; font-size: .85cqw; margin: 0 1.5cqw; }
+  .ap-cite { font-weight: 700; font-size: 1.05cqw; }
+  .ap-sub { font-size: 1cqw; color: #404040; }
+  .ap-div { border-top: .15cqw dashed #A6A6A6; }
+  .ap-r { border-radius: 2cqw; background: #fff; box-shadow: 0 0 1.4cqw rgba(0,0,0,.14); display: flex; flex-direction: column; overflow: hidden; border: .2cqw solid var(--p2); }
+  .ap-head { background: var(--p); color: #fff; font-weight: 700; font-size: 2cqw; padding: 1cqw 2cqw; }
+  .ap-in { flex: 1; padding: 1.4cqw 2cqw; display: flex; flex-direction: column; gap: 1.2cqw; }
+  .ap-lead { text-align: center; font-weight: 700; font-size: 1.3cqw; }
+  .ap-slogan { border: .18cqw solid var(--p); border-radius: 1cqw; padding: 1.2cqw; text-align: center; display: flex; flex-direction: column; gap: .4cqw; font-size: 1.15cqw; }
+  .ap-slogan b { font-size: 1.9cqw; color: var(--p); }
+  .ap-slogan b.ph { color: #A8AFB9; }
+  .ap-keys { display: grid; grid-template-columns: 1fr 3cqw 1fr 3cqw 1fr; align-items: center; text-align: center; }
+  .ap-cir { width: 11cqw; height: 11cqw; border-radius: 50%; margin: 0 auto; background: var(--tile); border: .15cqw solid var(--p2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ap-cir.on { background: var(--p); border-color: var(--p); }
+  .ap-cir small { font-size: .85cqw; color: var(--p2); font-weight: 700; }
+  .ap-cir b { font-size: 1.5cqw; color: var(--p); }
+  .ap-cir.on small, .ap-cir.on b { color: #fff; }
+  .ap-cir .ph { color: #A8AFB9; }
+  .ap-cir.on .ph { color: rgba(255,255,255,.7); }
+  .ap-dash { border-top: .18cqw dashed var(--p2); position: relative; }
+  .ap-dash:after { content: ''; position: absolute; right: -.2cqw; top: -.65cqw; border-left: .9cqw solid var(--p); border-top: .55cqw solid transparent; border-bottom: .55cqw solid transparent; }
+  .ap-cap { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; font-size: 1cqw; }
+  .ap-cap > div + div { border-left: 1px solid #D9D9D9; }
+  .ap-units { background: var(--p); padding: 1.1cqw 2cqw 1.3cqw; color: #fff; }
+  .ap-units .t { font-weight: 700; font-size: 1.25cqw; margin-bottom: .8cqw; }
+  .ap-units .ps { display: grid; grid-template-columns: repeat(5, 1fr); gap: .8cqw; }
+  .ap-units .ps span { background: rgba(255,255,255,.85); color: #7F7F7F; border-radius: 500px; text-align: center; padding: .6cqw .2cqw; font-size: 1cqw; }
+  /* 로드맵·근거문서형 */
+  .dl { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.4cqw; }
+  .dl-t { text-align: center; font-weight: 700; font-size: 1.5cqw; color: var(--dk); margin-bottom: 1.2cqw; }
+  .dl-line { position: relative; display: grid; gap: 2cqw; }
+  .dl-line:before { content: ''; position: absolute; left: -2.6cqw; right: -2.6cqw; top: .8cqw; height: .25cqw; background: linear-gradient(90deg, #E7E6E6, var(--p2) 30%, var(--p)); }
+  .dl-doc { position: relative; display: flex; flex-direction: column; align-items: center; gap: .6cqw; text-align: center; padding-top: 2.8cqw; }
+  .dl-dot { position: absolute; top: 0; width: 1.8cqw; height: 1.8cqw; border-radius: 50%; background: #fff; border: .3cqw solid var(--p2); }
+  .dl-doc:last-child .dl-dot { background: var(--p); border-color: var(--p); }
+  .dl-yr { position: absolute; top: .05cqw; left: calc(50% + 1.4cqw); font-size: 1cqw; font-weight: 700; color: var(--dk); }
+  .dl-cover { width: 13cqw; height: 17cqw; background: #fff; border: 1px solid #D9D9D9; box-shadow: 0 .25cqw .6cqw rgba(0,0,0,.15); display: flex; flex-direction: column; color: #262626; }
+  .dl-cover .band { height: 1.2cqw; background: var(--p); }
+  .dl-cover .t { flex: 1; display: flex; align-items: center; justify-content: center; padding: .8cqw; font-weight: 700; font-size: 1.3cqw; line-height: 1.3; }
+  .dl-cover .o { font-size: .8cqw; color: #7F7F7F; padding-bottom: .6cqw; }
+  .dl-role { font-size: 1.05cqw; color: var(--p); font-weight: 700; }
+  .dl-pt { font-size: 1.2cqw; color: #404040; line-height: 1.5; }
+  .dl-bot { display: grid; grid-template-columns: 1fr 4cqw 1fr; gap: 1.2cqw; align-items: center; margin-top: auto; }
+  .dl-chk { display: flex; flex-direction: column; gap: .8cqw; }
+  .dl-chk .it { display: flex; gap: .8cqw; align-items: flex-start; font-size: 1.3cqw; }
+  .dl-chk .bx { color: var(--p); border: .2cqw solid var(--p); width: 1.8cqw; height: 1.8cqw; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2cqw; flex-shrink: 0; }
+  .dl-chk b { display: block; font-size: 1cqw; color: #7F7F7F; }
+  .dl-chk span { color: #262626; }
+  .dl-arrow { height: 7cqw; background: linear-gradient(90deg, #F2F2F2, var(--p2)); clip-path: polygon(0 25%, 55% 25%, 55% 0, 100% 50%, 55% 100%, 55% 75%, 0 75%); }
+  .dl-need { border: .25cqw solid var(--p); background: var(--tile); padding: 1.2cqw 1.4cqw; font-weight: 700; font-size: 1.45cqw; color: var(--tileT); text-align: center; }
+  .dl-need small { display: block; font-size: 1cqw; color: var(--p); margin-bottom: .4cqw; }
   /* 수치 강조형 */
   .nm-stats { display: grid; gap: 1.4cqw; }
   .nm-stat { border: .22cqw solid #7F7F7F; display: flex; flex-direction: column; }
@@ -1618,6 +1696,17 @@
   function slideHtml(s) {
     function ph(v, label) { return v ? esc(v) : '<span class="ph">' + label + '</span>'; }
     function tx(x) { if (!x) return ''; var h = mark(x.text, x.terms || []); return x.quoted ? '“' + h + '”' : h; }
+    // 원문 쪽 발췌 창. 발췌 줄은 한 테두리로 묶는다
+    function pw(w) {
+      if (!w) return '<div class="pw"><span class="ph">원문 쪽을 찾지 못했습니다</span></div>';
+      var h = '', open = false;
+      w.lines.forEach(function (l) {
+        if (l.hit && !open) { h += '<div class="hitbox">'; open = true; }
+        if (!l.hit && open) { h += '</div>'; open = false; }
+        h += '<div>' + esc(l.text) + '</div>';
+      });
+      return '<div class="pw">' + h + (open ? '</div>' : '') + '</div>';
+    }
     function ul(list) { return list && list.length ? '<ul class="sl-ul">' + list.map(function (x) { return '<li>' + tx(x) + '</li>'; }).join('') + '</ul>' : ''; }
     var body = '';
     if (s.layout === 'roadmap') {
@@ -1638,11 +1727,8 @@
           '<div class="rm-c"><div>' + (s.need.top ? tx(s.need.top) : '<span class="ph">현장 수요 근거</span>') + '</div></div>' +
           '<div class="rm-c g"><div>' + (s.need.bottom ? esc(s.need.bottom.text) : '<span class="ph">사업 추진의 필요성</span>') + '</div></div></div>') +
         '<div class="rm-lab" style="grid-row:2;grid-column:1;">' + esc(s.proposer.label) + '</div>' +
-        '<div class="rm-pro' + (s.docs ? ' docs' : '') + '" style="grid-row:2;grid-column:2 / ' + (n > 2 ? 4 : 3) + ';"><div class="sl-bar' + (s.docs ? '' : ' sub') + '" style="font-size:1.15cqw;padding:.35cqw;">' + esc(s.proposer.listTitle) + '</div>' +
-          (s.docs ? '<div class="rm-docs" style="grid-template-columns:repeat(' + s.docs.length + ',1fr);">' + s.docs.map(function (d) {
-            return '<div class="rm-doc"><div class="rm-cover"><div class="band"></div><div class="t">' + esc(d.title) + '</div><div class="y">' + esc(d.year) + '</div></div><div>' + esc(d.org) + '</div></div>';
-          }).join('') + '</div>' :
-          [1, 2, 3, 4].map(function (i) { return '<div class="rm-slot">수행 실적 ' + i + ' (연도 · 사업명)</div>'; }).join('')) + '</div>' +
+        '<div class="rm-pro" style="grid-row:2;grid-column:2 / ' + (n > 2 ? 4 : 3) + ';"><div class="sl-bar sub" style="font-size:1.15cqw;padding:.35cqw;">' + esc(s.proposer.listTitle) + '</div>' +
+          [1, 2, 3, 4].map(function (i) { return '<div class="rm-slot">수행 실적 ' + i + ' (연도 · 사업명)</div>'; }).join('') + '</div>' +
         '<div class="rm-res" style="grid-row:2;grid-column:' + (n > 2 ? 4 : 3) + ' / ' + (n + 2) + ';"><div class="t">' + ph(s.proposer.boxTitle, '제안사 대응 헤드라인') + '</div>' +
           '<div style="text-align:center;"><span class="hl" style="font-weight:700;"><span class="ph" style="color:#7F7F7F;">핵심 대응 한 줄</span></span></div>' +
           [1, 2, 3].map(function (i) { return '<div class="ph">→ 대응 방향 ' + i + '</div>'; }).join('') + '</div>' +
@@ -1660,56 +1746,40 @@
           c.cards.map(function (k) { return '<div class="vo-card"><div>' + tx(k) + '</div><div class="sl-src">' + esc(k.source) + '</div></div>'; }).join('') + '</div>';
       }).join('') + '</div>';
     } else if (s.layout === 'derive') {
-      body = '<div class="dv"><div class="dv-l"><div class="sl-bar dk">' + esc(s.leftTitle) + '</div>' +
-        s.items.map(function (it) { return '<div class="dv-item"><small>' + esc(it.label) + '</small>' + tx(it) + '</div>'; }).join('') + '</div>' +
-        '<div class="dv-r"><div class="sl-bar">' + esc(s.rightTitle) + '</div>' +
-        s.checks.map(function (c) {
-          return '<div class="dv-chk"><span class="m">✔</span><span class="k">' + esc(c.label) + '</span><span class="v">' + ph(c.headline, '헤드라인 입력 전') + '</span>' +
-            (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
-        }).join('') +
-        '<div class="dv-bottom">' + (s.bottom ? esc(s.bottom) : '<span style="opacity:.7;">사업 추진의 필요성 입력 전</span>') + '</div></div></div>';
-    } else if (s.layout === 'survey') {
-      var widths = [88, 76, 62, 52, 44];
-      body = '<div class="sv"><div class="sv-l"><div class="sv-q"><span class="i">?</span><span class="ph">설문 문항 (제안사 사전 조사 또는 한 조사의 같은 문항)</span></div>' +
-        '<div class="sv-chart">' + widths.slice(0, s.bars).map(function (w, i) {
-          return '<div class="sv-row"><span class="ph">응답 항목 ' + (i + 1) + '</span><div class="sv-bar' + (i === 0 ? ' top' : '') + '" style="width:' + w + '%;">00.0%</div></div>';
-        }).join('') + '</div><div class="sl-src ph">출처 · 조사 기관, 연도, 대상</div>' +
-        (s.ref ? '<div class="sv-ref"><small>참고 수치</small>' + tx(s.ref) + ' <span class="sl-src">' + esc(s.ref.source) + '</span></div>' : '') + '</div>' +
-        '<div class="sv-r"><div class="sl-bar">시사점</div>' + s.checks.map(function (c) {
-          return '<div class="dv-chk"><span class="m">✔</span><span class="k">' + esc(c.label) + '</span><span class="v">' + ph(c.headline, '헤드라인 입력 전') + '</span>' +
-            (c.sub ? '<span class="s">' + tx(c.sub) + '</span>' : '') + '</div>';
-        }).join('') +
-        '<div class="dv-bottom">' + (s.bottom ? esc(s.bottom) : '<span style="opacity:.7;">사업 추진의 필요성 입력 전</span>') + '</div></div></div>';
-    } else if (s.layout === 'link') {
-      body = '<div class="lk-cols" style="grid-template-columns:repeat(' + s.cards.length + ',1fr);">' + s.cards.map(function (c, i) {
-        return '<div class="lk-card"><div class="lk-top"><div class="lk-lab">' + esc(c.label) + '</div><div class="lk-h"><span class="lk-ic">' + (i + 1) + '</span><span>' + esc(c.title) + '</span></div>' +
-          '<div class="lk-b">' + tx(c.body) + '</div><div class="sl-src" style="margin-top:auto;">' + esc(c.source) + '</div></div>' +
-          '<div class="lk-con"><span class="k">본 사업 연결</span><span class="ph">제안사 연계 방안 한두 줄</span></div></div>';
-      }).join('') + '</div>' +
-        '<div class="lk-box"><div class="k">제안 방향 ' + s.keywords + '대 키워드</div><div class="lk-kw">' +
-        [1, 2, 3, 4].slice(0, s.keywords).map(function (i) { return '<div><b class="ph">Keyword ' + i + '</b><span class="ph">한 줄 설명</span></div>'; }).join('') + '</div></div>' +
-        '<div class="lk-need"><span class="k">사업 추진의 필요성</span><span class="p">' + ph(s.bottom, '수렴점 입력 전') + '</span></div>';
-    } else if (s.layout === 'plan') {
-      body = '<div class="pl"><div class="pl-l">' +
-        '<div class="pl-title"><div class="t">' + esc(s.planYear) + ' ' + esc(s.planOrg) + ' ' + esc(s.planTitle) + '</div><div class="v">' + ph(s.vision, '발주기관 계획 헤드라인') + '</div></div>' +
-        '<div class="pl-k">세부과제</div><div class="pl-tasks" style="grid-template-columns:repeat(' + s.tasks.length + ',1fr);">' +
-        s.tasks.map(function (t) { return '<div class="pl-task">' + esc(t.text) + '</div>'; }).join('') + '</div>' +
-        '<div class="pl-k">주요 내용</div><ul class="pl-pts">' + s.points.map(function (x) { return '<li>' + tx(x) + ' <span class="sl-src">' + esc(x.source) + '</span></li>'; }).join('') + '</ul></div>' +
-        '<div class="pl-r">' + (s.upper.length ? '<div class="sl-bar sub">' + esc(s.upperTitle) + '</div>' +
-          s.upper.map(function (u) { return '<div class="pl-up"><small>' + esc(u.label) + '</small><div>' + tx(u) + '</div><div class="sl-src">' + esc(u.source) + '</div></div>'; }).join('') :
-          '<div class="sl-bar sub">본 사업 연결</div><div class="pl-up"><span class="ph">제안사 연계 방안</span></div>') +
-        '<div class="pl-bottom" style="margin-top:auto;">' + ph(s.bottom, '사업 추진의 필요성 입력 전') + '</div></div></div>';
-    } else if (s.layout === 'pillars') {
-      var nc = s.columns.length;
-      body = '<div class="pi" style="grid-template-columns:repeat(' + nc + ',1fr);"><div class="pi-band"></div>' +
-        s.columns.map(function (c) { return '<div class="pi-c"><small>' + esc(c.label) + '</small><b>' + ph(c.headline, '헤드라인 입력 전') + '</b></div>'; }).join('') +
-        s.columns.map(function (c) {
-          return '<div class="pi-col">' + c.docs.map(function (d) { return '<span class="pi-doc">' + esc(d.label) + '</span>' + ul(d.bullets); }).join('') + '</div>';
-        }).join('') + '</div>';
-    } else if (s.layout === 'spotlight') {
-      body = '<div class="sp">' + s.quotes.map(function (q) {
-        return '<div class="sp-q"><div class="q">' + tx(q) + '</div>' + (q.sub ? '<div class="s">' + esc(q.sub) + '</div>' : '') + '<div class="src">' + esc(q.source) + '</div></div>';
-      }).join('') + (s.bottom ? '<div class="sp-bottom">' + esc(s.bottom) + '</div>' : '') + '</div>';
+      var f = s.flow, st = s.stats;
+      body = '<div class="dr"><div class="dr-l"><div class="dr-t">' + esc(s.doc.title) + '</div><div class="dr-m">' + esc(s.doc.meta) + '</div>' +
+        '<div class="dr-paper">' + pw(s.doc.win) + '</div><div class="dr-cap">' + esc(s.doc.caption) + '</div></div>' +
+        '<div class="dr-r">' +
+        '<div class="dr-c"><div class="dr-tag"><b>[정책 연계]</b> ' + esc(f.path) + '</div>' +
+          f.steps.map(function (x) { return '<div class="dr-step"><b>' + esc(x.title) + '</b>' + tx(x.sub) + '</div><div class="dr-down"></div>'; }).join('') +
+          '<div class="dr-step own"><b>' + esc(f.last.title) + '</b>' + esc(f.last.sub) + '</div></div>' +
+        '<div class="dr-c"><div class="dr-tag"><b>[측면별 요지]</b></div>' +
+          s.aims.map(function (a) { return '<div class="dr-aim"><span class="pl">' + esc(a.label) + '</span><span>' + ph(a.text, '헤드라인 입력 전') + '</span></div>'; }).join('') + '</div>' +
+        '<div class="dr-c"><div class="dr-tag"><b>[' + esc(st.tag) + ']</b></div>' +
+          (st.items ? st.items.map(function (x) { return '<div class="dr-stat"><span class="sl-src">' + esc(x.source) + '</span><span class="n">' + esc(x.value) + '</span><span class="lb">' + esc(x.label) + '</span></div>'; }).join('') :
+            st.lines.length ? st.lines.map(function (x) { return '<div class="dr-stat"><span class="lb">' + tx(x) + ' <span class="sl-src">' + esc(x.source) + '</span></span></div>'; }).join('') :
+            '<div class="ph">수치·현장 수요 근거를 선택하면 채워집니다</div>') + '</div>' +
+        '<div class="dr-c"><div class="dr-tag"><b>[사업 방향]</b></div>' +
+          (s.dirs.length ? s.dirs.map(function (d) { return '<div class="dr-dir">' + esc(d.text) + '</div>'; }).join('') : '<div class="dr-dir"><span class="ph">측면별 헤드라인 입력 전</span></div>') +
+          '<div class="dr-dir g">' + ph(s.bottom, '사업 추진의 필요성 입력 전') + '</div></div>' +
+        '</div></div><div class="dr-note">' + esc(s.srcNote) + '</div>';
+    } else if (s.layout === 'approach') {
+      body = '<div class="ap"><div class="ap-l"><div class="ap-bgt">BACKGROUND</div><div class="ap-box">' + s.bg.map(function (b, i) {
+        return (i ? '<div class="ap-div"></div>' : '') + '<div class="ap-sec"><div class="ap-h"><span class="pill">' + esc(b.pill) + '</span><b>' + ph(b.shift, '변화 한 줄 (예: 학교 → 지역)') + '</b></div>' +
+          pw(b.win) + '<div class="ap-cite">' + esc(b.cite) + '</div><div class="ap-sub">- ' + tx(b.sub) + '</div></div>';
+      }).join('') + '</div></div>' +
+        '<div class="ap-r"><div class="ap-head">OUR APPROACH</div><div class="ap-in"><div class="ap-lead"><span class="ph">제안사 운영 모델 한 줄</span></div>' +
+        '<div class="ap-slogan"><b class="ph">운영 모델 슬로건</b><span>' + ph(s.sub, '사업 추진의 필요성 입력 전') + '</span></div>' +
+        '<div class="ap-keys">' + [1, 2, 3].map(function (i) { return '<div class="ap-cir' + (i === 3 ? ' on' : '') + '"><small>KEYWORD</small><b class="ph">키워드 ' + i + '</b></div>'; }).join('<div class="ap-dash"></div>') + '</div>' +
+        '<div class="ap-cap">' + [1, 2, 3].map(function (i) { return '<div class="ph">접근 ' + i + ' 설명</div>'; }).join('') + '</div></div>' +
+        '<div class="ap-units"><div class="t">실행 단위</div><div class="ps">' + [1, 2, 3, 4, 5].map(function (i) { return '<span>단위 ' + i + '</span>'; }).join('') + '</div></div></div></div>';
+    } else if (s.layout === 'docsline') {
+      body = '<div class="dl"><div><div class="dl-t">' + esc(s.band) + '</div><div class="dl-line" style="grid-template-columns:repeat(' + s.docs.length + ',1fr);">' + s.docs.map(function (d) {
+        return '<div class="dl-doc"><span class="dl-dot"></span><span class="dl-yr">' + esc(d.year) + '</span><div class="dl-cover"><div class="band"></div><div class="t">' + esc(d.title) + '</div><div class="o">' + esc(d.org) + '</div></div>' +
+          '<div class="dl-role">' + esc(d.role) + '</div><div class="dl-pt">' + tx(d.point) + '</div></div>';
+      }).join('') + '</div></div>' +
+        '<div class="dl-bot"><div class="dl-chk">' + s.checks.map(function (c) { return '<div class="it"><span class="bx">✔</span><div><b>' + esc(c.label) + '</b><span>' + ph(c.headline, '헤드라인 입력 전') + '</span></div></div>'; }).join('') + '</div>' +
+        '<div class="dl-arrow"></div><div class="dl-need"><small>사업 추진의 필요성</small>' + ph(s.bottom, '수렴점 입력 전') + '</div></div></div>';
     } else if (s.layout === 'numeric') {
       body = '<div class="sl-bar dk">' + esc(s.title) + '</div><div class="nm-stats" style="grid-template-columns:repeat(' + s.stats.length + ',1fr);">' + s.stats.map(function (x) {
         return '<div class="nm-stat"><div class="n">' + esc(x.value) + '</div><div class="t">' + esc(x.label) + '</div><div class="sl-src">' + esc(x.source) + '</div></div>';
