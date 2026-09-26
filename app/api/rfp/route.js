@@ -11,7 +11,7 @@ export const maxDuration = 30;
 //   POST /api/rfp?name=<파일명>&title=<공고명>  (본문 = 파일 바이트)       담당자가 올린 파일을 읽는다
 //
 // 첨부 URL은 나라장터·과기정통부 호스트만 받는다. 아무 주소나 받으면 이 서버를 거쳐 내부망·임의 주소를 부르는 통로가 된다.
-const ALLOWED = new Set(['www.g2b.go.kr', 'g2b.go.kr', 'www.msit.go.kr', 'pmsnew.kosac.re.kr']);   // 나라장터 첨부 + 과기정통부 게시판 첨부 + 한국과학창의재단 사업공고 첨부
+const ALLOWED = new Set(['www.g2b.go.kr', 'g2b.go.kr', 'www.msit.go.kr', 'pmsnew.kosac.re.kr', 'www.nipa.kr', 'www.keris.or.kr']);   // 나라장터 첨부 + 과기정통부 게시판 첨부 + 산하기관 게시판 첨부(한국과학창의재단·정보통신산업진흥원·한국교육학술정보원)
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_TEXT = 80000;
 
@@ -38,7 +38,7 @@ export async function GET(req) {
   const name = sp.get('name') || '';
   let u;
   try { u = new URL(sp.get('url') || ''); } catch { return fail('첨부파일 주소가 올바르지 않습니다.'); }
-  if (!['https:', 'http:'].includes(u.protocol) || !ALLOWED.has(u.hostname)) return fail('나라장터·과기정통부·한국과학창의재단 첨부파일만 받을 수 있습니다.');
+  if (!['https:', 'http:'].includes(u.protocol) || !ALLOWED.has(u.hostname)) return fail('나라장터·과기정통부·산하기관 게시판 첨부파일만 받을 수 있습니다.');
   let r;
   try {
     r = await fetch(u, { redirect: 'follow', signal: AbortSignal.timeout(20000), headers: { 'user-agent': 'Mozilla/5.0', referer: 'https://www.g2b.go.kr/' } });

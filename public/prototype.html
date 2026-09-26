@@ -1057,7 +1057,7 @@
     $('f-days').value = f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
     $('find-opts').classList.toggle('on', kw);
     $('f-days').style.display = kw ? '' : 'none';
-    if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 + 한국과학창의재단 사업공고(나라장터에 없는 공모) · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다') : ''); }
+    if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 + 산하기관 게시판 공고(한국과학창의재단·정보통신산업진흥원 사업공고, 한국교육학술정보원 공지) · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다') : ''); }
   }
   function findState(msg, isErr) {
     $('find-state').textContent = msg || '';
@@ -1072,15 +1072,15 @@
     if (t === 'bid') { if (kw) loadBids(v); else if (/^\d{4}-P\d+$/i.test(v)) loadAgency('', v); else startNotice(v); }
     else { if (kw) loadSpec(v); else openSpecNo(v); }
   }
-  // 나라장터 용역 입찰공고와 한국과학창의재단 사업공고(나라장터에 올라오지 않는 운영기관·수행기관 공모)를 함께 찾아 날짜순으로 섞는다.
-  // 사업공고는 기간 안에 올라왔거나 아직 접수 중인 것만. 사업공고를 못 불러와도 입찰공고는 그대로 보여 준다
+  // 나라장터 용역 입찰공고와 산하기관 게시판 공고(나라장터에 올라오지 않는 운영기관·수행기관 공모, 연수 사업 모집)를 함께 찾아 날짜순으로 섞는다.
+  // 게시판 공고는 기간 안에 올라왔거나 아직 접수 중인 것만. 사업공고를 못 불러와도 입찰공고는 그대로 보여 준다
   function loadBids(q) {
     var days = $('f-days').value;
     findState('입찰공고를 찾는 중'); $('find-list').innerHTML = '';
     var cut = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
     Promise.all([
       api('/api/bids', { q: q, days: days, limit: '20' }),
-      api('/api/kosac', { q: q, limit: '30' }).catch(function () { return { ok: false }; })
+      api('/api/boards', { q: q, limit: '50' }).catch(function () { return { ok: false }; })
     ]).then(function (r) {
       var d = r[0], k = r[1];
       if (!d.ok && !k.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
@@ -1089,8 +1089,8 @@
       var rows = BIDS.map(function (x) { return { at: x.postedAt || '', html: bidRow(x) }; })
         .concat(AGN.map(function (x, i) { return { at: x.postedAt || '', html: agencyRow(x, i) }; }))
         .sort(function (a, b) { return b.at.localeCompare(a.at); });
-      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 한국과학창의재단 사업공고 ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
-        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 사업공고는 불러오지 못했습니다' : ''));
+      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고 ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
+        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')));
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
@@ -1430,49 +1430,52 @@
         '</div></div>';
     }).join('') || '<div class="meta">\ub9de\ub294 \uc0ac\uc804\uaddc\uaca9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.</div>';
   }
-  /* ---------- 기관 사업공고(한국과학창의재단) ---------- */
-  // 나라장터에 없는 운영기관·수행기관 공모. 첨부의 제안요청서(없으면 공고문)를 읽어 사전규격처럼 공고번호 없이 시작한다
+  /* ---------- 산하기관 게시판 공고(한국과학창의재단·정보통신산업진흥원 사업공고, 한국교육학술정보원 공지) ---------- */
+  // 나라장터에 없는 운영기관·수행기관 공모와 연수 사업 모집. 첨부의 제안요청서(없으면 공고문, 첨부가 없으면 게시글 본문)를 읽어 사전규격처럼 공고번호 없이 시작한다
   var AGN = [];
   // 공고번호(2026-P094)로 찾을 때
   function loadAgency(q, no) {
     findState('한국과학창의재단 사업공고를 찾는 중'); $('find-list').innerHTML = '';
-    api('/api/kosac', { q: q, limit: '30' }).then(function (d) {
+    api('/api/boards', { q: q, limit: '50' }).then(function (d) {
       if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
-      AGN = no ? d.items.filter(function (x) { return x.no.toUpperCase() === no.toUpperCase(); }) : d.items;
-      findState(AGN.length ? '' : '최근 한국과학창의재단 사업공고 ' + d.pool + '건 중 공고번호 ' + no + '이(가) 없습니다.', !AGN.length);
+      AGN = no ? d.items.filter(function (x) { return x.src === 'kosac' && x.no.toUpperCase() === no.toUpperCase(); }) : d.items;
+      findState(AGN.length ? '' : '최근 한국과학창의재단 사업공고 중 공고번호 ' + no + '이(가) 없습니다.', !AGN.length);
       $('find-list').innerHTML = AGN.map(agencyRow).join('');
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   function agencyRow(x, i) {
     return '<div class="spec-item"><div class="nm">' + esc(x.title) + '</div>' +
-      '<span class="meta">한국과학창의재단 \u00b7 기관 게시판 공고 ' + esc(x.no) + (x.to ? ' \u00b7 접수 ~' + esc(x.to) : '') + (x.status ? ' \u00b7 <b>' + esc(x.status) + '</b>' : '') + '</span>' +
+      '<span class="meta">' + esc(x.org) + ' \u00b7 기관 게시판 ' + esc(x.board) + (x.no ? ' ' + esc(x.no) : '') + (x.biz ? ' \u00b7 ' + esc(x.biz) : '') + (x.to ? ' \u00b7 접수 ~' + esc(x.to) : '') + (x.status ? ' \u00b7 <b>' + esc(x.status) + '</b>' : '') + '</span>' +
       '<div class="acts"><button class="btn soft mini" onclick="startAgency(' + i + ')">이 공고로 시작</button>' +
       '<a class="btn soft mini" href="' + esc(x.url) + '" target="_blank" rel="noopener">원문</a></div></div>';
   }
   function startAgency(i) {
     var x = AGN[i]; if (!x) return;
     findState('첨부파일을 확인하는 중');
-    api('/api/kosac', { id: x.id }).then(function (d) {
+    api('/api/boards', { src: x.src, id: x.id }).then(function (d) {
       if (!d.ok) { findState(d.error || '공고 상세를 열지 못했습니다.', true); return; }
       var files = d.files.filter(function (f) { return f.readable; });
-      var pick = files.filter(function (f) { return RFP_NAME.test(f.name); })[0] || files.filter(function (f) { return /공고문|공고/.test(f.name); })[0] || files[0];
+      var pick = files.filter(function (f) { return RFP_NAME.test(f.name); })[0] || files.filter(function (f) { return /공고문|공고|안내/.test(f.name); })[0] || files[0];
+      // 읽을 첨부가 없으면(한국교육학술정보원 공지처럼 본문에만 내용이 있는 글) 게시글 본문을 읽는다
+      var body = !pick && (d.text || '').replace(/\s/g, '').length >= 200 ? new File([d.text], '게시글 본문.txt', { type: 'text/plain' }) : null;
+      var label = pick ? pick.name : body ? '게시글 본문' : '';
       findState('');
       saveWork(); lastWork = '';
       var my = ++seq;
-      S = { no: '', notice: { no: '', name: x.title, demandOrg: '한국과학창의재단', files: d.files, manual: true, agency: x.no, detailUrl: x.url, detailLabel: '한국과학창의재단 공고' },
-        lineage: null, terms: [], scope: 'lineage', results: [], rfp: pick ? { state: 'loading', name: pick.name, prev: [] } : { state: 'none' } };
+      S = { no: '', notice: { no: '', name: x.title, demandOrg: x.org, files: d.files, manual: true, agency: x.no || x.id, detailUrl: x.url, detailLabel: x.org + ' ' + x.board },
+        lineage: null, terms: [], scope: 'lineage', results: [], rfp: label ? { state: 'loading', name: label, prev: [] } : { state: 'none' } };
       CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
       AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
-      $('no-view').textContent = x.title; $('no-label').textContent = '한국과학창의재단 사업공고 ' + x.no;
+      $('no-view').textContent = x.title; $('no-label').textContent = x.org + ' ' + x.board + (x.no ? ' ' + x.no : '');
       renderNotice(); renderRfp();
       $('search-main').style.display = ''; setState('');
       $('lineage-card').innerHTML = '<div class="meta">확인 중</div>';
       $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
       go('search');
-      var rfp = pick ? api('/api/rfp', { url: pick.url, name: pick.name, title: x.title }).then(function (r) { if (my === seq) gotRfp(r, pick.name, 'rfp'); }) : Promise.resolve();
-      return rfp.then(function () { return api('/api/lineage', { name: '한국과학창의재단' }); }).then(function (l) {
+      var rfp = pick ? api('/api/rfp', { url: pick.url, name: pick.name, title: x.title }) : body ? postRfp(body, x.title) : null;
+      return (rfp ? rfp.then(function (r) { if (my === seq) gotRfp(r, label, 'rfp'); }) : Promise.resolve()).then(function () { return api('/api/lineage', { name: x.org }); }).then(function (l) {
         if (my !== seq || !l) return;
-        S.lineage = l.ok ? l : { chain: [{ name: '한국과학창의재단', role: '발주처' }], orgs: ['한국과학창의재단'], source: 'none', error: l.error };
+        S.lineage = l.ok ? l : { chain: [{ name: x.org, role: '발주처' }], orgs: [x.org], source: 'none', error: l.error };
         renderLineage();
         return runEvidence(true);
       });
