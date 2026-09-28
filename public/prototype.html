@@ -1286,7 +1286,7 @@
   }
   // 표 행의 칸 구분(색인의 EN SPACE)을 얇은 세로선으로 그린다. 글자 위치는 그대로라 발췌·대조에 영향 없음
   function cells(html) { return String(html).replace(/\u2002/g, '<span class="cs">\u2002</span>'); }
-  function pageLabel(r) { return 'p.' + r.page + (r.pageEstimated ? ' (추정)' : ''); }
+  function pageLabel(r) { return 'p.' + r.page + (r.pageEstimated ? ' (추정)' : '') + (r.ocr ? ' · OCR' : ''); }
   function sourceButtons(r) {
     return r.url
       ? '<a class="btn soft mini" href="' + esc(r.url) + '" target="_blank" rel="noopener" style="text-decoration:none;">' + ICON_OPEN + '원문 열기</a>'
@@ -1747,7 +1747,7 @@
     var c = CARDS[cur], r = c.r, n = selCount();
     $('rv-count').textContent = '후보 ' + CARDS.length + '건 · 선택 ' + n + '건';
     $('rv-card').innerHTML =
-      '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · p.' + c.page + (r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
+      '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · p.' + c.page + (r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + (r.ocr ? '<span class="tag" title="글자가 없는 PDF를 OCR로 읽은 쪽입니다. 오독이 있을 수 있어 원문과 대조가 필요합니다">OCR · 원문 확인</span>' : '') + '</div>' +
       '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '원문 일치 확인</div>' +
       '<div class="quote" style="margin-bottom:12px;">' + mark(c.quote, r.matched) + '</div>' +
       '<div style="display:flex;gap:8px;">' +
@@ -1789,7 +1789,7 @@
       $('src-page').textContent = 'p.' + d.page;
       $('src-prev').disabled = d.prev == null; $('src-next').disabled = d.next == null;
       $('src-hint').innerHTML = d.page !== c.page ? '카드 발췌 쪽: p.' + c.page
-        : (d.pageEstimated ? '쪽 번호 추정(±1쪽) · 원본과 대조 필요' : '');
+        : (d.ocr ? 'OCR로 읽은 쪽 · 글자를 잘못 읽었을 수 있어 원본과 대조 필요' : d.pageEstimated ? '쪽 번호 추정(±1쪽) · 원본과 대조 필요' : '');
       $('src-reset').style.display = (c.page !== c.orig.page || c.quote !== c.orig.quote) ? '' : 'none';
       $('src-use').disabled = true;
     });
@@ -1836,7 +1836,7 @@
         '<input class="winput' + (AIF.head[r.key] ? ' ai' : '') + '" placeholder="헤드라인 한 줄 · 비어 있으면 문서에 ‘가. (정책 기조)’처럼 역할 이름만 나갑니다 · AI 초안으로 채우거나 직접 입력" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;AIF.head[\'' + r.key + '\']=false;this.classList.remove(\'ai\');queueDraft()">' +
         CARDS.map(function (c, ci) {
           if (!c.sel || c.role !== r.key) return '';
-          return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
+          return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + (c.r.ocr ? '<span class="tag">OCR · 원문 확인</span>' : '') + '</div>' +
             '<div class="roles wroles" role="group" aria-label="이 근거가 들어갈 블록">' + ROLES.map(function (x) {
               return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(' + ci + ',\'' + x.key + '\')">' + x.label + '</button>';
             }).join('') + '</div>' + (c.aiWhy ? '<div class="ai-why">AI 분류: ' + esc(c.aiWhy) + '</div>' : '') +
