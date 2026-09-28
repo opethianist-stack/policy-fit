@@ -7,7 +7,10 @@
 파일명 규칙:  번호_분류_기관_문서명[_구분]_연도.확장자
   예) 10-2_공공기관_KERIS_부서별주요사업계획_2026.pdf
 
-- PDF  : 페이지 단위로 텍스트를 뽑는다. 텍스트가 없는 페이지(스캔본)는 건너뛰고 보고한다.
+- PDF  : 페이지 단위로 텍스트를 뽑는다. 텍스트가 없는 페이지(스캔본, 글자를 윤곽선으로 바꾼 인디자인 PDF)는
+         tesseract(kor)가 있으면 300dpi로 그려 OCR 한다. 깨진 줄(자모 조각·한글 비율 낮음)은 버리고,
+         한글 OCR_MIN_HANGUL자 미만인 쪽(표지·인포그래픽)은 색인하지 않는다. OCR 쪽이 있는 문서는 ocr=true.
+         OCR 결과는 파일 내용 해시로 data/ocr-cache.json 에 저장해 다음 실행 때 다시 돌리지 않는다.
 - HWPX : 본문 XML에서 문단을 뽑고, 저장된 줄 배치 정보(vertpos)가 위로 되돌아가는 지점을 쪽 경계로 본다.
 - HWP  : 본문 스트림의 문단 레코드를 같은 방식으로 처리한다.
   HWPX/HWP의 쪽 번호는 추정값이라 pageEstimated=true 로 표시한다.
@@ -15,13 +18,19 @@
 - 이름이 달라도 본문이 같은 문서(한글 8글자 조각 90% 이상 겹침)는 하나만 색인한다.
   PDF를 남기고, 둘 다 같은 형식이면 번호가 앞선 쪽을 남긴다(검색 결과에 같은 쪽이 두 번 나오지 않게).
 """
-import json, os, re, struct, sys, zipfile, zlib
+import hashlib, json, os, re, shutil, struct, subprocess, sys, tempfile, zipfile, zlib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from xml.etree import ElementTree as ET
 
 HP = '{http://www.hancom.co.kr/hwpml/2011/paragraph}'
 MIN_CHARS = 40  # 이보다 짧은 쪽은 표지·간지로 보고 색인하지 않는다
 DUP_SHARE = 0.9  # 본문 조각이 양쪽 모두 이 비율 이상 겹치면 같은 문서로 본다
+OCR_DPI = 300
+OCR_MIN_HANGUL = 150  # OCR 한 쪽에서 살아남은 한글이 이보다 적으면 표지·인포그래픽으로 보고 버린다
+OCR_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'ocr-cache.json')
+OCR_VERSION = 1  # 줄 거르기 규칙을 바꾸면 올려서 캐시를 무효화한다
+HAS_TESSERACT = shutil.which('tesseract') is not None
 
 
 def shingles(texts, n=8):
@@ -75,18 +84,89 @@ def parse_name(fn):
     return meta
 
 
+JAMO = re.compile(r'[\u3131-\u318e]')
+def ocr_line_ok(line):
+    """OCR 줄 거르기: 자모 조각이 섞였거나 한글·숫자 비율이 낮거나 한 글자 토막이 대부분인 줄은 버린다"""
+    s = re.sub(r'\s', '', line)
+    if len(s) < 4 or len(JAMO.findall(line)) >= 2:
+        return False
+    good = sum(1 for c in s if '가' <= c <= '힣' or c.isdigit() or c in '.,·ㆍ%()「」『』~-‧')
+    if good / len(s) < 0.7:
+        return False
+    toks = line.split()
+    return not (len(toks) >= 4 and sum(1 for t in toks if len(t) == 1) / len(toks) > 0.5)
+
+
+def ocr_page(path, i):
+    import pymupdf
+    doc = pymupdf.open(path)
+    pix = doc[i - 1].get_pixmap(dpi=OCR_DPI, alpha=False, colorspace=pymupdf.csGRAY)
+    with tempfile.TemporaryDirectory() as td:
+        png = os.path.join(td, 'p.png')
+        pix.save(png)
+        # psm 4(한 단짜리 줄 모음): 기본(psm 3)은 인디자인 판면의 장식 때문에 판 나누기를 잘못해 글자가 크게 깨졌다(실측)
+        r = subprocess.run(['tesseract', png, '-', '-l', 'kor', '--psm', '4'], capture_output=True, text=True, timeout=120)
+    lines = [l.strip() for l in r.stdout.splitlines() if ocr_line_ok(l)]
+    t = clean('\n'.join(lines))
+    return t if sum(1 for c in t if '가' <= c <= '힣') >= OCR_MIN_HANGUL else ''
+
+
+def file_hash(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as fp:
+        for chunk in iter(lambda: fp.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+OCR_STORE = None
+OCR_USED = set()
+OCR_MARK = {}  # 파일 이름 → OCR로 채운 쪽 번호들(쪽마다 ocr 표시)
+def ocr_store():
+    global OCR_STORE
+    if OCR_STORE is None:
+        try:
+            with open(OCR_CACHE, encoding='utf-8') as fp:
+                OCR_STORE = json.load(fp)
+        except (OSError, ValueError):
+            OCR_STORE = {}
+        OCR_STORE.setdefault('version', OCR_VERSION)
+        OCR_STORE.setdefault('files', {})
+        if OCR_STORE['version'] != OCR_VERSION:
+            OCR_STORE = {'version': OCR_VERSION, 'files': {}}
+    return OCR_STORE
+
+
 def pdf_pages(path):
     import pymupdf
     doc = pymupdf.open(path)
-    pages, scanned = [], 0
+    pages, blank = [], []
     for i, p in enumerate(doc, 1):
         t = clean(p.get_text())
         if len(t) < MIN_CHARS:
-            if p.get_images():
-                scanned += 1
+            blank.append(i)
             continue
         pages.append((i, t))
-    return pages, len(doc), scanned
+    ocr = 0
+    if blank and HAS_TESSERACT:
+        store = ocr_store()
+        key = file_hash(path)
+        OCR_USED.add(key)
+        cached = store['files'].get(key, {})
+        todo = [i for i in blank if str(i) not in cached]
+        if todo:
+            with ThreadPoolExecutor(max_workers=os.cpu_count() or 2) as ex:
+                for i, t in zip(todo, ex.map(lambda n: ocr_page(path, n), todo)):
+                    cached[str(i)] = t
+        store['files'][key] = {k: cached[k] for k in map(str, blank) if k in cached}
+        store['files'][key]['_name'] = os.path.basename(path)
+        for i in blank:
+            t = cached.get(str(i), '')
+            if t:
+                pages.append((i, t)); ocr += 1
+                OCR_MARK.setdefault(os.path.basename(path), set()).add(i)
+        pages.sort()
+    return pages, len(doc), (len(blank) - ocr, ocr)
 
 
 CELL_SEP = '\u2002'  # 표 칸 구분(EN SPACE). 공백으로 취급돼 검색·대조에는 영향이 없고, 화면은 칸 구분선으로 그린다
@@ -226,20 +306,29 @@ def main():
             got, total, scanned = fn(path)
         except Exception as ex:  # 한 파일이 깨져도 나머지는 색인한다
             report.append((f, f'실패: {type(ex).__name__}: {ex}')); continue
+        blank, ocr = scanned if isinstance(scanned, tuple) else (scanned, 0)
         meta.update({'pages': total, 'indexedPages': len(got), 'pageEstimated': meta['ext'] != 'pdf'})
+        if ocr:
+            meta.update({'ocr': True, 'ocrPages': ocr})
         parsed.append((f, meta, got))
         note = f'{len(got)}/{total}쪽'
-        if scanned: note += f' · 스캔 {scanned}쪽 제외'
-        if not got: note += ' · 텍스트 없음(OCR 필요)'
+        if ocr: note += f' · OCR {ocr}쪽'
+        if blank: note += f' · 글자 없는 쪽 {blank}쪽 제외'
+        if not got: note += ' · 텍스트 없음' + ('' if HAS_TESSERACT else '(OCR 도구 없음)')
         report.append((f, note))
     for f, meta, got in drop_duplicates(parsed, report):
         docs.append(meta)
+        marks = OCR_MARK.get(f, set())
         for n, t in got:
-            pages.append({'doc': meta['id'], 'page': n, 'text': t})
+            pages.append({'doc': meta['id'], 'page': n, 'text': t, **({'ocr': True} if n in marks else {})})
     result = {'builtAt': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'docs': docs, 'pages': pages}
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with open(out, 'w', encoding='utf-8') as fp:
         json.dump(result, fp, ensure_ascii=False, separators=(',', ':'))
+    if OCR_STORE is not None:  # 이번에 색인한 파일의 OCR 결과만 남긴다(드라이브에서 지운 파일은 캐시에서도 빠진다)
+        OCR_STORE['files'] = {k: v for k, v in OCR_STORE['files'].items() if k in OCR_USED}
+        with open(OCR_CACHE, 'w', encoding='utf-8') as fp:
+            json.dump(OCR_STORE, fp, ensure_ascii=False, indent=0, sort_keys=True)
     for f, note in report:
         print(f'{note:34s} {f}')
     print(f'\n문서 {len(docs)}건 · {len(pages)}쪽 · {os.path.getsize(out) / 1024:.0f} KB → {out}')

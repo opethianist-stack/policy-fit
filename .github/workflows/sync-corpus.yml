@@ -18,7 +18,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40   # 캐시가 없는 첫 OCR은 수 분 걸린다
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +28,10 @@ jobs:
 
       - name: 패키지 설치
         run: pip install pymupdf olefile google-api-python-client google-auth
+
+      # 글자가 없는 PDF 쪽(스캔본·글자를 윤곽선으로 바꾼 인디자인 PDF)을 OCR 한다. 결과는 data/ocr-cache.json 에 남아 다음 실행 때 다시 돌리지 않는다
+      - name: OCR 도구 설치
+        run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr tesseract-ocr-kor
 
       - name: 드라이브에서 받아 색인
         env:
@@ -39,7 +43,7 @@ jobs:
         run: |
           git config user.name "policy-fit-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/corpus-index.json data/corpus-links.json
+          git add data/corpus-index.json data/corpus-links.json data/ocr-cache.json
           if git diff --cached --quiet; then
             echo "바뀐 내용 없음"
           else
