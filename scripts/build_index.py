@@ -43,7 +43,8 @@ def drop_duplicates(parsed, report):
     rank = lambda item: (item[1]['ext'] != 'pdf', item[1]['id'])
     keep, sigs = [], []
     for item in sorted(parsed, key=rank):
-        sig = shingles(t for _, t in item[2])
+        # OCR 쪽은 비교에서 뺀다(표지 몇 쪽이 OCR로 더해지면 같은 문서가 90% 기준을 못 넘었다: 18-2 ↔ 02-1)
+        sig = shingles(t for n, t in item[2] if n not in OCR_MARK.get(item[0], ()))
         dup = None
         if len(sig) >= 200:
             for (kf, km, _), ks in zip(keep, sigs):
@@ -89,6 +90,8 @@ def ocr_line_ok(line):
     """OCR 줄 거르기: 자모 조각이 섞였거나 한글·숫자 비율이 낮거나 한 글자 토막이 대부분인 줄은 버린다"""
     s = re.sub(r'\s', '', line)
     if len(s) < 4 or len(JAMO.findall(line)) >= 2:
+        return False
+    if len(s) <= 12 and re.search(r'[=<>|\\\[\]{}^_]', line):  # "(= 의으 의하 의"처럼 기호가 낀 짧은 토막
         return False
     good = sum(1 for c in s if '가' <= c <= '힣' or c.isdigit() or c in '.,·ㆍ%()「」『』~-‧')
     if good / len(s) < 0.7:
@@ -222,6 +225,7 @@ def pdf_pages(path):
         store['files'][key]['_name'] = os.path.basename(path)
         for i in blank:
             t = cached.get(str(i), '')
+            t = clean('\n'.join(l for l in t.splitlines() if ocr_line_ok(l)))  # 캐시가 옛 거르기 규칙이어도 지금 규칙을 적용
             if t:
                 pages.append((i, t)); ocr += 1
                 OCR_MARK.setdefault(os.path.basename(path), set()).add(i)
