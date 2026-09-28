@@ -260,6 +260,9 @@
   .wsrc { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
   .wquote { font-size: 12px; color: var(--muted); line-height: 1.55; background: var(--bg); border-radius: 6px; padding: 7px 9px; margin-bottom: 6px; max-height: 92px; overflow-y: auto; }
   .witem .logic { margin-bottom: 6px; }
+  .wroles { margin-bottom: 8px; gap: 4px; }
+  .wroles button { font-size: 11px; padding: 4px 9px; }
+  .ai-msg.busy { color: var(--violet); }
   .wwarn { font-size: 11.5px; color: #9A5B00; margin-bottom: 6px; }
   .wwarn:empty { display: none; }
   .ex-body .paper { flex: 1; min-width: 0; position: sticky; top: 0; }
@@ -751,7 +754,7 @@
               <div class="ai-sug" id="ai-sug"></div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
                 <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
-                <button class="ai-btn" id="ai-rank-btn" onclick="aiRank()">AI 관련도 정렬</button><span class="ai-msg" id="ai-rank-msg"></span>
+                <span class="ai-msg" id="ai-rank-msg"></span>
                 <div class="sec-label" id="result-count" style="margin-bottom:0;margin-left:auto;"></div>
               </div>
               <div class="result-grid" id="result-grid"></div>
@@ -797,7 +800,6 @@
         <div class="review">
           <div class="sec-label" id="rv-count"></div>
           <div id="rv-card" style="background:var(--tint);border-radius:12px;padding:16px;margin-bottom:14px;"></div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;"><button class="ai-btn" id="ai-roles-btn" onclick="aiRoles()">AI 역할 분류</button><span class="ai-msg" id="ai-roles-msg"></span></div>
           <div id="rv-list" style="margin-bottom:18px;"></div>
           <button class="btn primary" id="rv-next" style="margin-top:auto;" onclick="go('export')" disabled>사업 이해도 문서 산출</button>
         </div>
@@ -825,6 +827,7 @@
           <button class="fmt on" id="fmt-docx" onclick="setFmt('docx')">docx</button>
           <button class="fmt" id="fmt-pdf" onclick="setFmt('pdf')">pdf</button>
           <button class="btn primary" id="dl-btn" onclick="download()" disabled>docx 다운로드</button>
+          <button class="ai-btn" id="ai-roles-btn" onclick="aiRoles()">AI 역할 분류</button><span class="ai-msg" id="ai-roles-msg"></span>
           <button class="ai-btn" id="ai-draft-btn" onclick="aiDraft()">AI 초안</button><span class="ai-msg" id="ai-draft-msg"></span>
           <button class="btn outline" style="margin-left:auto;" onclick="go('deck')">장표 구도 추천</button>
         </div>
@@ -1225,6 +1228,7 @@
       S.terms = d.terms; S.results = d.results; S.scopeDocs = d.scopeDocs;
       if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
       renderTerms(); renderResults(d);
+      autoRank();
       loadMsit();
       mergeRfpTerms();
     });
@@ -1624,27 +1628,37 @@
       rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 8000) : '',
     }, function (d) { AI.sug = d.terms; renderSug(); return d.terms.length ? '눌러서 추가' : '추가할 후보가 없습니다'; });
   }
-  // 키워드 후보를 넓게(30건) 받아 AI가 사업 관련도로 다시 줄 세운다. 발췌·문서는 그대로, 순서와 이유만 바뀐다
-  function aiRank() {
-    if (!S.notice || !S.lineage || !S.terms.length) return;
-    var my = seq, btn = $('ai-rank-btn');
-    btn.disabled = true; btn.textContent = '후보 모으는 중'; $('ai-rank-msg').textContent = ''; $('ai-rank-msg').className = 'ai-msg';
-    var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
-    return api('/api/evidence', params).then(function (ev) {
-      btn.disabled = false; btn.textContent = 'AI 관련도 정렬';
-      if (my !== seq) return;
-      if (!ev.ok || !ev.results.length) { $('ai-rank-msg').textContent = '정렬할 후보가 없습니다'; return; }
-      var by = {}; ev.results.forEach(function (r) { by[r.id] = r; });
-      return aiRun('ai-rank-btn', 'ai-rank-msg', {
-        task: 'rank', notice: S.notice, lineage: S.lineage, rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 3000) : '', candidates: ev.results,
-      }, function (d) {
-        if (my !== seq) return '';
-        S.results = d.ranked.filter(function (x) { return by[x.id]; }).map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; });
-        $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
-        syncCards(); renderTerms(); renderGrid(); repaintSteps();
-        return '후보 ' + d.candidates + '건을 관련도순으로 정렬' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : '');
-      });
-    });
+  // 검색할 때마다 자동으로: 키워드 결과를 먼저 보여 주고, 뒤에서 후보 20건을 받아 AI가 사업 관련도로 다시 줄 세운다.
+  // 발췌·문서는 그대로, 순서와 관련도(●●○)·이유만 바뀐다. 키가 없거나 실패하면 키워드순 그대로 둔다.
+  // 검색어를 연달아 바꿀 때 호출이 쌓이지 않게 0.7초 기다렸다가 마지막 검색만 판정한다
+  var RANKT = null, RANKSEQ = 0;
+  function rankMsg(t, cls) { var m = $('ai-rank-msg'); if (m) { m.className = 'ai-msg' + (cls ? ' ' + cls : ''); m.innerHTML = t; } }
+  function autoRank() {
+    clearTimeout(RANKT);
+    var rid = ++RANKSEQ;
+    if (!S.notice || !S.lineage || !S.terms.length || !(S.results || []).length) { rankMsg(''); return; }
+    var my = seq, t0 = Date.now();
+    rankMsg('관련도 판정 중', 'busy');
+    var tick = setInterval(function () { if (rid === RANKSEQ && my === seq) rankMsg('관련도 판정 중 ' + Math.round((Date.now() - t0) / 1000) + '초', 'busy'); else clearInterval(tick); }, 1000);
+    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) rankMsg(t, cls); };
+    RANKT = setTimeout(function () {
+      var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
+      api('/api/evidence', params).then(function (ev) {
+        if (rid !== RANKSEQ || my !== seq) return clearInterval(tick);
+        if (!ev.ok || !ev.results.length) return done('');
+        var by = {}; ev.results.forEach(function (r) { by[r.id] = r; });
+        return aiPost({ task: 'rank', notice: S.notice, lineage: S.lineage, rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 3000) : '', candidates: ev.results }).then(function (d) {
+          if (rid !== RANKSEQ || my !== seq) return clearInterval(tick);
+          if (!d.ok) return done('키워드순 · 관련도 판정 못 함(' + esc(d.error || '오류') + ')', 'err');
+          var ranked = d.ranked.filter(function (x) { return by[x.id]; });
+          if (!ranked.length) return done('관련도 판정: 관련 높은 후보가 없어 키워드순으로 둡니다');
+          S.results = ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; });
+          $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
+          syncCards(); renderTerms(); renderGrid(); repaintSteps();
+          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : ''));
+        });
+      }).catch(function () { done('키워드순 · 관련도 판정 못 함', 'err'); });
+    }, 700);
   }
   function renderSug() {
     $('ai-sug').innerHTML = AI.sug.map(function (x, i) {
@@ -1661,7 +1675,7 @@
     if (!body.cards.length) { $('ai-roles-msg').textContent = '선택한 근거가 없습니다'; return; }
     return aiRun('ai-roles-btn', 'ai-roles-msg', { task: 'roles', cards: body.cards, lineage: S.lineage, notice: S.notice }, function (d) {
       d.roles.forEach(function (x) { var c = cardOf(x.id); if (c) { c.role = x.role; c.aiWhy = x.why || ''; } });
-      renderReview();
+      renderWork(); queueDraft();
       return '선택한 근거 ' + d.roles.length + '건의 역할을 바꿨습니다';
     });
   }
@@ -1718,7 +1732,8 @@
     renderReview();
     go('chat');
   }
-  function setRole(k) { CARDS[cur].role = k; CARDS[cur].aiWhy = ''; renderReview(); }
+  // 역할 = 문서의 어느 블록(가. 정책 기조 …)에 들어갈지. 산출 화면에서 카드마다 고른다
+  function setRole(ci, k) { var c = CARDS[ci]; if (!c) return; c.role = k; c.aiWhy = ''; renderWork(); queueDraft(); }
   function pick(i) { cur = i; renderReview(); loadSrc(); }
   function toggleCur() { var c = CARDS[cur]; if (c) toggleSel(c.r.id); }
   function stepCur(d) { if (!CARDS.length) return; cur = (cur + d + CARDS.length) % CARDS.length; renderReview(); loadSrc(); }
@@ -1735,10 +1750,6 @@
       '<div class="doc-title" style="margin-bottom:8px;">' + esc(r.org + ' ' + r.title) + ' · ' + esc(r.year) + ' · p.' + c.page + (r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
       '<div class="badge-ok" style="margin-bottom:10px;">' + ICON_OK + '원문 일치 확인</div>' +
       '<div class="quote" style="margin-bottom:12px;">' + mark(c.quote, r.matched) + '</div>' +
-      (c.sel ? '<div class="sec-label" style="margin-bottom:6px;">역할</div>' +
-        '<div class="roles">' + ROLES.map(function (x) {
-          return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(\'' + x.key + '\')">' + x.label + '</button>';
-        }).join('') + '</div>' + (c.aiWhy ? '<div class="ai-why">AI 분류: ' + esc(c.aiWhy) + '</div>' : '') : '') +
       '<div style="display:flex;gap:8px;">' +
         '<button class="btn soft" style="min-height:36px;padding:0 12px;" onclick="stepCur(-1)" aria-label="이전 후보">‹</button>' +
         '<button class="btn ' + (c.sel ? 'soft' : 'primary') + '" style="flex:1;min-height:36px;" onclick="toggleCur()">' + (c.sel ? '선택 해제' : '이 근거 선택') + '</button>' +
@@ -1748,7 +1759,6 @@
       return '<div class="rv-row">' +
         '<button class="box' + (x.sel ? ' on' : '') + '" onclick="toggleSel(\'' + esc(x.r.id) + '\')" aria-label="선택"></button>' +
         '<button onclick="pick(' + i + ')" style="flex:1;min-width:0;text-align:left;font-size:12px;color:var(--slate);' + (i === cur ? 'font-weight:700;color:var(--ink);' : '') + '">' + esc(x.r.org + ' ' + x.r.title) + ' · p.' + x.page + '</button>' +
-        (x.sel ? '<span class="meta" style="flex-shrink:0;">' + esc(roleLabel(x.role)) + '</span>' : '') +
       '</div>';
     }).join('');
     $('rv-next').disabled = !n;
@@ -1823,18 +1833,21 @@
     if (!used.length) { $('ex-work').innerHTML = ''; return; }
     var html = used.map(function (r, i) {
       return '<div class="wblock"><div class="wlabel">' + MARKS[i] + '. ' + esc(r.label) + '</div>' +
-        '<input class="winput' + (AIF.head[r.key] ? ' ai' : '') + '" placeholder="헤드라인 한 줄" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;AIF.head[\'' + r.key + '\']=false;this.classList.remove(\'ai\');queueDraft()">' +
+        '<input class="winput' + (AIF.head[r.key] ? ' ai' : '') + '" placeholder="헤드라인 한 줄 · 비어 있으면 문서에 ‘가. (정책 기조)’처럼 역할 이름만 나갑니다 · AI 초안으로 채우거나 직접 입력" value="' + esc(HEAD[r.key] || '') + '" oninput="HEAD[\'' + r.key + '\']=this.value;AIF.head[\'' + r.key + '\']=false;this.classList.remove(\'ai\');queueDraft()">' +
         CARDS.map(function (c, ci) {
           if (!c.sel || c.role !== r.key) return '';
           return '<div class="witem"><div class="wsrc">' + esc(c.r.org + ' 「' + c.r.title + '」 p.' + c.page) + (c.r.pageEstimated ? '<span class="tag">쪽 확인</span>' : '') + '</div>' +
+            '<div class="roles wroles" role="group" aria-label="이 근거가 들어갈 블록">' + ROLES.map(function (x) {
+              return '<button class="' + (c.role === x.key ? 'on' : '') + '" onclick="setRole(' + ci + ',\'' + x.key + '\')">' + x.label + '</button>';
+            }).join('') + '</div>' + (c.aiWhy ? '<div class="ai-why">AI 분류: ' + esc(c.aiWhy) + '</div>' : '') +
             '<div class="wquote">' + cells(esc(c.quote)) + '</div>' +
-            '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 줄마다 불릿 하나 · 비우면 발췌문을 그대로 싣습니다" oninput="fitArea(this);CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
+            '<textarea class="logic' + (c.aiText ? ' ai' : '') + '" placeholder="문서 문장 · 줄마다 불릿 하나 · 비어 있으면 위 발췌문을 따옴표로 그대로 싣습니다 · AI 초안으로 개조식 요약을 채우거나 직접 입력" oninput="fitArea(this);CARDS[' + ci + '].text=this.value;CARDS[' + ci + '].aiText=false;this.classList.remove(\'ai\');queueDraft()">' + esc(c.text) + '</textarea>' +
             '<div class="wwarn" id="warn-' + esc(c.r.id) + '"></div></div>';
         }).join('') + '</div>';
     }).join('');
     if (used.length >= 2) {
       html += '<div class="wblock"><div class="wlabel">수렴점 · 사업 추진의 필요성</div>' +
-        '<textarea class="logic' + (AIF.concl ? ' ai' : '') + '" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장" oninput="CONCL=this.value;AIF.concl=false;this.classList.remove(\'ai\');queueDraft()">' + esc(CONCL) + '</textarea></div>';
+        '<textarea class="logic' + (AIF.concl ? ' ai' : '') + '" style="margin-bottom:0;" placeholder="위 근거들이 모이는 결론 한두 문장 · 비어 있으면 종합 표에서 ‘사업 추진의 필요성’ 줄이 빠집니다 · AI 초안으로 채우거나 직접 입력" oninput="CONCL=this.value;AIF.concl=false;this.classList.remove(\'ai\');queueDraft()">' + esc(CONCL) + '</textarea></div>';
     }
     $('ex-work').innerHTML = html;
     Array.prototype.forEach.call($('ex-work').querySelectorAll('textarea.logic'), fitArea);
