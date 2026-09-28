@@ -4,7 +4,8 @@ name: 정책문서 색인 갱신
 # 바뀐 게 있으면 main 에 커밋하고, Vercel 이 그 커밋으로 자동 배포한다.
 on:
   schedule:
-    - cron: '0 18 * * *'   # 매일 03:00 (한국시간)
+    - cron: '0 18 * * *'   # 매일 03:00 (한국시간). GitHub 예약이 밀려 실제로는 05:20~05:50쯤 돈다
+    - cron: '0 23 * * 0,3' # 월·목 08:00 (한국시간). policy-harvest가 월·목 06:00에 드라이브에 넣은 문서를 당일 반영
   workflow_dispatch:        # Actions 탭의 "Run workflow" 버튼으로 바로 실행
 
 permissions:
