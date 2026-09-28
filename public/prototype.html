@@ -152,6 +152,16 @@
   .fmt { font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 500px; background: #fff; border: 1px solid var(--hairline); color: var(--slate); }
   .fmt.on { background: var(--violet-tint); border-color: transparent; color: var(--violet); }
   .btn:disabled { opacity: 0.4; cursor: default; }
+  .notice .limits { grid-column: 1 / -1; padding-top: 12px; border-top: 1px solid var(--hairline); }
+  .notice .limits .k { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .lm-list { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .lm { font-size: 12.5px; color: var(--slate); line-height: 1.5; }
+  .lm b { font-weight: 600; color: var(--muted); margin-right: 6px; font-size: 11.5px; }
+  .lm.on { color: var(--ink); font-weight: 600; }
+  .lm-code { font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 3px; }
+  .lm-code::before { content: '('; } .lm-code::after { content: ')'; }
+  .lm .meta { font-weight: 400; }
+  .lm-or { font-weight: 500; color: var(--muted); font-size: 11.5px; }
   .notice .files { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--hairline); }
   .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; color: var(--slate); background: var(--soft); border-radius: 500px; padding: 5px 11px; text-decoration: none; max-width: 100%; }
   .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1152,7 +1162,32 @@
       (n.manual ? '' :
       '<div><div class="k">' + (n.budget ? '배정예산' : '추정가격') + '</div><div class="v">' + won(n.budget || n.estimatedPrice) + '</div></div>' +
       '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>') +
+      (n.manual ? '' : limitsHtml(n.limits)) +
       (files || link ? '<div class="files">' + link + files + '</div>' : '');
+  }
+  // 투찰 제한 한 줄: 업종(면허)제한 · 참가가능지역 · 지역의무 공동도급 · 공동수급.
+  // 업종 제한 그룹은 서로 대안(그룹 중 하나 충족), 같은 그룹 안의 업종은 함께 필요한 것으로 보고 "또는"·"+"로 잇는다
+  function limitsHtml(L) {
+    if (!L) return '';
+    var items = [];
+    var groups = {};
+    (L.licenses || []).forEach(function (x) { (groups[x.group] = groups[x.group] || []).push(x); });
+    var keys = Object.keys(groups);
+    var lic = keys.map(function (g) {
+      return groups[g].map(function (x) { return esc(x.name) + (x.code ? '<span class="lm-code">' + esc(x.code) + '</span>' : ''); }).join(' + ');
+    }).join(' <span class="lm-or">또는</span> ');
+    var allow = [];
+    (L.licenses || []).forEach(function (x) { (x.allowed.match(/\[([^\]]+)\]/g) || []).forEach(function (a) { a = a.slice(1, -1).replace(/\/\w+$/, ''); if (allow.indexOf(a) < 0 && !(L.licenses || []).some(function (y) { return y.name === a; })) allow.push(a); }); });   // 이미 다른 그룹으로 나온 업종은 빼고
+    if (lic) items.push(['업종', lic + (allow.length ? ' <span class="meta">(허용 업종 ' + esc(allow.slice(0, 2).join(', ')) + (allow.length > 2 ? ' 외 ' + (allow.length - 2) : '') + ')</span>' : ''), true]);
+    else if (L.industry) items.push(['업종', L.checked === false ? '제한 있음 · 목록을 불러오지 못했습니다' : '제한 있음', true]);
+    else items.push(['업종', '제한 없음', false]);
+    if ((L.regions || []).length) items.push(['지역', esc(L.regions.join(', ')) + (L.regionBasis ? ' <span class="meta">(' + esc(L.regionBasis) + ' 기준)</span>' : ''), true]);
+    else items.push(['지역', L.checked === false ? '확인하지 못했습니다' : '제한 없음', false]);
+    if ((L.jointDuty || []).length) items.push(['지역의무 공동도급', esc(L.jointDuty.join(', ')) + (L.jointDutyRate ? ' ' + esc(L.jointDutyRate) + '%' : ''), true]);
+    if (L.joint) items.push(['공동수급', esc(L.joint), /불허/.test(L.joint)]);
+    return '<div class="limits"><div class="k">투찰 제한</div><div class="lm-list">' + items.map(function (x) {
+      return '<span class="lm' + (x[2] ? ' on' : '') + '"><b>' + x[0] + '</b>' + x[1] + '</span>';
+    }).join('') + '</div></div>';
   }
 
   function renderLineage() {

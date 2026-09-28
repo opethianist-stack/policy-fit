@@ -1,7 +1,7 @@
 # Policy Fit — 작업 핸드오프
 
 레포 루트의 `CLAUDE.md`. Codespace의 Claude Code가 세션 시작 시 자동으로 읽는다.
-최종 갱신: 2026-09-28 (STEP32 — NIPA 사업공고 제외어 추가)
+최종 갱신: 2026-09-28 (STEP33 — 공고 카드에 투찰 제한 표시)
 
 ---
 
@@ -46,7 +46,7 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 | `/search` | `app/search/page.js` → `public/prototype.html` (iframe) | 사용자 화면 5종(홈·정책 근거 검색·정책 근거 선택·문서 산출·구도 추천). 바닐라 HTML/JS. **다섯 화면 모두 실데이터**(아래 API)로 동작한다 |
 | `/api-test` | `app/api-test/page.js` | 오픈API 연결 테스트. 프리셋 11개(포털 7 + 알리오플러스 4). **실제로 동작함.** 상단 탭 "API 연결 테스트"(2026-09-22부터) |
 | `/api/health` | `app/api/health/route.js` | 나라장터·공공기관 정보 API를 1건씩 실제 호출해 `{g2b, inst}` 의 ok/사유를 반환. 포털은 인증 실패에도 HTTP 200을 주므로 본문 결과코드까지 확인한다. 결과는 1분 캐시 |
-| `/api/notice?no=` | `app/api/notice/route.js` | 입찰공고번호 → 공고 요약(공고명·수요기관·예산·마감·첨부파일 URL). 업무구분을 몰라 용역→물품→공사→외자 순으로 조회하고, 정정공고는 최신 차수를 쓴다. 첨부는 공고 첨부(`ntceSpecFile1~10`) + **제안요청정보(e발주 첨부, `getBidPblancListInfoEorderAtchFileInfo`)** — 뒤쪽은 `doc`(제안요청서·기타문서)가 붙는다 |
+| `/api/notice?no=` | `app/api/notice/route.js` | 입찰공고번호 → 공고 요약(공고명·수요기관·예산·마감·첨부파일 URL). 업무구분을 몰라 용역→물품→공사→외자 순으로 조회하고, 정정공고는 최신 차수를 쓴다. 첨부는 공고 첨부(`ntceSpecFile1~10`) + **제안요청정보(e발주 첨부, `getBidPblancListInfoEorderAtchFileInfo`)** — 뒤쪽은 `doc`(제안요청서·기타문서)가 붙는다. **투찰 제한(STEP33)** `notice.limits`: 공고 응답의 `indstrytyLmtYn`(업종제한 여부)·`rgnLmtBidLocplcJdgmBssNm`(지역제한 기준, 본사소재지 등)·`jntcontrctDutyRgnNm1~3`·`rgnDutyJntcontrctRt`(지역의무 공동도급)·`cmmnSpldmdMethdNm`(공동수급) + 따로 부르는 `getBidPblancListInfoLicenseLimit`(업종 `lcnsLmtNm` "학술.연구용역/1169" → 이름·코드, 제한 그룹 `lmtGrpNo`, 허용 업종 `permsnIndstrytyList`)·`getBidPblancListInfoPrtcptPsblRgn`(참가가능지역 `prtcptPsblRgnNm`). 두 오퍼레이션은 **`bidNtceOrd`(차수)가 없으면 "필수값 입력 에러(08)"**. 실패해도 공고 조회는 그대로(`checked:false`). 화면은 공고 카드에 "투찰 제한" 줄(업종·지역·지역의무 공동도급·공동수급, 제한이 걸린 항목은 진하게). 업종 제한 그룹은 서로 대안으로 보고 "또는"으로, 같은 그룹 안은 "+"로 잇는다(실측 `R26BK01738303`: 그룹 1~3이 건설엔지니어링업 종합·설계일반·건설사업관리 — 셋 중 하나). 허용 업종은 이미 다른 그룹에 나온 것은 빼고 2개까지. 저장된 작업(STEP25 이전)의 공고에는 `limits`가 없어 줄이 안 나온다 |
 | `/api/lineage?name=` | `app/api/lineage/route.js` | 수요기관명 → 계보. ① 중앙부처 본부 ② 규칙(교육지원청·교육청·학교·대학, `data/org-rules.json`) ③ 공공기관 정보 API의 주관부처 순. 붙여 쓴 교육청 소속기관("세종특별자치시교육청평생교육원")은 시도교육청을 부모로 넣는다. API에 주관부처가 비어 오면 `org-rules.json`의 `knownParents`로 보완(세종학당재단 → 문화체육관광부). **대학·대학 소속기관(STEP19)**: "○○대학교산학협력단"·"○○대학교 산학협력단"·"○○대학교 평생교육원"은 대학을 부모로 넣는다(`byUniversity`). 교육부 소관이 아닌 대학은 `knownParents`가 먼저(한국기술교육대학교·한국폴리텍대학 → 고용노동부, 한국예술종합학교 → 문화체육관광부, 한국전통문화대학교 → 국가유산청, 한국농수산대학교 → 농림축산식품부, 경찰대학 → 경찰청). 실측: 사전규격 교육·AI 용역 중 산학협력단 발주가 많다(한기대 산학협력단 공고 결과 3건 → 7건, 고용노동부 문서가 범위에 들어옴) |
 | `/api/evidence?title=&orgs=&ministry=&terms=&scope=&limit=` | `app/api/evidence/route.js` → `lib/search.js` | 색인에서 쪽 단위 검색 후 발췌문 반환. 결과마다 역할 기본값(`role`)을 붙인다(`lib/roles.js`). `limit` 기본 10, 최대 30(AI 관련도 정렬 후보용). `coverage`: 계보 기관별 색인 문서 수·최신 연도(`coverageOf`). 외부 호출·LLM 없음 |
 | `/api/page?doc=&page=&quote=` | `app/api/page/route.js` | 색인의 한 쪽 원문 전체 + 발췌문 위치(`hit`) + 앞뒤 쪽 번호. 검토 화면의 원문 쪽 보기가 쓴다 |

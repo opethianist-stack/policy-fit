@@ -33,7 +33,40 @@ function shape(x, kind) {
     closeAt: x.bidClseDt || '',
     detailUrl: x.bidNtceDtlUrl || x.bidNtceUrl || '',
     files,
+    // 투찰 제한: 공고 조회 응답에는 여부·기준만 있다. 업종·지역 목록은 limits() 가 따로 채운다
+    limits: {
+      industry: x.indstrytyLmtYn === 'Y',
+      regionBasis: x.rgnLmtBidLocplcJdgmBssNm || '',          // 본사소재지 등
+      jointDuty: [x.jntcontrctDutyRgnNm1, x.jntcontrctDutyRgnNm2, x.jntcontrctDutyRgnNm3].filter(Boolean),
+      jointDutyRate: x.rgnDutyJntcontrctRt || '',
+      joint: String(x.cmmnSpldmdMethdNm || '').replace(/^\([^)]*\)/, '').trim(),   // "(없음)공동수급불허" → 공동수급불허
+      licenses: [], regions: [],
+    },
   };
+}
+
+// 업종(면허)제한·참가가능지역 목록. 차수(bidNtceOrd)가 없으면 "필수값 입력 에러"가 난다.
+// 업종은 "학술.연구용역/1169"처럼 이름/코드로 오고, 제한 그룹 번호(lmtGrpNo)가 붙는다. 실패하면 빈 목록(공고 조회는 그대로)
+async function limitList(key, op, no, ord) {
+  try {
+    const r = await portalGet(BASE + op, { ServiceKey: key, inqryDiv: '2', bidNtceNo: no, bidNtceOrd: ord, pageNo: '1', numOfRows: '50', type: 'json' });
+    const items = r.json && r.json.response && r.json.response.body && r.json.response.body.items;
+    return { ok: !!(r.json && r.json.response && r.json.response.header && r.json.response.header.resultCode === '00'), items: Array.isArray(items) ? items : [] };
+  } catch {
+    return { ok: false, items: [] };
+  }
+}
+async function limits(key, no, ord) {
+  const [lic, rgn] = await Promise.all([
+    limitList(key, 'getBidPblancListInfoLicenseLimit', no, ord),
+    limitList(key, 'getBidPblancListInfoPrtcptPsblRgn', no, ord),
+  ]);
+  const licenses = lic.items.map((x) => {
+    const m = String(x.lcnsLmtNm || '').match(/^(.*)\/(\w+)$/);
+    return { group: String(x.lmtGrpNo || '1'), name: (m ? m[1] : x.lcnsLmtNm || '').trim(), code: m ? m[2] : '', allowed: x.permsnIndstrytyList || '' };
+  }).filter((x) => x.name);
+  const regions = [...new Set(rgn.items.map((x) => String(x.prtcptPsblRgnNm || '').trim()).filter(Boolean))];
+  return { licenses, regions, checked: lic.ok && rgn.ok };
 }
 
 async function eorderFiles(key, no, ord) {
@@ -80,7 +113,9 @@ export async function GET(req) {
       const notice = shape(items[0], kind);
       // 나라장터 화면의 "제안요청정보"(e발주 첨부)는 공고 첨부(ntceSpecFile)와 따로 있다. 조달청이 대행한 공고는
       // 공고서만 공고 첨부에 있고 제안요청서는 여기에만 있는 경우가 많다(실측: NIA·NIPA 공고 4건). 실패해도 공고 조회는 그대로 돌려준다.
-      notice.files = notice.files.concat(await eorderFiles(key, no, notice.ord));
+      const [eorder, lim] = await Promise.all([eorderFiles(key, no, notice.ord), limits(key, no, notice.ord)]);
+      notice.files = notice.files.concat(eorder);
+      Object.assign(notice.limits, lim);
       return Response.json({ ok: true, notice, revisions: items.length });
     }
   }
