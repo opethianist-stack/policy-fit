@@ -29,7 +29,7 @@ DUP_SHARE = 0.9  # 본문 조각이 양쪽 모두 이 비율 이상 겹치면 �
 OCR_DPI = 300
 OCR_MIN_HANGUL = 150  # OCR 한 쪽에서 살아남은 한글이 이보다 적으면 표지·인포그래픽으로 보고 버린다
 OCR_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'ocr-cache.json')
-OCR_VERSION = 1  # 줄 거르기 규칙을 바꾸면 올려서 캐시를 무효화한다
+OCR_VERSION = 3  # 줄 거르기 규칙을 바꾸면 올려서 캐시를 무효화한다
 HAS_TESSERACT = shutil.which('tesseract') is not None
 
 
@@ -97,16 +97,70 @@ def ocr_line_ok(line):
     return not (len(toks) >= 4 and sum(1 for t in toks if len(t) == 1) / len(toks) > 0.5)
 
 
+def column_regions(page):
+    """쪽을 읽는 순서대로 나눈 영역(pymupdf Rect) 목록. 두 단 구간은 왼쪽 단 → 오른쪽 단 순으로 나눈다.
+    가운데(30~70%)에서 글자가 가장 적게 지나가는 세로줄(단 사이 홈)을 찾고, 그 줄이 비어 있는 가로 구간이
+    충분히 길면 두 단으로 본다. 제목·표처럼 홈을 가로지르는 구간은 한 단으로 둔다."""
+    import pymupdf
+    dpi = 50
+    pix = page.get_pixmap(dpi=dpi, alpha=False, colorspace=pymupdf.csGRAY)
+    w, h, buf = pix.width, pix.height, pix.samples
+    dark = lambda x, y: buf[y * w + x] < 170
+    x0, x1 = int(w * 0.3), int(w * 0.7)
+    cnt = [sum(1 for y in range(h) if dark(x, y)) for x in range(x0, x1)]
+    gx = x0 + min(range(len(cnt)), key=lambda k: cnt[k])
+    rows = [not any(dark(x, y) for x in range(max(0, gx - 1), min(w, gx + 2))) for y in range(h)]
+    # 홈 양쪽에 글자가 있는 줄만 "두 단 줄"로 센다(여백 줄은 어느 쪽에도 붙일 수 있음)
+    side = [any(dark(x, y) for x in range(0, gx - 2)) and any(dark(x, y) for x in range(gx + 3, w)) for y in range(h)]
+    segs, y = [], 0
+    while y < h:
+        two = rows[y]
+        z = y
+        while z < h and rows[z] == two:
+            z += 1
+        segs.append([y, z, two and sum(side[y:z]) >= 6])   # 50dpi에서 6줄 ≈ 3mm 이상 양쪽에 글자
+        y = z
+    merged = []
+    for s0, s1, two in segs:
+        if merged and merged[-1][2] == two:
+            merged[-1][1] = s1
+        else:
+            merged.append([s0, s1, two])
+    r = page.rect
+    k = r.width / w
+    out = []
+    for s0, s1, two in merged:
+        top, bot = s0 * k, s1 * k
+        if bot - top < 4:
+            continue
+        if two:
+            out.append(pymupdf.Rect(r.x0, top, gx * k, bot)); out.append(pymupdf.Rect(gx * k, top, r.x1, bot))
+        else:
+            out.append(pymupdf.Rect(r.x0, top, r.x1, bot))
+    return out or [r]
+
+
 def ocr_page(path, i):
     import pymupdf
     doc = pymupdf.open(path)
-    pix = doc[i - 1].get_pixmap(dpi=OCR_DPI, alpha=False, colorspace=pymupdf.csGRAY)
+    page = doc[i - 1]
+    env = dict(os.environ, OMP_THREAD_LIMIT='1')  # 쪽마다 따로 돌리므로 한 프로세스는 한 스레드만(안 그러면 서로 막혀 쪽당 2분을 넘겼다)
+    parts = []
     with tempfile.TemporaryDirectory() as td:
-        png = os.path.join(td, 'p.png')
-        pix.save(png)
-        # psm 4(한 단짜리 줄 모음): 기본(psm 3)은 인디자인 판면의 장식 때문에 판 나누기를 잘못해 글자가 크게 깨졌다(실측)
-        r = subprocess.run(['tesseract', png, '-', '-l', 'kor', '--psm', '4'], capture_output=True, text=True, timeout=120)
-    lines = [l.strip() for l in r.stdout.splitlines() if ocr_line_ok(l)]
+        for n, clip in enumerate(column_regions(page)):
+            pix = page.get_pixmap(dpi=OCR_DPI, alpha=False, colorspace=pymupdf.csGRAY, clip=clip)
+            if pix.width < 40 or pix.height < 40:
+                continue
+            png = os.path.join(td, f'{n}.png')
+            pix.save(png)
+            # psm 4(한 단 줄 모음): 자동 판 나누기(psm 3)는 장식·배경색이 있는 판면에서 글자가 크게 깨졌다(실측, 경북·전문대교협).
+            # 단은 column_regions 가 미리 나눠 준다
+            try:
+                r = subprocess.run(['tesseract', png, '-', '-l', 'kor', '--psm', '4'], capture_output=True, text=True, timeout=90, env=env)
+                parts.append(r.stdout)
+            except subprocess.TimeoutExpired:
+                pass
+    lines = [l.strip() for o in parts for l in o.splitlines() if ocr_line_ok(l)]
     t = clean('\n'.join(lines))
     return t if sum(1 for c in t if '가' <= c <= '힣') >= OCR_MIN_HANGUL else ''
 
@@ -156,8 +210,14 @@ def pdf_pages(path):
         todo = [i for i in blank if str(i) not in cached]
         if todo:
             with ThreadPoolExecutor(max_workers=os.cpu_count() or 2) as ex:
-                for i, t in zip(todo, ex.map(lambda n: ocr_page(path, n), todo)):
-                    cached[str(i)] = t
+                def safe(n):
+                    try:
+                        return ocr_page(path, n)
+                    except Exception:  # 한 쪽이 실패해도 나머지 쪽과 문서 색인은 계속한다(다음 실행 때 다시 시도하도록 캐시에 넣지 않음)
+                        return None
+                for i, t in zip(todo, ex.map(safe, todo)):
+                    if t is not None:
+                        cached[str(i)] = t
         store['files'][key] = {k: cached[k] for k in map(str, blank) if k in cached}
         store['files'][key]['_name'] = os.path.basename(path)
         for i in blank:
