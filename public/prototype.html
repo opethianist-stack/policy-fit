@@ -114,6 +114,13 @@
   .find-opts.on { display: flex; }
   .find-opts select { border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 8px; font-family: inherit; font-size: 12px; color: var(--ink); background: #fff; }
   .find-opts .state-msg.err, #find-state.err { color: #B42318; }
+  .f-range { display: none; align-items: center; gap: 6px; }
+  .f-range.on { display: inline-flex; }
+  .f-range span { font-size: 12px; color: var(--muted); }
+  .f-range input { border: 1px solid var(--hairline); border-radius: 8px; padding: 5px 8px; font-family: inherit; font-size: 12px; color: var(--ink); background: #fff; }
+  .f-range input:focus { outline: none; border-color: var(--violet); }
+  /* 진행 상태·결과 건수는 보라로 굵게, 설명 문구는 회색 그대로 */
+  #find-state.busy, #find-state.done { color: var(--violet); font-weight: 600; }
   #find-list { margin-top: 6px; }
   #find-list:empty { display: none; }
   .health { display: flex; align-items: center; gap: 16px; margin-top: 10px; padding-left: 2px; }
@@ -296,11 +303,25 @@
   .ai-btn:before { content: '✦'; font-size: 11px; }
   .ai-msg { font-size: 11.5px; color: var(--muted); align-self: center; }
   .ai-msg.err { color: #B42318; }
+  .ai-msg.busy, .ai-msg.ok { font-weight: 600; }
+  .ai-msg.ok { color: var(--violet); }
+  #result-count { color: var(--violet); }
+  .rank-wait { display: flex; align-items: flex-start; gap: 12px; padding: 22px 18px; border: 1px dashed rgba(115,83,234,.4); border-radius: 10px; background: var(--violet-tint); }
+  .rank-wait i { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; border-radius: 50%; border: 2px solid rgba(115,83,234,.25); border-top-color: var(--violet); animation: rw-spin .9s linear infinite; }
+  .rank-wait b { display: block; font-size: 13.5px; color: var(--violet); margin-bottom: 4px; }
+  .rank-wait span { font-size: 12px; color: var(--slate); line-height: 1.55; }
+  @keyframes rw-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .rank-wait i { animation: none; } }
   .ai-drop { display: inline-block; position: relative; }
   .ai-drop summary { cursor: pointer; list-style: none; color: var(--violet); text-decoration: underline; text-underline-offset: 2px; }
   .ai-drop summary::-webkit-details-marker { display: none; }
   .ai-drop ul { position: absolute; z-index: 30; top: 100%; left: 0; width: max-content; max-width: min(420px, 82vw); margin: 6px 0 0; padding: 8px 12px 8px 26px; background: #fff; border: 1px solid var(--hairline); border-radius: 8px; box-shadow: 0 4px 14px rgba(25,31,40,.12); color: var(--ink); font-size: 11.5px; line-height: 1.5; }
   .chip.term.weak { opacity: .55; }
+  .term-legend { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+  .term-legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .term-legend .lg { width: 12px; height: 12px; border-radius: 4px; background: var(--violet-tint); box-shadow: inset 0 0 0 1px rgba(115,83,234,.2); }
+  .term-legend .lg.rfp { background: #fff; box-shadow: inset 0 0 0 1px rgba(115,83,234,.45); }
+  .term-legend .lg.weak { opacity: .45; }
   .chip.term .n { font-size: 10.5px; font-weight: 500; opacity: .75; }
   .chip.term.swap { cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--violet); opacity: 1; }
   .chip.term.swap:hover { background: var(--violet); color: #fff; }
@@ -687,7 +708,8 @@
             <button class="btn primary" type="submit">조회</button>
           </form>
           <div class="find-opts" id="find-opts">
-            <select id="f-days" aria-label="조회 기간"></select>
+            <select id="f-days" aria-label="조회 기간" onchange="periodMode()"></select>
+            <span class="f-range" id="f-range"><input type="date" id="f-from" aria-label="시작일"><span>~</span><input type="date" id="f-to" aria-label="종료일"></span>
             <span class="meta" id="find-state"></span>
           </div>
           <div id="find-list"></div>
@@ -893,10 +915,10 @@
   var STEP_KEYS = ['search', 'chat', 'export', 'deck'];
   function stepOk(k) {
     if (k === 'search') return !!(S && S.notice);
-    if (k === 'chat') return CARDS.length > 0;
+    if (k === 'chat') return CARDS.length > 0 && !RANKING;
     return CARDS.some(function (c) { return c.sel; });
   }
-  function stepWhy(k) { return k === 'search' ? '홈에서 공고를 먼저 찾아 주세요' : k === 'chat' ? '정책 근거 검색을 먼저 진행해 주세요' : '정책 근거를 1건 이상 선택해 주세요'; }
+  function stepWhy(k) { return k === 'search' ? '홈에서 공고를 먼저 찾아 주세요' : k === 'chat' ? (RANKING ? '관련도 판정이 끝나면 넘어갈 수 있습니다' : '정책 근거 검색을 먼저 진행해 주세요') : '정책 근거를 1건 이상 선택해 주세요'; }
   function repaintSteps() { var on = STEP_KEYS.filter(function (k) { return $('s-' + k).classList.contains('on'); })[0]; if (on) paintSteps(on); }
   function paintSteps(name) {
     var at = STEP_KEYS.indexOf(name);
@@ -1058,8 +1080,8 @@
 
   /* ---------- 공고 찾기: 대상(입찰공고·사전규격) × 방법(번호·키워드) ---------- */
   var FIND = {
-    bid: { no: ['공고번호', '예: R26BK00412587'], kw: '공고명 키워드 (예: AI 교육, 연수)', days: [7, 14, 30] },
-    spec: { no: ['규격번호', '예: R26BD00276609'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21] }
+    bid: { no: ['공고번호', '예: R26BK00412587'], kw: '공고명 키워드 (예: AI 교육, 연수)', days: [7, 14, 30], span: 92 },
+    spec: { no: ['규격번호', '예: R26BD00276609'], kw: '규격명 키워드 (예: 교육, 연수)', days: [7, 14, 21], span: 21 }
   };
   var BIDS = [];
   function findMode(reset) {
@@ -1069,15 +1091,35 @@
     inp.placeholder = kw ? f.kw : f.no[1];
     inp.setAttribute('aria-label', kw ? '검색어' : f.no[0]);
     var keep = $('f-days').value;
-    $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('');
-    $('f-days').value = f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('') + '<option value="range">기간 지정</option>';
+    $('f-days').value = keep === 'range' || f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    periodMode();
     $('find-opts').classList.toggle('on', kw);
     $('f-days').style.display = kw ? '' : 'none';
     if (reset) { $('find-list').innerHTML = ''; findState(kw ? (t === 'bid' ? '나라장터 용역 입찰공고 + 산하기관 게시판 공고(한국과학창의재단·정보통신산업진흥원 사업공고, 한국교육학술정보원 공지) · 공고명에 검색어가 든 것 (쉼표로 여러 개)' : '나라장터 용역 사전규격 · 공고 전에 공개된 제안요청서·과업지시서를 읽습니다') : ''); }
   }
-  function findState(msg, isErr) {
+  // 기간 지정: 입찰공고는 최대 92일(나라장터가 한 번에 한 달까지만 받아 31일씩 나눠 부른다), 사전규격은 21일(구간 전체를 받아 거른다)
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function periodMode() {
+    var on = $('f-days').value === 'range', today = new Date();
+    $('f-range').classList.toggle('on', on && $('f-mode').value === 'kw');
+    $('f-from').max = $('f-to').max = ymd(today);
+    if (on && !$('f-from').value) { $('f-to').value = ymd(today); $('f-from').value = ymd(new Date(today.getTime() - 29 * 86400000)); }
+  }
+  // 조회 구간 → { q: API 조건, label: 안내 문구 } 또는 { error }
+  function findPeriod() {
+    var v = $('f-days').value, f = FIND[$('f-target').value];
+    if (v !== 'range') return { q: { days: v }, label: '최근 ' + v + '일' };
+    var a = $('f-from').value, b = $('f-to').value || ymd(new Date());
+    if (!a) return { error: '시작일을 고르세요.' };
+    if (a > b) return { error: '시작일이 종료일보다 늦습니다.' };
+    var span = Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
+    if (span > f.span) return { error: (f === FIND.spec ? '사전규격은' : '입찰공고는') + ' 기간을 ' + f.span + '일까지 지정할 수 있습니다(지금 ' + span + '일).' };
+    return { q: { from: a.replace(/-/g, ''), to: b.replace(/-/g, '') }, label: a.slice(2).replace(/-/g, '.') + '~' + b.slice(2).replace(/-/g, '.'), span: span };
+  }
+  function findState(msg, isErr, kind) {
     $('find-state').textContent = msg || '';
-    $('find-state').className = 'meta' + (isErr ? ' err' : '');
+    $('find-state').className = 'meta' + (isErr ? ' err' : kind ? ' ' + kind : '');
     if ($('f-mode').value !== 'kw') $('find-opts').classList.toggle('on', !!msg);
   }
   function submitFind(e) {
@@ -1091,10 +1133,12 @@
   // 나라장터 용역 입찰공고와 산하기관 게시판 공고(나라장터에 올라오지 않는 운영기관·수행기관 공모, 연수 사업 모집)를 함께 찾아 날짜순으로 섞는다.
   // 게시판 공고는 선택한 기간과 상관없이 최근 6개월치(서버에서 자름). 지난 공고도 참고로 본다. 사업공고를 못 불러와도 입찰공고는 그대로 보여 준다
   function loadBids(q) {
-    var days = $('f-days').value;
-    findState('입찰공고를 찾는 중'); $('find-list').innerHTML = '';
+    var pd = findPeriod();
+    if (pd.error) { findState(pd.error, true); return; }
+    findState('입찰공고를 찾는 중' + (pd.span > 31 ? ' (기간이 길어 몇 초 더 걸립니다)' : ''), false, 'busy'); $('find-list').innerHTML = '';
+    var bq = { q: q, limit: pd.span > 31 ? '50' : '20' }; for (var k0 in pd.q) bq[k0] = pd.q[k0];
     Promise.all([
-      api('/api/bids', { q: q, days: days, limit: '20' }),
+      api('/api/bids', bq),
       api('/api/boards', { q: q, limit: '50' }).catch(function () { return { ok: false }; })
     ]).then(function (r) {
       var d = r[0], k = r[1];
@@ -1104,8 +1148,8 @@
       var rows = BIDS.map(function (x) { return { at: x.postedAt || '', html: bidRow(x) }; })
         .concat(AGN.map(function (x, i) { return { at: x.postedAt || '', html: agencyRow(x, i) }; }))
         .sort(function (a, b) { return b.at.localeCompare(a.at); });
-      findState('최근 ' + days + '일 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고(최근 6개월) ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
-        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')));
+      findState(pd.label + ' 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고(최근 6개월) ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
+        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : d.ok && d.total > BIDS.length ? ' · 최근 ' + BIDS.length + '건만 표시(검색어를 더 구체적으로 넣으면 좁혀집니다)' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')), false, 'done');
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
@@ -1227,7 +1271,7 @@
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
       S.terms = d.terms; S.results = d.results; S.scopeDocs = d.scopeDocs;
       if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
-      renderTerms(); renderResults(d);
+      renderTerms(); renderResults(d, true);
       autoRank();
       loadMsit();
       mergeRfpTerms();
@@ -1252,7 +1296,18 @@
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="' + (S.terms.length >= MAX_TERMS ? '검색어 교체' : '검색어 추가') + '" aria-label="검색어 추가"></form>' +
       '<button class="ai-btn" id="ai-terms-btn" onclick="aiTerms()">AI 검색어 추천</button><span class="ai-msg" id="ai-terms-msg"></span>' +
       '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>' +
+      termLegend(fromRfp, counted) +
       (SWAP ? '<span class="swap-note">검색어는 ' + MAX_TERMS + '개까지입니다. ‘' + esc(SWAP.term) + '’ 대신 뺄 검색어를 누르세요 (건수 = 지금 결과에서 그 검색어가 걸린 카드 수)<button onclick="cancelSwap()">취소</button></span>' : '');
+  }
+  // 칩 모양 설명: 꽉 찬 칩 = 공고명·직접 추가·AI 추천, 테두리 칩 = 제안요청서(규격서·과기정통부 문서)에서 뽑은 말, 흐린 칩 = 지금 결과에 안 걸린 말.
+  // 두 종류 이상이 섞여 있을 때만 보인다
+  function termLegend(fromRfp, counted) {
+    var rfp = S.terms.some(function (t) { return fromRfp.indexOf(t) >= 0; });
+    var weak = counted && S.terms.some(function (t) { return termHits(t) === 0; });
+    if (!rfp && !weak) return '';
+    var src = S.rfp && S.rfp.src === 'spec' ? '규격서' : S.rfp && S.rfp.src === 'msit' ? '과기정통부 문서' : '제안요청서';
+    return '<span class="term-legend">' + (rfp ? '<span><i class="lg"></i>공고명·직접 추가</span><span><i class="lg rfp"></i>' + src + '에서 뽑음</span>' : '') +
+      (weak ? '<span><i class="lg weak"></i>지금 결과에 안 걸림</span>' : '') + '</span>';
   }
   function removeTerm(i) { SWAP = null; S.terms.splice(i, 1); runEvidence(false); }
   function addTerm(e) {
@@ -1293,8 +1348,12 @@
       : '<span class="meta" style="word-break:break-all;">' + esc(r.file) + '</span>';
   }
 
-  function renderResults(d) {
-    $('result-count').textContent = S.results.length + '건 · 대상 문서 ' + d.scopeDocs + '건';
+  // rank=true(새 검색)이면 관련도 판정이 끝날 때까지 결과를 숨기고 진행만 보여 준다. 판정 중에 키워드순 카드가 떴다가
+  // 바뀌면 헷갈린다는 팀 의견. 판정이 실패하거나 키가 없으면 곧바로 키워드순으로 보여 준다(autoRank의 done)
+  var RANKING = false, RANK_LABEL = '관련도 판정 중';
+  function renderResults(d, rank) {
+    RANKING = !!(rank && S.results.length && S.terms.length);
+    $('result-count').textContent = RANKING ? '키워드 후보 ' + S.results.length + '건 · 대상 문서 ' + d.scopeDocs + '건' : S.results.length + '건 · 대상 문서 ' + d.scopeDocs + '건';
     syncCards();
     if (!S.results.length) {
       $('result-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">' +
@@ -1304,6 +1363,11 @@
     renderGrid(); repaintSteps();
   }
   function renderGrid() {
+    if (RANKING) {
+      $('result-grid').innerHTML = '<div class="rank-wait" style="grid-column:1/-1;"><i></i><div><b id="rank-wait-t">' + esc(RANK_LABEL) + '</b>' +
+        '<span>키워드로 찾은 후보를 사업과의 관련도로 거르고 있습니다. 관련 없는 문서는 빼고 관련도순으로 보여 줍니다.</span></div></div>';
+      renderPickCount(); return;
+    }
     $('result-grid').innerHTML = S.results.map(function (r, i) {
       var c = cardOf(r.id), on = c && c.sel;
       return '<div class="card' + (on ? ' sel' : '') + '">' +
@@ -1440,18 +1504,20 @@
   // 나라장터 사전규격에는 공고 전에 제안요청서·과업지시서가 붙는다. 규격서를 읽어 공고번호 없이 바로 시작할 수 있다.
   var SPEC = [];
   function loadSpec(q) {
-    var days = $('f-days').value;
-    findState('사전규격을 불러오는 중'); $('find-list').innerHTML = '';
-    api('/api/prespec', { q: q, days: days, limit: '15' }).then(function (d) {
+    var pd = findPeriod();
+    if (pd.error) { findState(pd.error, true); return; }
+    findState('사전규격을 불러오는 중', false, 'busy'); $('find-list').innerHTML = '';
+    var sq = { q: q, limit: '15' }; for (var k0 in pd.q) sq[k0] = pd.q[k0];
+    api('/api/prespec', sq).then(function (d) {
       if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       SPEC = d.items;
-      findState('최근 ' + days + '일 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : ''));
+      findState(pd.label + ' 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.partial ? ' · 건수가 많아 일부만 봤습니다' : ''), false, 'done');
       renderSpec();
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   // 규격번호로 찾으면 규격서가 있고 이어진 공고가 없을 때 바로 시작한다. 공고가 이미 났거나 규격서가 없으면 목록에 한 건을 보여 고르게 한다
   function openSpecNo(no) {
-    findState('사전규격을 찾는 중'); $('find-list').innerHTML = '';
+    findState('사전규격을 찾는 중', false, 'busy'); $('find-list').innerHTML = '';
     api('/api/prespec', { no: no }).then(function (d) {
       if (!d.ok) { findState(d.error || '찾지 못했습니다.', true); return; }
       SPEC = [d.item];
@@ -1476,7 +1542,7 @@
   var AGN = [];
   // 공고번호(2026-P094)로 찾을 때
   function loadAgency(q, no) {
-    findState('한국과학창의재단 사업공고를 찾는 중'); $('find-list').innerHTML = '';
+    findState('한국과학창의재단 사업공고를 찾는 중', false, 'busy'); $('find-list').innerHTML = '';
     api('/api/boards', { q: q, limit: '50' }).then(function (d) {
       if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       AGN = no ? d.items.filter(function (x) { return x.src === 'kosac' && x.no.toUpperCase() === no.toUpperCase(); }) : d.items;
@@ -1492,7 +1558,7 @@
   }
   function startAgency(i) {
     var x = AGN[i]; if (!x) return;
-    findState('첨부파일을 확인하는 중');
+    findState('첨부파일을 확인하는 중', false, 'busy');
     api('/api/boards', { src: x.src, id: x.id }).then(function (d) {
       if (!d.ok) { findState(d.error || '공고 상세를 열지 못했습니다.', true); return; }
       var files = d.files.filter(function (f) { return f.readable; });
@@ -1636,11 +1702,22 @@
   function autoRank() {
     clearTimeout(RANKT);
     var rid = ++RANKSEQ;
-    if (!S.notice || !S.lineage || !S.terms.length || !(S.results || []).length) { rankMsg(''); return; }
+    // 판정이 끝나면(실패 포함) 숨겨 둔 결과를 보여 준다. 판정하지 못했으면 키워드순 그대로
+    var reveal = function () {
+      if (!RANKING) return;
+      RANKING = false;
+      if (S.results.length) { $('result-count').textContent = $('result-count').textContent.replace(/^키워드 후보 /, '키워드순 '); renderGrid(); repaintSteps(); }
+    };
+    if (!S.notice || !S.lineage || !S.terms.length || !(S.results || []).length) { rankMsg(''); reveal(); return; }
     var my = seq, t0 = Date.now();
-    rankMsg('관련도 판정 중', 'busy');
-    var tick = setInterval(function () { if (rid === RANKSEQ && my === seq) rankMsg('관련도 판정 중 ' + Math.round((Date.now() - t0) / 1000) + '초', 'busy'); else clearInterval(tick); }, 1000);
-    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) rankMsg(t, cls); };
+    RANK_LABEL = '관련도 판정 중'; rankMsg(RANK_LABEL, 'busy');
+    var tick = setInterval(function () {
+      if (rid === RANKSEQ && my === seq) {
+        var t = '관련도 판정 중 ' + Math.round((Date.now() - t0) / 1000) + '초';
+        RANK_LABEL = t; rankMsg(t, 'busy'); var w = $('rank-wait-t'); if (w) w.textContent = t;
+      } else clearInterval(tick);
+    }, 1000);
+    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) { rankMsg(t, cls); reveal(); } };
     RANKT = setTimeout(function () {
       var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
       api('/api/evidence', params).then(function (ev) {
@@ -1653,11 +1730,14 @@
           var ranked = d.ranked.filter(function (x) { return by[x.id]; });
           if (!ranked.length) return done('관련도 판정: 관련 높은 후보가 없어 키워드순으로 둡니다');
           S.results = ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; });
+          RANKING = false;
           $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
           syncCards(); renderTerms(); renderGrid(); repaintSteps();
-          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : ''));
+          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : ''), 'ok');
         });
       }).catch(function () { done('키워드순 · 관련도 판정 못 함', 'err'); });
+      // 서버가 응답하지 않으면 40초 뒤 키워드순으로 보여 준다
+      setTimeout(function () { if (rid === RANKSEQ && my === seq && RANKING) done('키워드순 · 관련도 판정이 늦어 키워드순으로 보여 줍니다', 'err'); }, 40000);
     }, 700);
   }
   function renderSug() {
@@ -1716,7 +1796,7 @@
   function selCount() { return CARDS.filter(function (c) { return c.sel; }).length; }
   function renderPickCount() {
     var n = selCount();
-    $('to-review').disabled = !CARDS.length;
+    $('to-review').disabled = !CARDS.length || RANKING;
     $('to-review').textContent = n ? '선택한 ' + n + '건 확인' : '정책 근거 선택';
   }
   function toggleSel(id) {
