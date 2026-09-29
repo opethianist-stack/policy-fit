@@ -4,7 +4,7 @@ import { defaultRole } from '../../../lib/roles';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// GET /api/evidence?title=공고명&orgs=발주처,주관부처&ministry=주관부처&terms=직접,지정&scope=lineage|all&limit=10
+// GET /api/evidence?title=공고명&orgs=발주처,주관부처&ministry=주관부처&terms=직접,지정&add=제안요청서,검색어&scope=lineage|all&limit=10
 // limit: 기본 10, AI 관련도 정렬 때는 후보를 넓게(최대 30) 받는다. coverage: 계보 기관별 색인 문서 수(누락 위험 표시)
 export async function GET(req) {
   const sp = new URL(req.url).searchParams;
@@ -12,6 +12,8 @@ export async function GET(req) {
   const list = (k) => (sp.get(k) || '').split(',').map((s) => s.trim()).filter(Boolean);
   const orgs = list('orgs');
   const terms = sp.has('terms') ? list('terms') : extractTerms(title, orgs);
+  // add: 공고명 검색어 뒤에 붙일 말(제안요청서에서 뽑은 검색어). 첫 검색에 함께 넣어 두 번 검색하지 않게 한다
+  for (const t of list('add')) if (terms.length < MAX_TERMS && !terms.includes(t)) terms.push(t);
   const ministry = (sp.get('ministry') || '').trim();
   const scope = sp.get('scope') === 'all' ? 'all' : 'lineage';
   const limit = Math.min(30, Math.max(1, parseInt(sp.get('limit') || '10', 10) || 10));

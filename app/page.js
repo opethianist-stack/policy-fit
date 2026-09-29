@@ -27,7 +27,7 @@ export default function Home() {
   return (
     <div className="landing">
       <div className="landing-inner">
-        <h1>공고번호 하나로,<br />근거부터 장표 구도까지</h1>
+        <h1>입찰 공고에서 정책 근거까지,<br />사업 이해도를 높이는 초안 완성</h1>
         <Link href="/search" className="cta">
           공고 검색하기
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
