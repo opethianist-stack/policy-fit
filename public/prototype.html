@@ -354,6 +354,9 @@
   .deck-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 30px; }
   .deck-bar .ai-msg { flex: 1 1 200px; min-width: 0; }
   .deck-bar .pal { margin-left: auto; align-items: center; }
+  .deck-font { flex: none; width: auto; border: 1px solid var(--hairline); border-radius: 8px; padding: 6px 8px; font-family: inherit; font-size: 12px; color: var(--ink); background: #fff; }
+  .deck-pdf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .deck-pdf .meta { margin-left: 2px; }
   .deck-bar .pal .k { font-size: 11.5px; color: var(--muted); margin-right: 2px; }
   @media (max-width: 560px) { .deck-hl { grid-template-columns: 1fr; } }
   .deck-ctl input { width: 100%; box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--ink); outline: none; background: #fff; }
@@ -364,7 +367,7 @@
   /* 제안서 장표 목업 — 부서 정성제안서 판형(가로 1.4:1). 크기는 장표 너비(cqw) 기준 */
   .sl-scroll { overflow-x: auto; }
   .sl-wrap { container-type: inline-size; min-width: 600px; }
-  .sl { --p: #FF5647; --p2: #FF887E; --hd: #FF5647; --dk: #595959; --gy: #E7E6E6; --tile: #FFC000; --tileT: #222; --txt: #262626;
+  .sl { font-family: var(--sl-font, 'Noto Sans KR', sans-serif); --p: #FF5647; --p2: #FF887E; --hd: #FF5647; --dk: #595959; --gy: #E7E6E6; --tile: #FFC000; --tileT: #222; --txt: #262626;
         aspect-ratio: 1.4 / 1; background: #fff; border: 1px solid #D5D9E0; box-shadow: 0 1px 3px rgba(25,31,40,0.06); position: relative;
         padding: 1.4cqw 2.6cqw 2.4cqw; display: flex; flex-direction: column; overflow: hidden; color: var(--txt); font-size: 1.25cqw; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
   .sl.navy { --p: #2E5597; --p2: #4472C4; --hd: #E8412C; --dk: #404040; --gy: #E7E6E6; --tile: #DAE3F3; --tileT: #2E5597; }
@@ -902,9 +905,12 @@
             <input id="deck-h2" placeholder="헤드라인 아랫줄(강조)" oninput="DECKHL[1]=this.value;DECKHL.edited=true;paintDeck()">
           </div>
           <div class="deck-bar">
-            <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button><span class="ai-msg" id="ai-deck-msg"></span>
+            <button class="ai-btn" id="ai-deck-btn" onclick="aiDeck()">AI 문구 다듬기</button>
+            <select id="deck-font" class="deck-font" aria-label="장표 글꼴" onchange="setFont(this.value)"></select>
+            <span class="ai-msg" id="ai-deck-msg"></span>
             <div class="pal"><span class="k">색</span><button id="pal-coral" class="on" style="background:#FF5647" onclick="setPal('coral')" aria-label="코랄"></button><button id="pal-orange" style="background:#ED7D31" onclick="setPal('orange')" aria-label="주황"></button><button id="pal-navy" style="background:#2E5597" onclick="setPal('navy')" aria-label="네이비"></button><button id="pal-purple" style="background:#733E98" onclick="setPal('purple')" aria-label="보라"></button><button id="pal-blue" style="background:#0E70F2" onclick="setPal('blue')" aria-label="파랑"></button><button id="pal-pink" style="background:#FE2D81" onclick="setPal('pink')" aria-label="분홍"></button></div>
           </div>
+          <div class="deck-pdf"><button class="btn soft mini" onclick="printDeck(false)">이 구도 PDF로 저장</button><button class="btn soft mini" onclick="printDeck(true)">추천 구도 전체 PDF</button><span class="meta">인쇄 창에서 대상을 "PDF로 저장"으로 고르세요</span></div>
         </div>
         <div class="decks" id="deck-grid"></div>
       </div>
@@ -993,7 +999,7 @@
     var rfp = S.rfp || { state: 'none' };
     if (rfp.text && rfp.text.length > 20000) rfp = Object.assign({}, rfp, { text: rfp.text.slice(0, 20000) });
     return { v: 1, no: S.no, step: CURSTEP === 'home' ? 'search' : CURSTEP, S: Object.assign({}, S, { rfp: rfp }), CARDS: CARDS, cur: cur, HEAD: HEAD, CONCL: CONCL,
-      AIF: AIF, COPY: COPY, DECKHL: [DECKHL[0], DECKHL[1]], hlEdited: !!DECKHL.edited, DECKSEL: DECKSEL, PAL: PAL, MSIT: MSIT, sug: AI.sug };
+      AIF: AIF, COPY: COPY, DECKHL: [DECKHL[0], DECKHL[1]], hlEdited: !!DECKHL.edited, DECKSEL: DECKSEL, PAL: PAL, FONT: FONT, MSIT: MSIT, sug: AI.sug };
   }
   function saveWork() {
     var w = snapshot(); if (!w) return;
@@ -1072,6 +1078,7 @@
     lastWork = JSON.stringify(Object.assign({}, w, { at: 0 }));
     $('deck-h1').value = DECKHL[0]; $('deck-h2').value = DECKHL[1];
     if (w.PAL) setPal(w.PAL);
+    if (w.FONT) setFont(w.FONT);
     $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
     renderNotice(); renderRfp(); renderLineage(); renderTerms(); renderSug();
     renderResults({ scopeDocs: S.scopeDocs || 0 });
@@ -2133,6 +2140,55 @@
     paintDeck();
   }
   var PALS = ['coral', 'orange', 'navy', 'purple', 'blue', 'pink'];
+  // 장표 미리보기 글꼴(무료 글꼴만). 고를 때 처음 한 번만 글꼴 파일을 불러온다. 원본 HG꼬딕씨는 웹 글꼴이 없다
+  var FONTS = {
+    noto: { name: 'Noto Sans KR', css: '', family: "'Noto Sans KR'" },
+    pretendard: { name: 'Pretendard', css: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css', family: "'Pretendard Variable'" },
+    nanum: { name: '나눔고딕', css: 'https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap', family: "'Nanum Gothic'" },
+    plex: { name: 'IBM Plex Sans KR', css: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap', family: "'IBM Plex Sans KR'" },
+    gothica1: { name: '고딕 A1', css: 'https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;800&display=swap', family: "'Gothic A1'" }
+  };
+  var FONT = 'noto';
+  function setFont(k) {
+    if (!FONTS[k]) k = 'noto';
+    FONT = k;
+    var f = FONTS[k];
+    if (f.css && !document.querySelector('link[data-font="' + k + '"]')) {
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = f.css; l.setAttribute('data-font', k); document.head.appendChild(l);
+    }
+    document.documentElement.style.setProperty('--sl-font', f.family + ", 'Noto Sans KR', sans-serif");
+    var sel = $('deck-font'); if (sel) sel.value = k;
+  }
+  (function () { var sel = $('deck-font'); if (sel) sel.innerHTML = Object.keys(FONTS).map(function (k) { return '<option value="' + k + '">글꼴: ' + FONTS[k].name + '</option>'; }).join(''); })();
+  // 장표 PDF: 보이는 장표(또는 추천 구도 전체)를 장표 비율(1.4:1, 가로 297mm) 쪽에 한 장씩 옮겨 브라우저 인쇄 창을 연다. 산출 화면의 PDF와 같은 방식
+  function printDeck(all) {
+    if (!DECK) return;
+    var opts = all ? DECK.options : DECK.options.filter(function (o) { return o.key === DECKSEL; });
+    if (!opts.length) return;
+    var old = document.getElementById('print-frame'); if (old) old.remove();
+    var f = document.createElement('iframe');
+    f.id = 'print-frame'; f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(f);
+    var head = Array.prototype.map.call(document.querySelectorAll('head style, head link[rel=stylesheet]'), function (n) { return n.outerHTML; }).join('');
+    var name = '장표구도_' + (S.notice && (S.notice.no || S.notice.name) || 'draft') + (all ? '' : '_' + opts[0].name);
+    var doc = f.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(name) + '</title>' + head +
+      '<style>@page{size:297mm 212.14mm;margin:0}html,body{background:#fff!important;margin:0;padding:0;height:auto!important;overflow:visible!important;display:block!important}' +
+      ':root{--sl-font:' + FONTS[FONT].family + ",'Noto Sans KR',sans-serif}" +
+      '.pg{width:297mm;height:212.14mm;overflow:hidden;break-after:page}.pg:last-child{break-after:auto}' +
+      '.sl-wrap{min-width:0!important;width:297mm}.sl{border:0!important;box-shadow:none!important}' +
+      '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' +
+      opts.map(function (o) { return '<div class="pg"><div class="sl-wrap">' + slideHtml(o.slide) + '</div></div>'; }).join('') + '</body></html>');
+    doc.close();
+    var go = function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} };
+    // 고른 글꼴을 인쇄 전에 확실히 받아 둔다(웹 글꼴은 쓰일 때 늦게 받아져 인쇄에 대체 글꼴이 들어갈 수 있다)
+    var fam = FONTS[FONT].family;
+    if (doc.fonts && doc.fonts.load) Promise.all(['400', '700'].map(function (w) { return doc.fonts.load(w + ' 16px ' + fam, '가나다'); })).catch(function () {})
+      .then(function () { return doc.fonts.ready; }).then(function () { setTimeout(go, 80); });
+    else setTimeout(go, 400);
+  }
   function setPal(p) { PAL = p; PALS.forEach(function (k) { $('pal-' + k).classList.toggle('on', k === p); }); paintDeck(); }
   // 구도는 탭으로 하나씩 본다(5장을 세로로 늘어놓으면 비교가 어렵다). 기본은 추천안
   var DECKSEL = '';
@@ -2315,7 +2371,7 @@
     var doc = f.contentDocument;
     doc.open();
     doc.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc('사업이해도_' + (S.notice.no || S.notice.name || 'draft')) + '</title>' + head +
-      '<style>@page{size:A4;margin:18mm 16mm}html,body{background:#fff!important;margin:0}' +
+      '<style>@page{size:A4;margin:18mm 16mm}html,body{background:#fff!important;margin:0;padding:0!important;height:auto!important;overflow:visible!important;display:block!important}' +
       '.paper{border:0!important;border-radius:0!important;padding:0!important;max-width:none!important;box-shadow:none!important}' +
       '.paper .arg li,.paper tr{break-inside:avoid}.paper h4{break-after:avoid}' +
       '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body><div class="paper">' + paper.innerHTML + '</div></body></html>');
