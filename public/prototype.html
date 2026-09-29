@@ -54,8 +54,21 @@
   .nav.on svg { stroke: var(--violet); }
   .side-div { border-top: 1px solid var(--hairline); margin: 12px 8px 14px; }
   .side-label { font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; padding: 0 10px; margin-bottom: 8px; }
-  .recent { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 12px; color: var(--slate); width: 100%; border-radius: 4px; text-align: left; }
+  .recent { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; color: var(--slate); width: 100%; border-radius: 4px; text-align: left; cursor: pointer; }
   .recent:hover { background: var(--tint); }
+  .recent svg { align-self: flex-start; margin-top: 2px; }
+  .recent .rt { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.35; }
+  .recent .rno { font-weight: 500; }
+  .recent .rnm { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent input, .row.edit input { width: 15px; height: 15px; accent-color: var(--violet); flex-shrink: 0; cursor: pointer; }
+  #side-recent { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+  .side-recent-head { display: flex; align-items: center; justify-content: space-between; }
+  .rtool { font-size: 10.5px; font-weight: 600; color: var(--violet); padding: 1px 4px; border-radius: 4px; }
+  .rtool.mute { color: var(--muted); }
+  .rtool:disabled { opacity: .4; cursor: default; }
+  .rtool + .rtool { margin-left: 4px; }
+  .recent-head { display: flex; align-items: center; gap: 10px; max-width: 1040px; }
+  .recent-head .tools { margin-left: auto; }
   /* 최근 검색 확인 창 */
   .ask { position: fixed; inset: 0; background: rgba(25,31,40,.38); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
   .ask[hidden] { display: none; }
@@ -63,7 +76,7 @@
   .ask-t { font-weight: 700; font-size: 15px; color: var(--ink); line-height: 1.45; }
   .ask-d { font-size: 12.5px; color: var(--slate); line-height: 1.6; white-space: pre-line; }
   .ask-b { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
-  .me { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--hairline); }
+  .me { margin-top: 12px; display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--hairline); }
   .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--violet-tint); color: var(--violet); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
   /* ---------- main ---------- */
@@ -72,7 +85,7 @@
   .screen.on { display: flex; }
   .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px var(--pad) 44px; }
 
-  .steps { display: flex; align-items: center; gap: 8px; padding: 22px var(--pad) 0; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+  .steps { display: flex; align-items: center; gap: 8px; padding: 18px var(--pad) 10px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
   .steps::-webkit-scrollbar { display: none; }
   .step { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .step .n { width: 20px; height: 20px; border-radius: 50%; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -139,6 +152,7 @@
   .row .st { font-size: 11px; font-weight: 600; color: var(--violet); text-align: right; line-height: 1.45; }
   .row .st span { display: block; white-space: nowrap; }
   .row .st .sub { font-weight: 500; color: var(--slate); }
+  .row.edit { grid-template-columns: 130px minmax(0,1fr) 170px 190px 20px; cursor: pointer; }
   .notice { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; margin-bottom: 24px; }
   .notice .k { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
   .notice .v { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; }
@@ -174,7 +188,6 @@
   .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   a.chip:hover { background: #DDE0E6; }
   .chip.term { background: var(--violet-tint); color: var(--violet); font-weight: 600; }
-  .chip.term.rfp { background: #fff; box-shadow: inset 0 0 0 1px rgba(115,83,234,0.45); }
   .rfp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 16px; margin: -8px 0 24px; font-size: 12.5px; color: var(--slate); }
   .rfp-row .k { font-size: 11px; font-weight: 600; color: var(--muted); margin-right: 2px; }
   .rfp-row .msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -304,6 +317,8 @@
   .ai-msg { font-size: 11.5px; color: var(--muted); align-self: center; }
   .ai-msg.err { color: #B42318; }
   .ai-msg.busy, .ai-msg.ok { font-weight: 600; }
+  .sel-all { font-size: 12px; font-weight: 600; color: var(--violet); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(115,83,234,.35); background: #fff; }
+  .sel-all:hover { background: var(--violet-tint); }
   .ai-msg.ok { color: var(--violet); }
   #result-count { color: var(--violet); }
   .rank-wait { display: flex; align-items: flex-start; gap: 12px; padding: 22px 18px; border: 1px dashed rgba(115,83,234,.4); border-radius: 10px; background: var(--violet-tint); }
@@ -317,11 +332,6 @@
   .ai-drop summary::-webkit-details-marker { display: none; }
   .ai-drop ul { position: absolute; z-index: 30; top: 100%; left: 0; width: max-content; max-width: min(420px, 82vw); margin: 6px 0 0; padding: 8px 12px 8px 26px; background: #fff; border: 1px solid var(--hairline); border-radius: 8px; box-shadow: 0 4px 14px rgba(25,31,40,.12); color: var(--ink); font-size: 11.5px; line-height: 1.5; }
   .chip.term.weak { opacity: .55; }
-  .term-legend { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
-  .term-legend span { display: inline-flex; align-items: center; gap: 4px; }
-  .term-legend .lg { width: 12px; height: 12px; border-radius: 4px; background: var(--violet-tint); box-shadow: inset 0 0 0 1px rgba(115,83,234,.2); }
-  .term-legend .lg.rfp { background: #fff; box-shadow: inset 0 0 0 1px rgba(115,83,234,.45); }
-  .term-legend .lg.weak { opacity: .45; }
   .chip.term .n { font-size: 10.5px; font-weight: 500; opacity: .75; }
   .chip.term.swap { cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--violet); opacity: 1; }
   .chip.term.swap:hover { background: var(--violet); color: #fff; }
@@ -626,6 +636,8 @@
     .side-div, .side-label, .recent, .me { display: none; }
 
     .row { grid-template-columns: minmax(0,1fr); row-gap: 3px; }
+    .row.edit { grid-template-columns: minmax(0,1fr); position: relative; padding-right: 44px; }
+    .row.edit input { position: absolute; right: 16px; top: 50%; margin-top: -8px; }
     .row .st { text-align: left; }
     .row .st span { display: inline; }
     .row .st .sub::before { content: ' · '; }
@@ -682,7 +694,7 @@
     </div>
 
     <div class="side-div"></div>
-    <div class="side-label" id="side-recent-label">최근 검색</div>
+    <div class="side-label side-recent-head" id="side-recent-label"><span>최근 검색</span><span id="side-recent-tools"></span></div>
     <div id="side-recent"></div>
 
     <div class="me">
@@ -777,7 +789,8 @@
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
                 <div class="sec-label" style="margin-bottom:0;">관련 정책 근거</div>
                 <span class="ai-msg" id="ai-rank-msg"></span>
-                <div class="sec-label" id="result-count" style="margin-bottom:0;margin-left:auto;"></div>
+                <button class="sel-all" id="sel-all" onclick="selectAll()" style="margin-left:auto;display:none;"></button>
+                <div class="sec-label" id="result-count" style="margin-bottom:0;"></div>
               </div>
               <div class="result-grid" id="result-grid"></div>
               <button class="btn primary" id="to-review" onclick="startReview()" disabled>정책 근거 선택</button>
@@ -947,18 +960,19 @@
   var ICON_OK = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
 
   /* ---------- 최근 검색 (이 브라우저에만 저장) ---------- */
+  var RECENT_MAX = 20;   // 최근 검색은 20건까지(멘토링 9/29). 목록에서 밀려난 공고의 저장된 작업도 지운다
   function loadRecent() { try { return JSON.parse(localStorage.getItem('pf-recent') || '[]'); } catch (e) { return []; } }
   function saveRecent(n) {
     var list = loadRecent().filter(function (x) { return x.no !== n.no; });
     list.unshift({ no: n.no, name: n.name, org: n.demandOrg });
-    list = list.slice(0, 8);
+    list = list.slice(0, RECENT_MAX);
     try { localStorage.setItem('pf-recent', JSON.stringify(list)); } catch (e) {}
     pruneWork(list);
     renderRecent();
   }
 
   /* ---------- 작업 저장 (이 브라우저에만) ----------
-     공고마다 검색 결과·선택·역할·작성칸·장표 설정을 localStorage 'pf-work:<공고번호>'에 둔다. 최근 검색 8건과 같이 간다.
+     공고마다 검색 결과·선택·역할·작성칸·장표 설정을 localStorage 'pf-work:<공고번호>'에 둔다. 최근 검색 20건과 같이 간다.
      4초마다 바뀐 게 있으면 저장하고, 다른 공고로 넘어가기 전·화면을 옮길 때·창을 닫을 때도 저장한다 */
   var WORK = 'pf-work:', CURSTEP = 'home', lastWork = '';
   var STEP_NAME = { search: '정책 근거', chat: '선택', export: '산출', deck: '구도 추천' };
@@ -1061,16 +1075,43 @@
     saveRecent(S.notice);
     go(w.step || 'search');
   }
+  // 최근 검색 지우기: "편집"을 누르면 행마다 오른쪽에 체크박스가 나오고, 고른 공고를 지운다(저장된 작업도 함께). 사이드바·홈 표가 같은 상태를 쓴다
+  var RDEL = { on: false, sel: {} };
+  function recentEdit(on) { RDEL = { on: !!on, sel: {} }; renderRecent(); }
+  function recentTick(no, v) { if (v) RDEL.sel[no] = 1; else delete RDEL.sel[no]; renderRecent(); }
+  function recentDelete() {
+    var nos = Object.keys(RDEL.sel); if (!nos.length) return;
+    var saved = nos.filter(function (no) { return !!loadWork(no); }).length;
+    showAsk('선택한 최근 검색 ' + nos.length + '건을 지우시겠습니까?', nos.join('\n') + (saved ? '\n\n저장된 작업 ' + saved + '건도 함께 지워지고 되돌릴 수 없습니다.' : ''), [
+      { label: '아니오' },
+      { label: '지우기', primary: true, fn: function () {
+        var list = loadRecent().filter(function (x) { return !RDEL.sel[x.no]; });
+        try { localStorage.setItem('pf-recent', JSON.stringify(list)); nos.forEach(function (no) { localStorage.removeItem(WORK + no); }); } catch (e) {}
+        if (RDEL.sel[S.no]) lastWork = '';
+        RDEL = { on: false, sel: {} }; renderRecent();
+      } }
+    ]);
+  }
   function renderRecent() {
-    var list = loadRecent();
+    var list = loadRecent(), ed = RDEL.on, n = Object.keys(RDEL.sel).length;
+    if (!list.length && ed) RDEL = { on: false, sel: {} }, ed = false;
+    var tick = function (x) { return '<input type="checkbox" aria-label="' + esc(x.no) + ' 선택"' + (RDEL.sel[x.no] ? ' checked' : '') + ' onchange="recentTick(\'' + esc(x.no) + '\', this.checked)">'; };
+    var tools = !list.length ? '' : ed
+      ? '<button class="rtool" onclick="recentDelete()"' + (n ? '' : ' disabled') + '>삭제' + (n ? ' ' + n : '') + '</button><button class="rtool mute" onclick="recentEdit(false)">취소</button>'
+      : '<button class="rtool mute" onclick="recentEdit(true)">편집</button>';
     $('side-recent-label').style.display = list.length ? '' : 'none';
-    $('side-recent').innerHTML = list.slice(0, 5).map(function (x) {
-      return '<button class="recent" onclick="pickRecent(\'' + esc(x.no) + '\')">' + ICON_SEARCH + esc(x.no) + '</button>';
+    $('side-recent-tools').innerHTML = tools;
+    $('side-recent').innerHTML = list.map(function (x) {
+      var body = ICON_SEARCH + '<span class="rt"><span class="rno">' + esc(x.no) + '</span><span class="rnm">' + esc(x.name || '') + '</span></span>';
+      return ed ? '<label class="recent edit">' + body + tick(x) + '</label>'
+        : '<button class="recent" onclick="pickRecent(\'' + esc(x.no) + '\')" title="' + esc(x.name || '') + '">' + body + '</button>';
     }).join('');
     $('home-recent').innerHTML = !list.length ? '' :
-      '<div class="sec-label">최근 검색</div><div class="rows">' + list.map(function (x) {
+      '<div class="sec-label recent-head"><span>최근 검색</span><span class="tools">' + tools + '</span></div><div class="rows">' + list.map(function (x) {
         var w = workInfo(x.no);
-        return '<button class="row" onclick="pickRecent(\'' + esc(x.no) + '\')"><span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st">' + (w ? '<span>저장된 작업 · ' + esc(w.at) + '</span><span class="sub">' + esc(w.stage) + '</span>' : '') + '</span></button>';
+        var cells = '<span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st">' + (w ? '<span>저장된 작업 · ' + esc(w.at) + '</span><span class="sub">' + esc(w.stage) + '</span>' : '') + '</span>';
+        return ed ? '<label class="row edit">' + cells + tick(x) + '</label>'
+          : '<button class="row" onclick="pickRecent(\'' + esc(x.no) + '\')">' + cells + '</button>';
       }).join('') + '</div>';
   }
 
@@ -1258,23 +1299,50 @@
   }
 
   function evParams() { return { title: S.notice.name, orgs: S.lineage.orgs.join(','), ministry: S.lineage.ministry || '', scope: S.scope }; }
+  // 첫 검색(fresh)은 제안요청서를 읽는 중이면 최대 RFP_WAIT 기다렸다가 제안요청서 검색어까지 넣어 한 번만 한다.
+  // 예전에는 공고명으로 먼저 찾고, 제안요청서가 7~10초 뒤 읽히면 검색어를 더해 다시 찾아 결과가 저절로 바뀌었다(멘토링 9/29)
+  var RFP_WAIT = 12000;
+  function waitRfp(my) {
+    return new Promise(function (done) {
+      var t0 = Date.now();
+      (function poll() {
+        if (my !== seq || !S.rfp || S.rfp.state !== 'loading' || Date.now() - t0 > RFP_WAIT) return done();
+        var sec = Math.round((Date.now() - t0) / 1000);
+        $('result-count').textContent = '';
+        $('result-grid').innerHTML = '<div class="rank-wait" style="grid-column:1/-1;"><i></i><div><b>' + (S.rfp.src === 'spec' ? '규격서' : '제안요청서') + ' 읽는 중' + (sec ? ' ' + sec + '초' : '') + '</b>' +
+          '<span>본문에서 검색어를 뽑아 공고명 검색어와 함께 한 번에 찾습니다.</span></div></div>';
+        setTimeout(poll, 500);
+      })();
+    });
+  }
   function runEvidence(fresh) {
     var my = seq;
+    if (fresh && S.rfp && S.rfp.state === 'loading') { $('to-review').disabled = true; return waitRfp(my).then(function () { if (my === seq) return searchNow(true); }); }
+    return searchNow(fresh);
+  }
+  var SSEQ = 0;   // 검색 요청 순번. 범위 전환(저장본 복원)·검색어 삭제 뒤에 늦게 온 이전 검색 응답은 버린다
+  function searchNow(fresh) {
+    var my = seq, sq = ++SSEQ;
     var params = evParams();
     $('ai-rank-msg').textContent = '';
+    var r0 = S.rfp;
     if (!fresh) params.terms = S.terms.join(',');
-    else { AI.sug = []; renderSug(); }
+    else {
+      AI.sug = []; renderSug(); SCOPEC = {};
+      if (r0 && r0.state === 'ok' && !r0.merged && (r0.terms || []).length) params.add = r0.terms.join(',');
+    }
     $('result-count').textContent = '검색 중';
     $('to-review').disabled = true;
     return api('/api/evidence', params).then(function (d) {
-      if (my !== seq) return;
+      if (my !== seq || sq !== SSEQ) return;
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
+      if (params.add && S.rfp === r0) { r0.merged = true; r0.terms = r0.terms.filter(function (t) { return d.terms.indexOf(t) >= 0; }); renderRfp(); }
       S.terms = d.terms; S.results = d.results; S.scopeDocs = d.scopeDocs;
       if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
       renderTerms(); renderResults(d, true);
       autoRank();
       loadMsit();
-      mergeRfpTerms();
+      mergeRfpTerms(true);   // 검색 도중에 읽힌 제안요청서 검색어는 다시 찾지 않고 추천 칩으로
     });
   }
 
@@ -1289,27 +1357,35 @@
     var counted = (S.results || []).length > 0;
     $('terms').innerHTML = S.terms.map(function (t, i) {
       var n = counted ? termHits(t) : -1, cls = 'chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + (n === 0 ? ' weak' : '') + (SWAP ? ' swap' : '');
-      return '<span class="' + cls + '"' + (SWAP ? ' role="button" onclick="swapTerm(' + i + ')"' : '') + (fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) +
+      return '<span class="' + cls + '"' + (SWAP ? ' role="button" onclick="swapTerm(' + i + ')"' : '') + (n === 0 ? ' title="지금 결과에 걸리지 않은 검색어"' : fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) +
         (SWAP && n >= 0 ? '<span class="n">' + n + '건</span>' : '') +
         '<button aria-label="' + esc(t) + ' 삭제" onclick="event.stopPropagation();removeTerm(' + i + ')">×</button></span>';
     }).join('') +
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="' + (S.terms.length >= MAX_TERMS ? '검색어 교체' : '검색어 추가') + '" aria-label="검색어 추가"></form>' +
       '<button class="ai-btn" id="ai-terms-btn" onclick="aiTerms()">AI 검색어 추천</button><span class="ai-msg" id="ai-terms-msg"></span>' +
       '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>' +
-      termLegend(fromRfp, counted) +
       (SWAP ? '<span class="swap-note">검색어는 ' + MAX_TERMS + '개까지입니다. ‘' + esc(SWAP.term) + '’ 대신 뺄 검색어를 누르세요 (건수 = 지금 결과에서 그 검색어가 걸린 카드 수)<button onclick="cancelSwap()">취소</button></span>' : '');
   }
-  // 칩 모양 설명: 꽉 찬 칩 = 공고명·직접 추가·AI 추천, 테두리 칩 = 제안요청서(규격서·과기정통부 문서)에서 뽑은 말, 흐린 칩 = 지금 결과에 안 걸린 말.
-  // 두 종류 이상이 섞여 있을 때만 보인다
-  function termLegend(fromRfp, counted) {
-    var rfp = S.terms.some(function (t) { return fromRfp.indexOf(t) >= 0; });
-    var weak = counted && S.terms.some(function (t) { return termHits(t) === 0; });
-    if (!rfp && !weak) return '';
-    var src = S.rfp && S.rfp.src === 'spec' ? '규격서' : S.rfp && S.rfp.src === 'msit' ? '과기정통부 문서' : '제안요청서';
-    return '<span class="term-legend">' + (rfp ? '<span><i class="lg"></i>공고명·직접 추가</span><span><i class="lg rfp"></i>' + src + '에서 뽑음</span>' : '') +
-      (weak ? '<span><i class="lg weak"></i>지금 결과에 안 걸림</span>' : '') + '</span>';
+  function removeTerm(i) {
+    SWAP = null;
+    S.terms.splice(i, 1);
+    var keep = S.terms.map(function (t) { return String(t).toLowerCase(); });
+    var before = S.results.length;
+    S.results = S.results.map(function (r) {
+      var m = (r.matched || []).filter(function (t) { return keep.indexOf(String(t).toLowerCase()) >= 0; });
+      return m.length === (r.matched || []).length ? r : Object.assign({}, r, { matched: m });
+    }).filter(function (r) { return r.matched.length; });
+    ++SSEQ;   // 진행 중인 검색 응답은 버린다
+    if (RANKING) { ++RANKSEQ; clearTimeout(RANKT); rankMsg(''); }   // 판정 중이었으면 버리고 키워드순으로
+    RANKING = false;
+    syncCards(); renderTerms();
+    if (!S.results.length) {
+      $('result-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">' + (S.terms.length ? '남은 검색어로 걸린 근거가 없습니다. 검색어를 추가해 다시 찾아 보세요.' : '검색어를 추가해 주세요.') + '</div>';
+      renderPickCount();
+    } else renderGrid();
+    $('result-count').textContent = S.results.length + '건' + (before > S.results.length ? ' · 검색어 삭제로 ' + (before - S.results.length) + '건 뺌' : '');
+    repaintSteps(); snapScope();
   }
-  function removeTerm(i) { SWAP = null; S.terms.splice(i, 1); runEvidence(false); }
   function addTerm(e) {
     e.preventDefault();
     var v = $('term-input').value.trim();
@@ -1326,7 +1402,28 @@
     runEvidence(false);
   }
   function cancelSwap() { SWAP = null; renderTerms(); }
-  function setScope(v) { if (S.scope !== v) { S.scope = v; runEvidence(false); } }
+  // 범위(유관기관 문서 ↔ 관련 정책문서 전체)마다 결과·관련도 판정을 저장해 두고, 같은 검색어로 다시 오가면 바로 보여 준다
+  var SCOPEC = {};
+  function scopeKey() { return S.scope + '|' + S.terms.join(','); }
+  function snapScope() {
+    if (RANKING || !S.terms.length) return;
+    var m = $('ai-rank-msg');
+    SCOPEC[scopeKey()] = { results: S.results, scopeDocs: S.scopeDocs, count: $('result-count').textContent, msg: m ? m.innerHTML : '', cls: m ? m.className : 'ai-msg' };
+  }
+  function setScope(v) {
+    if (S.scope === v) return;
+    snapScope();
+    S.scope = v;
+    var c = SCOPEC[scopeKey()];
+    if (!c) return runEvidence(false);
+    ++RANKSEQ; ++SSEQ; clearTimeout(RANKT);   // 진행 중인 검색·판정은 버린다
+    RANKING = false;
+    S.results = c.results; S.scopeDocs = c.scopeDocs;
+    syncCards(); renderTerms();
+    if (S.results.length) renderGrid(); else renderResults({ scopeDocs: c.scopeDocs || 0 });
+    $('result-count').textContent = c.count; rankMsg(c.msg, (c.cls || '').replace(/^ai-msg ?/, ''));
+    repaintSteps();
+  }
 
   function mark(text, terms) {
     var out = esc(text);
@@ -1448,7 +1545,7 @@
     var msg = {
       none: '<span class="msg meta">첨부파일에서 찾지 못했습니다.</span>',
       loading: '<span class="msg meta">' + esc(r.name || '') + ' 읽는 중</span>',
-      ok: '<span class="msg">' + ICON_OK + ' ' + esc(r.name) + ' · 검색어 ' + (r.terms || []).length + '개 반영</span>',
+      ok: '<span class="msg">' + ICON_OK + ' ' + esc(r.name) + (r.late ? ' · 늦게 읽혀 검색어 ' + r.late + '개를 아래 추천 칩으로 두었습니다' : ' · 검색어 ' + (r.terms || []).length + '개 반영') + '</span>',
       err: '<span class="msg err">' + esc(r.error || '읽지 못했습니다.') + '</span>'
     }[r.state];
     $('rfp-row').innerHTML = '<span class="k">' + (r.src === 'msit' ? '과기정통부 문서' : r.src === 'spec' ? '규격서' : '제안요청서') + '</span>' + msg + (r.state === 'loading' ? '' : up);
@@ -1457,7 +1554,7 @@
     var f = pickRfpFile(S.notice.files);
     if (!f) { S.rfp = { state: 'none' }; renderRfp(); return; }
     S.rfp = { state: 'loading', name: f.name, prev: [] }; renderRfp();
-    api('/api/rfp', { url: f.url, name: f.name, title: S.notice.name }).then(function (d) { if (my === seq) gotRfp(d, f.name); })
+    api('/api/rfp', { url: f.url, name: f.name, title: S.notice.name }).then(function (d) { if (my === seq) gotRfp(d, f.name, undefined, true); })
       .catch(function () { if (my === seq) gotRfp({ ok: false, error: '서버에 연결하지 못했습니다.' }, f.name); });
   }
   function postRfp(file, title) {
@@ -1474,19 +1571,26 @@
     S.rfp = { state: 'loading', name: file.name, prev: prev }; renderRfp();
     postRfp(file, S.notice.name).then(function (d) { if (my === seq) gotRfp(d, file.name); });
   }
-  function gotRfp(d, name, src) {
+  // auto: 공고를 열 때 자동으로 읽은 경우. 첫 검색이 이미 끝난 뒤 늦게 읽히면 다시 검색하지 않고 추천 칩으로만 보여 준다
+  function gotRfp(d, name, src, auto) {
     var old = (S.rfp && (S.rfp.prev || S.rfp.terms)) || [];
     if (!d.ok) { S.rfp = { state: 'err', name: name, error: d.error, src: src }; renderRfp(); return; }
     S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, merged: false, src: src };
     // 이전 제안요청서에서 들어온 검색어는 뺀다
     S.terms = S.terms.filter(function (t) { return old.indexOf(t) < 0; });
-    renderRfp(); mergeRfpTerms();
+    renderRfp(); mergeRfpTerms(auto);
   }
   var MAX_TERMS = 10;   // 검색어는 모두 합쳐 10개까지(공고명 최대 6 + 나머지는 제안요청서). lib/search.js 와 같게 유지
-  function mergeRfpTerms() {
+  function mergeRfpTerms(auto) {
     var r = S.rfp;
     if (!r || r.state !== 'ok' || r.merged || !S.terms.length) return;
     r.merged = true;
+    if (auto) {
+      var late = r.terms.filter(function (t) { return S.terms.indexOf(t) < 0; });
+      r.terms = []; r.late = late.length;
+      AI.sug = late.map(function (t) { return { term: t, from: 'rfp' }; }).concat(AI.sug.filter(function (x) { return late.indexOf(x.term) < 0; }));
+      renderRfp(); renderSug(); return;
+    }
     var room = Math.max(0, MAX_TERMS - S.terms.length);
     var add = r.terms.filter(function (t) { return S.terms.indexOf(t) < 0; }).slice(0, room);
     r.terms = add;   // 실제로 들어간 것만 제안요청서 검색어로 표시
@@ -1698,6 +1802,14 @@
   // 발췌·문서는 그대로, 순서와 관련도(●●○)·이유만 바뀐다. 키가 없거나 실패하면 키워드순 그대로 둔다.
   // 검색어를 연달아 바꿀 때 호출이 쌓이지 않게 0.7초 기다렸다가 마지막 검색만 판정한다
   var RANKT = null, RANKSEQ = 0;
+  // 정렬(멘토링 9/29): 관련도(●) 높은 순 → 정책문서명 가나다 → 쪽 순 → 발췌 첫 문장 가나다
+  function sortByRelevance(list) {
+    var ko = function (a, b) { return String(a || '').localeCompare(String(b || ''), 'ko'); };
+    var first = function (q) { return String(q || '').trim().split(/[.。!?]\s|\n/)[0]; };
+    return list.slice().sort(function (a, b) {
+      return (b.aiScore || 0) - (a.aiScore || 0) || ko(a.title, b.title) || (Number(a.page) || 0) - (Number(b.page) || 0) || ko(first(a.quote), first(b.quote));
+    });
+  }
   function rankMsg(t, cls) { var m = $('ai-rank-msg'); if (m) { m.className = 'ai-msg' + (cls ? ' ' + cls : ''); m.innerHTML = t; } }
   function autoRank() {
     clearTimeout(RANKT);
@@ -1717,7 +1829,7 @@
         RANK_LABEL = t; rankMsg(t, 'busy'); var w = $('rank-wait-t'); if (w) w.textContent = t;
       } else clearInterval(tick);
     }, 1000);
-    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) { rankMsg(t, cls); reveal(); } };
+    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) { rankMsg(t, cls); reveal(); snapScope(); } };
     RANKT = setTimeout(function () {
       var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
       api('/api/evidence', params).then(function (ev) {
@@ -1729,7 +1841,7 @@
           if (!d.ok) return done('키워드순 · 관련도 판정 못 함(' + esc(d.error || '오류') + ')', 'err');
           var ranked = d.ranked.filter(function (x) { return by[x.id]; });
           if (!ranked.length) return done('관련도 판정: 관련 높은 후보가 없어 키워드순으로 둡니다');
-          S.results = ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; });
+          S.results = sortByRelevance(ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; }));
           RANKING = false;
           $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
           syncCards(); renderTerms(); renderGrid(); repaintSteps();
@@ -1742,7 +1854,7 @@
   }
   function renderSug() {
     $('ai-sug').innerHTML = AI.sug.map(function (x, i) {
-      return '<button class="chip" onclick="addSug(' + i + ')" title="색인 ' + x.pages + '쪽">+ ' + esc(x.term) + '</button>';
+      return '<button class="chip" onclick="addSug(' + i + ')" title="' + (x.from === 'rfp' ? '제안요청서에서 뽑은 검색어' : '색인 ' + x.pages + '쪽') + '">+ ' + esc(x.term) + '</button>';
     }).join('');
   }
   function addSug(i) {
@@ -1794,8 +1906,17 @@
     if (cur >= CARDS.length) cur = 0;
   }
   function selCount() { return CARDS.filter(function (c) { return c.sel; }).length; }
+  // 전체 선택: 지금 보이는 결과 카드를 모두 선택하거나, 모두 선택돼 있으면 모두 해제한다(다른 검색에서 고른 카드는 그대로)
+  function shownCards() { return (S.results || []).map(function (r) { return cardOf(r.id); }).filter(Boolean); }
+  function selectAll() {
+    var list = shownCards(), on = list.length && list.every(function (c) { return c.sel; });
+    list.forEach(function (c) { c.sel = !on; });
+    renderGrid(); repaintSteps();
+  }
   function renderPickCount() {
     var n = selCount();
+    var list = shownCards(), b = $('sel-all');
+    if (b) { b.style.display = list.length && !RANKING ? '' : 'none'; b.textContent = list.length && list.every(function (c) { return c.sel; }) ? '전체 해제' : '전체 선택'; }
     $('to-review').disabled = !CARDS.length || RANKING;
     $('to-review').textContent = n ? '선택한 ' + n + '건 확인' : '정책 근거 선택';
   }
