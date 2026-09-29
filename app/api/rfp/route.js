@@ -1,5 +1,5 @@
 import { extractText, ExtractError } from '../../../lib/extract';
-import { termsFromRfp, guessMeta } from '../../../lib/rfp';
+import { termsFromRfp, guessMeta, purposeLines } from '../../../lib/rfp';
 import { titleTokens } from '../../../lib/search';
 
 export const runtime = 'nodejs';
@@ -25,6 +25,7 @@ async function respond(buf, name, title) {
       ok: true, name, kind, chars: text.length,
       terms: termsFromRfp(text, { exclude: base }),
       meta: guessMeta(text),
+      purpose: purposeLines(text).slice(0, 80),   // 사업 목적·배경 구역 줄. 관련도 판정은 본문 대신 이것만 보낸다(lib/match.js)
       text: text.slice(0, MAX_TEXT), truncated: text.length > MAX_TEXT,
     });
   } catch (e) {

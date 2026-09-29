@@ -317,6 +317,11 @@
   .ai-msg { font-size: 11.5px; color: var(--muted); align-self: center; }
   .ai-msg.err { color: #B42318; }
   .ai-msg.busy, .ai-msg.ok { font-weight: 600; }
+  .pair { margin: -2px 0 10px; padding: 8px 10px; border-radius: 8px; background: var(--tint); display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; line-height: 1.55; color: var(--slate); }
+  .pair > div { display: flex; gap: 8px; }
+  .pair .k { flex-shrink: 0; width: 58px; font-size: 10.5px; font-weight: 700; color: var(--violet); padding-top: 1px; }
+  .pair > div:last-child .k { color: var(--muted); }
+  .pair-none { margin: -4px 0 10px; font-size: 10.5px; color: var(--muted); }
   .sel-all { font-size: 12px; font-weight: 600; color: var(--violet); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(115,83,234,.35); background: #fff; }
   .sel-all:hover { background: var(--violet-tint); }
   .ai-msg.ok { color: var(--violet); }
@@ -1459,6 +1464,17 @@
     }
     renderGrid(); repaintSteps();
   }
+  // 관련도(●, STEP38부터 5점) + 판정 이유 + 짝 문장(제안요청서 ⇄ 정책문서, 둘 다 원문 그대로, 함께 나온 말 형광)
+  function aiRankHtml(r) {
+    if (!r.aiScore) return '';
+    var n = r.aiScale || 3, full = '●●●●●'.slice(0, n);
+    var h = '<div class="ai-rank"><b title="관련도 ' + r.aiScore + '/' + n + '">' + full.slice(0, r.aiScore) + '<span style="opacity:.25">' + full.slice(r.aiScore) + '</span></b>' + esc(r.aiWhy || '') + '</div>';
+    var p = r.aiPair;
+    if (p) h += '<div class="pair"><div><span class="k">' + (p.from === 'title' ? '공고명' : '제안요청서') + '</span><span>' + mark(p.rfp, p.shared) + '</span></div>' +
+      '<div><span class="k">정책문서</span><span>' + mark(p.policy, p.shared) + '</span></div></div>';
+    if (r.aiMatch === 'none') h += '<div class="pair-none">제안요청서 문장 대조 없음</div>';
+    return h;
+  }
   function renderGrid() {
     if (RANKING) {
       $('result-grid').innerHTML = '<div class="rank-wait" style="grid-column:1/-1;"><i></i><div><b id="rank-wait-t">' + esc(RANK_LABEL) + '</b>' +
@@ -1471,7 +1487,7 @@
         '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;">' + ICON_DOC + '<div class="doc-title" style="flex:1;">' + esc(r.org + ' ' + r.title) + '</div>' +
         '<button class="pick' + (on ? ' on' : '') + '" onclick="toggleSel(\'' + esc(r.id) + '\')"><i></i>선택</button></div>' +
         '<div class="meta" style="margin-bottom:10px;">' + esc(r.year) + ' · ' + pageLabel(r) + '</div>' +
-        (r.aiScore ? '<div class="ai-rank"><b title="관련도 ' + r.aiScore + '/3">' + '●●●'.slice(0, r.aiScore) + '<span style="opacity:.25">' + '●●●'.slice(r.aiScore) + '</span></b>' + esc(r.aiWhy || '') + '</div>' : '') +
+        aiRankHtml(r) +
         '<div class="quote" style="margin-bottom:12px;">' + mark(r.quote, r.matched) + '</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + sourceButtons(r) + '</div>' +
       '</div>';
@@ -1575,7 +1591,7 @@
   function gotRfp(d, name, src, auto) {
     var old = (S.rfp && (S.rfp.prev || S.rfp.terms)) || [];
     if (!d.ok) { S.rfp = { state: 'err', name: name, error: d.error, src: src }; renderRfp(); return; }
-    S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, merged: false, src: src };
+    S.rfp = { state: 'ok', name: name, terms: d.terms, text: d.text, purpose: d.purpose || null, merged: false, src: src };
     // 이전 제안요청서에서 들어온 검색어는 뺀다
     S.terms = S.terms.filter(function (t) { return old.indexOf(t) < 0; });
     renderRfp(); mergeRfpTerms(auto);
@@ -1836,16 +1852,19 @@
         if (rid !== RANKSEQ || my !== seq) return clearInterval(tick);
         if (!ev.ok || !ev.results.length) return done('');
         var by = {}; ev.results.forEach(function (r) { by[r.id] = r; });
-        return aiPost({ task: 'rank', notice: S.notice, lineage: S.lineage, rfpText: S.rfp && S.rfp.text ? S.rfp.text.slice(0, 3000) : '', candidates: ev.results }).then(function (d) {
+        // 제안요청서는 목적·배경 구역 줄만 보낸다(서버가 후보 쪽 문장과 짝지어 AI에 넘긴다). 예전 저장 작업처럼 없으면 본문을 보내 서버가 뽑는다
+        var rq = { task: 'rank', notice: S.notice, lineage: S.lineage, candidates: ev.results };
+        if (S.rfp && S.rfp.state === 'ok') { if (S.rfp.purpose) rq.purpose = S.rfp.purpose; else if (S.rfp.text) rq.rfpText = S.rfp.text.slice(0, 20000); }
+        return aiPost(rq).then(function (d) {
           if (rid !== RANKSEQ || my !== seq) return clearInterval(tick);
           if (!d.ok) return done('키워드순 · 관련도 판정 못 함(' + esc(d.error || '오류') + ')', 'err');
           var ranked = d.ranked.filter(function (x) { return by[x.id]; });
           if (!ranked.length) return done('관련도 판정: 관련 높은 후보가 없어 키워드순으로 둡니다');
-          S.results = sortByRelevance(ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; return r; }));
+          S.results = sortByRelevance(ranked.map(function (x) { var r = {}; for (var k in by[x.id]) r[k] = by[x.id][k]; r.aiScore = x.score; r.aiWhy = x.why; r.aiPair = x.pair || null; r.aiScale = d.scale || 3; r.aiMatch = d.match || ''; return r; }));
           RANKING = false;
           $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
           syncCards(); renderTerms(); renderGrid(); repaintSteps();
-          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : ''), 'ok');
+          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : '') + (d.match === 'none' ? ' · 제안요청서 문장 대조 없음' : ''), 'ok');
         });
       }).catch(function () { done('키워드순 · 관련도 판정 못 함', 'err'); });
       // 서버가 응답하지 않으면 40초 뒤 키워드순으로 보여 준다
