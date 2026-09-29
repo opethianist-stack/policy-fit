@@ -28,10 +28,16 @@ export default function Home() {
     <div className="landing">
       <div className="landing-inner">
         <h1>입찰 공고에서 정책 근거까지,<br />사업 이해도를 높이는 초안 완성</h1>
-        <Link href="/search" className="cta">
-          공고 검색하기
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-        </Link>
+        <div className="cta-row">
+          <Link href="/search" className="cta">
+            공고 검색하기
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
+          <a href="/manual.pdf" download="PolicyFit_사용매뉴얼.pdf" className="cta ghost">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
+            매뉴얼 PDF
+          </a>
+        </div>
 
         <ol className="flow" aria-label="작업 순서">
           <span className="flow-track" aria-hidden="true"><i className="flow-fill" /><i className="flow-token"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg></i></span>
@@ -45,8 +51,14 @@ export default function Home() {
             </li>
           ))}
         </ol>
-        <div className="flow-caption" aria-hidden="true">
-          {STEPS.map(([k, , d], i) => <span key={k} style={{ '--i': i }}>{d}</span>)}
+        {/* 흐름 아래 20px부터 켜진 단계의 실제 화면을 흐리게 깐다(public/flow/N.jpg, 매뉴얼과 같은 캡처) */}
+        <div className="flow-stage" aria-hidden="true">
+          <div className="flow-shots">
+            {STEPS.map(([k], i) => <img key={k} src={`/flow/${i + 1}.jpg`} alt="" style={{ '--i': i }} />)}
+          </div>
+          <div className="flow-caption">
+            {STEPS.map(([k, , d], i) => <span key={k} style={{ '--i': i }}>{d}</span>)}
+          </div>
         </div>
       </div>
     </div>
