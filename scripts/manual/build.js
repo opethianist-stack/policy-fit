@@ -1,4 +1,4 @@
-// 매뉴얼 PDF(public/manual.pdf) 만들기: 표지 + 로그인 + 8단계 + 관리자 대시보드, 한 쪽에 설명 + 화면 캡처, A4 가로.
+// 매뉴얼 PDF(public/manual.pdf) 만들기: 표지 + 개요(브랜드·마스코트) + 로그인 + 8단계 + 관리자 대시보드, 한 쪽에 설명 + 화면 캡처, A4 가로.
 // 사용: node scripts/manual/build.js <캡처 폴더(jpg/login·1~8·admin.jpg가 있는 곳)> public/manual.pdf
 // 화면 설명 문구는 아래 STEPS. 화면이 바뀌면 capture.js로 다시 찍고 이 파일의 문구도 고친다
 const { chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright');
@@ -7,6 +7,8 @@ const fs = require('fs');
 const D = process.argv[2], OUT = process.argv[3];
 const viaCurl = async (route) => { const u = route.request().url(); try { const body = execFileSync('curl', ['-s', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36', u], { maxBuffer: 50e6 }); await route.fulfill({ status: 200, body, headers: { 'content-type': /css2\?/.test(u) ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } }); } catch (e) { await route.abort(); } };
 const SUIT = fs.readFileSync(__dirname + '/../../public/fonts/SUIT-Variable.woff2').toString('base64');
+const b64 = (f) => fs.readFileSync(__dirname + '/../../' + f).toString('base64');
+const MOTIF = 'data:image/png;base64,' + b64('public/KMA Graphic Motif_png/KMA Graphic Motif_color.png');
 const img = (i) => 'data:image/jpeg;base64,' + fs.readFileSync(D + '/jpg/' + i + '.jpg').toString('base64');
 const STEPS = [
   ['login', '로그인', '로그인', [
@@ -60,17 +62,49 @@ const LABEL = { login: '시작', admin: '관리' };
 const num = (k) => LABEL[k] || k.padStart(2, '0');
 const page = (i, [k, t, where, lines]) => `<section class="pg"><div class="top"><span class="n${LABEL[k] ? ' x' : ''}">${num(k)}</span><span class="t">${t}</span><span class="w">${where} 화면</span><span class="c">${i + 1} / ${STEPS.length}</span></div>
 <div class="body"><ol>${lines.map((l) => `<li>${l}</li>`).join('')}</ol><div class="shot"><img src="${img(k)}"></div></div></section>`;
+const CHECK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+// 개요 쪽(브랜드·마스코트). 마스코트는 SVG 경로가 많아 빌드 때 흰 바탕 JPG로 구워 넣는다(__MASCOT__)
+const ICON = {
+  doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><circle cx="11.5" cy="13.5" r="2.5"/><path d="M13.3 15.3L15 17"/>',
+  search: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><circle cx="11" cy="13" r="3"/><path d="M13.2 15.2l2.3 2.3"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  chart: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 17v-4M12 17V9M16 17v-6"/>',
+};
+const ico = (k) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+const FLOW = [
+  ['01', 'doc', '공고 / 사업 질문', '공고와 제안요청서에서 핵심 키워드를 파악합니다.', '시작 · 01'],
+  ['02', 'search', '정책 탐색', '발주처·상위기관·주무부처 흐름을 따라 정책 근거를 찾습니다.', '02 · 03 · 04'],
+  ['03', 'link', '근거 연결', '사업에 적합한 정책 근거를 선별하고 사업과 연결합니다.', '05'],
+  ['04', 'chart', '초안 · 문서 · 장표', '선택한 근거를 바탕으로 제안 초안, 문서, 장표 구도로 연결합니다.', '06 · 07 · 08'],
+];
+const OVERVIEW = `<section class="pg ov"><div class="top"><span class="n x">개요</span><span class="t">Policy Fit 소개</span><span class="w">브랜드 · 마스코트</span><span class="c">개요</span></div>
+<div class="ovb"><div class="ovl"><h2>정책과 사업 사이,<br><em>딱 맞는 근거를 찾다</em></h2>
+<p class="lead">Policy Fit은 공고와 제안요청서에서 출발해 관련 정책을 탐색하고, 사업에 필요한 근거를 연결해 제안 논리와 장표 작성까지 돕는 도구입니다.</p>
+<ol><li>공고와 제안요청서에서 핵심 키워드를 파악합니다.</li><li>발주처·상위기관·주무부처 흐름을 따라 정책 근거를 찾습니다.</li><li>선택한 근거를 초안, 문서, 장표 구도로 연결합니다.</li></ol>
+<div class="tip"><span class="bulb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></span><b>좋은 제안은 <em>좋은 근거</em>에서 시작됩니다.</b></div></div>
+<div class="ovr"><div class="flow"><div class="fh"><b class="f1">FIND</b><svg class="ar" width="22" height="16" viewBox="0 0 22 16" fill="none" stroke="#4A56EA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h17M13 2l6 6-6 6"/></svg><b class="f2">LINK</b><svg class="ar" width="22" height="16" viewBox="0 0 22 16" fill="none" stroke="#4A56EA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h17M13 2l6 6-6 6"/></svg><b class="f3">FIT</b></div><div class="fs">공고에서 제안까지, 정책이 이어지는 하나의 흐름</div>
+<svg class="wave" viewBox="0 0 520 24" preserveAspectRatio="none"><defs><linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="#3552E6"/><stop offset="1" stop-color="#7B5CF0"/></linearGradient></defs><path d="M6 14 C 80 4, 130 22, 190 13 S 300 4, 370 13 S 470 22, 512 8" fill="none" stroke="url(#wg)" stroke-width="2"/><circle cx="6" cy="14" r="3.6" fill="#fff" stroke="#3552E6" stroke-width="2"/><circle cx="190" cy="13" r="3.6" fill="#fff" stroke="#4A56EA" stroke-width="2"/><circle cx="370" cy="13" r="3.6" fill="#fff" stroke="#6158EE" stroke-width="2"/><path d="M500 3l14 5-12 8" fill="none" stroke="#7B5CF0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<div class="cards">${FLOW.map(([n, k, t, d, m]) => `<div class="fc"><span class="fn">${n}</span><span class="fi">${ico(k)}</span><h4>${t}</h4><p>${d}</p><div class="fm"><b>매뉴얼</b> ${m}</div></div>`).join('')}</div></div>
+<div class="masc"><img src="__MASCOT__"><div><div class="mh"><span class="pill">마스코트</span><b>폴링이</b><span class="mt">공고와 정책 사이, 딱 맞는 근거를 이어 주는 안내자</span></div>
+<div class="eq"><span class="chip"><b>Policy</b><small>정책</small></span><i>+</i><span class="chip"><b>Link</b><small>연결</small></span><i>=</i><span class="res"><b>폴링이</b><small>정책을 이어 주는 아이</small></span></div>
+<p><b>Policy(정책)</b>와 <b>Link(연결)</b>를 합친 이름으로, 공고와 정책 사이를 이어 주는 Policy Fit의 역할을 담았습니다. KMA 심벌의 회전하는 날개를 바람의 형태로 옮긴 ‘바람의 정령’이며, 유연함·연결·확장성을 상징합니다.</p></div></div></div></div>
+<div class="foot"><span>Policy Fit 사용 매뉴얼</span><span>KMA AI미래교육본부</span></div></section>`;
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Policy Fit 사용 매뉴얼</title>
 <style>@page{size:297mm 210mm;margin:0}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 @font-face{font-family:'SUIT Variable';src:url(data:font/woff2;base64,${SUIT}) format('woff2');font-weight:100 900}
 body{margin:0;font-family:'SUIT Variable','Noto Sans CJK KR',sans-serif;color:#111111}
 .pg{width:297mm;height:210mm;padding:12mm 12mm 10mm;break-after:page;display:flex;flex-direction:column;overflow:hidden}
 .pg:last-child{break-after:auto}
-.cover{background:#fff;border-top:3mm solid #0000A3;justify-content:center;padding:0 26mm}
-.cover .mk{width:16mm;height:16mm;border-radius:4mm;background:#0000A3;margin-bottom:10mm}
-.cover h1{font-size:30pt;margin:0 0 4mm;letter-spacing:-.02em}.cover p{font-size:14pt;color:#494949;margin:0 0 16mm}
-.cover ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4mm 5mm;max-width:250mm}
-.cover li::before{display:none}.cover li{font-size:10.5pt;color:#494949;background:#fff;border:0.3mm solid #DDDDDD;border-radius:1mm;padding:3mm 4mm}.cover li b{color:#0000A3;margin-right:2mm}
+.cover{background:#fff;border-top:3mm solid #0000A3;padding:17mm 20mm 12mm}
+.brand{display:flex;align-items:center;gap:3.2mm}.brand .mk{width:11mm;height:11mm;border-radius:2.6mm;background:#0000A3;display:flex;align-items:center;justify-content:center}
+.brand b{font-size:14pt;font-weight:700;letter-spacing:-.01em}
+.hero{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.hero .motif{position:absolute;width:60mm;left:50%;top:50%;transform:translate(-8mm,-54%);opacity:.28}
+.hero h1{position:relative;font-size:30pt;font-weight:800;margin:0 0 4mm;letter-spacing:-.02em}.hero h1 em{font-style:normal;color:#0000A3}
+.hero p{position:relative;font-size:12pt;color:#494949;margin:0}
+.cover ol{list-style:none;padding:0;margin:0 0 30mm;display:grid;grid-template-columns:repeat(5,1fr);gap:5mm}
+.cover li::before{display:none}.cover li{font-size:10pt;color:#494949;background:#fff;border:0.3mm solid #DDDDDD;border-radius:1.2mm;padding:3.6mm 5mm;margin:0}.cover li b{color:#0000A3;margin-right:2.6mm;font-weight:800}
+.foot{display:flex;justify-content:space-between;font-size:8pt;color:#9A9A9A}
 .top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #DDDDDD;padding-bottom:4mm;margin-bottom:7mm}
 .top .n{font-size:22pt;font-weight:800;color:#0000A3;line-height:1}.top .n.x{font-size:15pt}.top .t{font-size:17pt;font-weight:700}
 .top .w{font-size:9.5pt;color:#0000A3;background:#EBEBF7;border-radius:0.5mm;padding:1mm 3.5mm}.top .c{margin-left:auto;font-size:9pt;color:#767676}
@@ -79,14 +113,53 @@ ol{margin:0;padding:0;list-style:none;counter-reset:k}
 ol li{counter-increment:k;position:relative;padding-left:7mm;font-size:9.6pt;line-height:1.6;color:#494949;margin-bottom:4mm}
 ol li::before{content:counter(k);position:absolute;left:0;top:0.6mm;width:4.6mm;height:4.6mm;border-radius:50%;background:#0000A3;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center}
 .shot{align-self:center;border:0.3mm solid #DDDDDD;border-radius:1mm;overflow:hidden}
-.shot img{display:block;width:100%}</style></head><body>
-<section class="pg cover"><div class="mk"></div><h1>Policy Fit 사용 매뉴얼</h1><p>공고 입력부터 사업 이해도 장표 구도 추천까지</p>
-<ol>${STEPS.map(([k, t]) => `<li><b>${num(k)}</b>${t}</li>`).join('')}</ol></section>
+.shot img{display:block;width:100%}
+.ov .foot{margin-top:5mm}
+.ovb{flex:1;display:grid;grid-template-columns:84mm 1fr;gap:9mm;min-height:0}
+.ovl{display:flex;flex-direction:column;justify-content:center;word-break:keep-all}
+.ovl h2{font-size:21pt;line-height:1.35;margin:0 0 6mm;letter-spacing:-.02em;font-weight:800}.ovl h2 em{font-style:normal;color:#0000A3}
+.ovl .lead{font-size:9.8pt;line-height:1.75;color:#494949;margin:0 0 7mm}
+.ovl ol li{font-size:9.6pt;margin-bottom:4.5mm;padding-left:9mm}.ovl ol li::before{width:5.4mm;height:5.4mm;top:0.2mm}
+.tip{margin-top:4mm;background:#F1F2F8;border-radius:2.5mm;padding:4.5mm 5mm;display:flex;align-items:center;gap:4mm;font-size:10.5pt}
+.tip .bulb{width:8.5mm;height:8.5mm;border-radius:2mm;background:linear-gradient(135deg,#3552E6,#7B5CF0);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tip em{font-style:normal;color:#0000A3}
+.ovr{background:linear-gradient(135deg,#F4F5FB 0%,#EEF0FA 60%,#E9EAFA 100%);border-radius:5mm;padding:7mm 7mm 6mm;display:flex;flex-direction:column;gap:5mm;min-height:0}
+.flow{text-align:center;flex:1;display:flex;flex-direction:column}
+.fh{font-size:22pt;font-weight:800;letter-spacing:.01em;display:inline-flex;gap:3.5mm;align-items:center;align-self:center}
+.fh .f1{color:#2446E8}.fh .f2{color:#4F55EC}.fh .f3{color:#8150F0}
+.fs{font-size:8.6pt;color:#494949;margin:1.2mm 0 4mm}
+.wave{display:block;width:100%;height:7mm;margin-bottom:0}
+.cards{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:3.6mm;text-align:center}
+.fc{position:relative;background:#fff;border-radius:3mm;padding:5mm 3.4mm 3mm;min-height:50mm;display:flex;flex-direction:column;align-items:center;word-break:keep-all}
+.fc .fn{position:absolute;left:2.6mm;top:2.6mm;font-size:6.8pt;font-weight:800;color:#0000A3;background:#EEF0FA;border-radius:50%;width:6.4mm;height:6.4mm;display:flex;align-items:center;justify-content:center}
+.fc .fi{width:11.5mm;height:11.5mm;border-radius:50%;background:linear-gradient(135deg,#3552E6,#7B5CF0);display:flex;align-items:center;justify-content:center;margin-bottom:2.4mm}
+.fc h4{font-size:10pt;margin:0 0 2mm;font-weight:800}
+.fc p{font-size:8.4pt;line-height:1.6;color:#494949;margin:0 0 2.6mm;text-align:left;flex:1}
+.fc .fm{align-self:stretch;border-top:0.3mm dashed #D5D7E6;padding-top:2mm;font-size:7.4pt;color:#494949;text-align:left}.fc .fm b{color:#0000A3}
+.masc{flex:none;margin-top:auto;background:#fff;border-radius:3.5mm;padding:5mm 7mm;display:grid;grid-template-columns:40mm 1fr;gap:6mm;align-items:center;min-height:0;word-break:keep-all}
+.masc img{width:40mm;display:block}
+.mh{display:flex;align-items:center;gap:3mm;margin-bottom:3mm;flex-wrap:wrap}
+.mh .pill{font-size:7.6pt;font-weight:700;color:#fff;background:#0000A3;border-radius:5mm;padding:1mm 3.4mm}.mh b{font-size:16pt;font-weight:800;color:#0000A3}.mh .mt{font-size:8.6pt;color:#494949}
+.eq{display:flex;align-items:center;gap:2.6mm;margin-bottom:3mm}.eq i{font-style:normal;color:#6A55EE;font-weight:700}
+.eq .chip{background:#F1F2F8;border-radius:1.6mm;padding:1.4mm 3.4mm;display:flex;flex-direction:column;align-items:center;line-height:1.2}.eq .chip b{font-size:10pt;color:#0000A3;letter-spacing:.04em}.eq small{font-size:6.4pt;color:#767676}
+.eq .res{display:flex;flex-direction:column;line-height:1.25}.eq .res b{font-size:11pt;color:#0000A3}
+.masc p{font-size:8.6pt;line-height:1.7;color:#494949;margin:0}.masc p b{color:#0000A3}
+</style></head><body>
+<section class="pg cover"><div class="brand"><span class="mk">${CHECK}</span><b>Policy Fit</b></div>
+<div class="hero"><img class="motif" src="${MOTIF}"><h1><em>Policy Fit</em> 사용 매뉴얼</h1><p>공고 입력부터 사업 이해도 장표 구도 추천까지</p></div>
+<ol>${STEPS.map(([k, t]) => `<li><b>${num(k)}</b>${t}</li>`).join('')}</ol>
+<div class="foot"><span>KMA AI미래교육본부</span><span>2026</span></div></section>
+${OVERVIEW}
 ${STEPS.map((s, i) => page(i, s)).join('\n')}</body></html>`;
 (async () => {
   const b0 = await chromium.launch(); const b = await b0.newContext();
   await b.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
-  const p = await b.newPage(); await p.setContent(html, { waitUntil: 'networkidle' });
+  const mp = await b.newPage({ viewport: { width: 420, height: 420 } });
+  await mp.setContent(`<html><body style="margin:0;background:#fff"><img id="m" src="data:image/svg+xml;base64,${b64('public/mascot.svg')}" style="width:420px;height:420px;display:block"></body></html>`);
+  await mp.waitForFunction(() => document.getElementById('m').complete);
+  const MASCOT = 'data:image/jpeg;base64,' + (await mp.locator('#m').screenshot({ type: 'jpeg', quality: 82 })).toString('base64'); // 흰 카드 위라 JPG로
+  await mp.close();
+  const p = await b.newPage(); await p.setContent(html.replace('__MASCOT__', MASCOT), { waitUntil: 'networkidle' });
   await p.evaluate(async () => { await Promise.all(['400', '700', '800'].map((w) => document.fonts.load(w + ' 16px "SUIT Variable"', '가나다'))); await document.fonts.ready; });
   await p.pdf({ path: OUT, preferCSSPageSize: true, printBackground: true });
   await b0.close();
