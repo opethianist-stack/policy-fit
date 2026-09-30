@@ -29,15 +29,25 @@ export default async function Login({ searchParams }) {
   }
   return (
     <main className="login">
-      <section className="login-hero" aria-hidden="true">
-        <img className="login-motif" src={MOTIF} alt="" />
-        <div className="login-top"><img className="login-logo" src={LOGO} alt="" width="480" height="126" /></div>
+      <div className="login-bg" aria-hidden="true">
+        <span className="c c1" /><span className="c c2" /><span className="c c3" /><span className="c c4" />
+        <span className="dots d1" /><span className="dots d2" />
+        <img className="motif" src={MOTIF} alt="" />
+      </div>
+      <div className="login-card">
+      <section className="login-hero">
+        <img className="motif" src={MOTIF} alt="" aria-hidden="true" />
+        <img className="login-logo" src={LOGO} alt="KMA" width="480" height="126" />
         <div className="login-copy">
           <p className="l1">정책과 함께하는<br />공공입찰의 세계</p>
           <p className="l2"><span>주요 부처와 연결되는 공간을 맛보세요</span></p>
+          <p className="l3">공고를 찾으면 발주처와 주무부처를 잇고, 정책문서에서 근거를 골라<br />사업 이해도 초안과 장표 구도까지 이어집니다.</p>
+          <ol className="login-steps">
+            <li><b>01</b>공고 검색</li><li><b>02</b>정책 근거</li><li><b>03</b>초안 산출</li><li><b>04</b>장표 구도</li>
+          </ol>
         </div>
-        <div className="login-mascot"><img src="/mascot.svg" alt="" width="200" height="200" /></div>
       </section>
+      <div className="login-mascot" aria-hidden="true"><img src="/mascot.svg" alt="" width="200" height="200" /></div>
       <section className="login-side">
         <div className="login-form">
           <div className="login-mark" aria-hidden="true">
@@ -55,6 +65,7 @@ export default async function Login({ searchParams }) {
           <p className="login-note">로그인하면 Google 계정의 이메일·이름·프로필 사진을 로그인 확인에만 씁니다. <Link href="/privacy">개인정보처리방침</Link></p>
         </div>
       </section>
+      </div>
     </main>
   );
 }

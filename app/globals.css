@@ -178,32 +178,49 @@ pre.out {
 .topbar .who .logout:hover { color: var(--ink); border-color: #c9ced6; }
 @media (max-width: 640px) { .topbar .who .email { display: none; } }
 
-/* ---------- 로그인: 왼쪽 58% 패널(KMA 로고 + 문구 + 모티프 + 마스코트) / 오른쪽 흰 패널 ---------- */
-.login { min-height: calc(100vh / var(--vz) - 56px); display: grid; grid-template-columns: 58fr 42fr; background: #fff; }
-.login-hero { --lh: #0000A3; position: relative; overflow: hidden; background: var(--lh); color: #fff; min-height: 520px; }
-.login-motif { position: absolute; right: -6%; bottom: -8%; width: 62%; max-width: 620px; opacity: .22; pointer-events: none; }
-.login-top { position: absolute; left: 56px; top: 44px; z-index: 2; }
-.login-logo { display: block; height: 30px; width: auto; }
-.login-copy { position: absolute; left: 56px; right: 40%; top: 50%; transform: translateY(-50%); z-index: 2; word-break: keep-all; }
-.login-copy .l1 { font-size: clamp(30px, 3.4vw, 50px); font-weight: 800; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 22px; }
-/* 패널색 글씨는 패널 위에서 안 읽혀서 흰 띠 위에 얹는다 */
-.login-copy .l2 { margin: 0; font-size: clamp(15px, 1.35vw, 19px); font-weight: 700; line-height: 1.5; }
-.login-copy .l2 span { background: #fff; color: var(--lh); padding: 4px 10px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-/* 마스코트: 패널 아래에서 올라와 한 바퀴 돌고 오른쪽에 자리 잡아 떠 있다 */
-.login-mascot { position: absolute; right: 9%; top: 26%; width: 26%; max-width: 250px; z-index: 2; animation: lm-rise 2.6s cubic-bezier(.3, .6, .25, 1) .2s both; }
-.login-mascot img { display: block; width: 100%; height: auto; animation: mascot-float 4.8s ease-in-out 2.8s infinite; }
-@keyframes lm-rise {
-  0% { transform: translate(-40%, 240%) rotate(0deg) scale(.6); opacity: 0; }
-  12% { opacity: 1; }
-  40% { transform: translate(-40%, 40%) rotate(0deg) scale(.8); }
-  52% { transform: translate(-80%, -10%) rotate(-90deg) scale(.85); }
-  64% { transform: translate(-40%, -50%) rotate(-180deg) scale(.9); }
-  76% { transform: translate(0%, -10%) rotate(-270deg) scale(.95); }
-  88% { transform: translate(-10%, 8%) rotate(-360deg) scale(1.02); }
-  100% { transform: translate(0, 0) rotate(-360deg) scale(1); opacity: 1; }
+/* ---------- 로그인: 배경(군청 + 원·점 무늬 + KMA 모티프) 위에 가운데 카드 — 왼쪽 슬로건 패널 / 오른쪽 흰 로그인 상자 ---------- */
+@property --lm-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --lm-y { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --lm-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@property --lm-r { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.login { position: relative; overflow: hidden; min-height: calc(100vh / var(--vz) - 56px); display: flex; align-items: center; justify-content: center;
+  padding: 48px 32px; background: linear-gradient(135deg, #00006E 0%, #0000A3 45%, #1B2FC8 100%); }
+.login-bg { position: absolute; inset: 0; pointer-events: none; }
+.login-bg .c { position: absolute; border-radius: 50%; }
+.login-bg .c1 { width: 560px; height: 560px; left: -180px; top: -220px; background: radial-gradient(circle at 35% 35%, rgba(120, 150, 255, .35), rgba(60, 90, 255, .08) 70%); }
+.login-bg .c2 { width: 420px; height: 420px; right: -120px; bottom: -160px; background: radial-gradient(circle at 40% 40%, rgba(140, 170, 255, .32), rgba(60, 90, 255, .06) 70%); }
+.login-bg .c3 { width: 300px; height: 300px; right: 12%; top: -150px; border: 38px solid rgba(255, 255, 255, .06); }
+.login-bg .c4 { width: 180px; height: 180px; left: 8%; bottom: -70px; border: 26px solid rgba(255, 255, 255, .07); }
+.login-bg .dots { position: absolute; width: 220px; height: 140px; background-image: radial-gradient(rgba(255, 255, 255, .35) 1.5px, transparent 1.6px); background-size: 16px 16px; }
+.login-bg .d1 { right: 5%; top: 9%; }
+.login-bg .d2 { left: 1.5%; top: 3%; width: 160px; height: 60px; }
+.login-bg .motif { position: absolute; right: -90px; bottom: -110px; width: 520px; opacity: .1; }
+.login-card { position: relative; z-index: 1; width: 100%; max-width: 1160px; min-height: 600px; display: grid; grid-template-columns: 56fr 44fr; }
+.login-hero { position: relative; overflow: hidden; color: #fff; padding: 56px 56px 48px; display: flex; flex-direction: column;
+  background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .18); border-right: 0; }
+.login-hero .motif { position: absolute; right: -60px; bottom: -80px; width: 360px; opacity: .14; pointer-events: none; }
+.login-logo { display: block; align-self: flex-start; height: 28px; width: auto; }
+.login-copy { margin-top: auto; margin-bottom: auto; padding-top: 40px; word-break: keep-all; position: relative; z-index: 1; }
+.login-copy .l1 { font-size: clamp(38px, 4.4vw, 60px); font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin: 0 0 24px; }
+/* 군청 글씨는 군청 바탕 위에서 안 읽혀서 흰 띠 위에 얹는다 */
+.login-copy .l2 { margin: 0 0 28px; font-size: clamp(16px, 1.5vw, 21px); font-weight: 700; line-height: 1.5; }
+.login-copy .l2 span { background: #fff; color: #0000A3; padding: 5px 12px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.login-copy .l3 { margin: 0; font-size: 15px; line-height: 1.7; color: rgba(255, 255, 255, .82); }
+.login-steps { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.login-steps li { font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 2px; color: #fff; }
+.login-steps li b { font-weight: 800; margin-right: 6px; opacity: .7; }
+/* 마스코트: 화면 왼쪽 위에서 들어와 천천히 원을 그리며 슬로건 오른쪽 위에 자리 잡고, 그 뒤 둥둥 떠 있다 */
+.login-mascot { position: absolute; z-index: 3; left: 40%; top: 20%; width: 180px; pointer-events: none;
+  transform: translate(var(--lm-x), var(--lm-y)) rotate(var(--lm-a)) translateX(var(--lm-r)) rotate(calc(-1 * var(--lm-a)));
+  animation: lm-orbit 5.2s cubic-bezier(.33, .1, .25, 1) .2s both; }
+.login-mascot img { display: block; width: 100%; height: auto; animation: mascot-float 4.8s ease-in-out 5.4s infinite; }
+@keyframes lm-orbit {
+  0% { --lm-x: -520px; --lm-y: -380px; --lm-a: 200deg; --lm-r: 170px; opacity: 0; }
+  10% { opacity: 1; }
+  100% { --lm-x: 0px; --lm-y: 0px; --lm-a: -160deg; --lm-r: 0px; opacity: 1; }
 }
-.login-side { display: flex; align-items: center; justify-content: center; padding: 48px 40px; background: #fff; }
-.login-form { width: 100%; max-width: 420px; word-break: keep-all; }
+.login-side { display: flex; align-items: center; justify-content: center; padding: 56px 52px; background: #fff; }
+.login-form { width: 100%; max-width: 400px; word-break: keep-all; }
 .login-mark { width: 52px; height: 52px; border-radius: 13px; background: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 0 22px; }
 .login h1 { font-size: 34px; color: var(--ink); margin: 0 0 10px; letter-spacing: -0.02em; }
 .login-sub { font-size: 16px; color: var(--slate); line-height: 1.6; margin: 0 0 36px; }
@@ -217,19 +234,20 @@ pre.out {
 @media (prefers-reduced-motion: reduce) {
   .login-mascot, .login-mascot img { animation: none; }
 }
-/* 좁은 화면: 왼쪽 패널을 위쪽 200px 띠로 접고 로그인은 그 아래 */
+/* 좁은 화면: 카드를 위아래로(슬로건 → 로그인 상자) */
 @media (max-width: 900px) {
-  .login { grid-template-columns: 1fr; grid-template-rows: 200px auto; }
-  .login-hero { min-height: 0; }
-  .login-top { left: 20px; top: 16px; }
+  .login { padding: 20px 16px 32px; align-items: flex-start; }
+  .login-card { grid-template-columns: 1fr; min-height: 0; }
+  .login-hero { padding: 24px 22px 26px; border-right: 1px solid rgba(255, 255, 255, .18); border-bottom: 0; }
   .login-logo { height: 20px; }
-  .login-copy { left: 20px; right: 34%; top: auto; bottom: 22px; transform: none; }
-  .login-copy .l1 { font-size: 22px; margin-bottom: 10px; }
-  .login-copy .l2 { font-size: 12.5px; }
-  .login-mascot { right: 5%; top: 18%; width: 26%; max-width: 130px; }
-  .login-motif { width: 70%; }
-  .login-side { padding: 36px 20px 48px; align-items: flex-start; }
+  .login-copy { padding-top: 22px; padding-right: 30%; }
+  .login-copy .l1 { font-size: 27px; margin-bottom: 14px; }
+  .login-copy .l2 { font-size: 13px; margin-bottom: 0; }
+  .login-copy .l3, .login-steps { display: none; }
+  .login-mascot { left: auto; right: 16px; top: 46px; width: 96px; }
+  .login-side { padding: 32px 22px 36px; }
   .login h1 { font-size: 28px; }
+  .login-bg .motif, .login-bg .d1 { display: none; }
 }
 
 .tabs { display: flex; gap: 4px; flex-shrink: 0; align-self: stretch; }

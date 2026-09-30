@@ -18,7 +18,7 @@ const BASE = 'http://localhost:3100';
   const p = await b.newPage(); p.on('pageerror', e => console.log('ERR', e.message));
   const shot = async (n) => { await p.waitForTimeout(700); await p.screenshot({ path: D + n + '.png' }); console.log('shot', n); };
   // 로그인 화면(쿠키 없이)
-  await p.goto(BASE + '/'); await p.waitForTimeout(4500); await shot('login');   // 대문 애니메이션이 끝난 뒤(약 3초)
+  await p.goto(BASE + '/'); await p.waitForTimeout(6500); await shot('login');   // 마스코트 애니메이션이 끝난 뒤(약 5.4초)
   await b.addCookies([{ name: 'authjs.session-token', value, url: BASE }]);
   await p.goto(BASE + '/search'); await p.waitForTimeout(1500);
   const f = p.frame({ url: /prototype\.html/ });
