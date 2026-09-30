@@ -25,6 +25,22 @@ const ORGS = [
   { name: '한국지능정보사회진흥원', logo: '/brand/orgs/web/nia.png' },
   { name: '정보통신기획평가원', logo: '/brand/orgs/web/iitp.svg' },
   { name: '전문대학혁신지원사업발전협의회', logo: '/brand/orgs/web/ick.png' },
+  { name: '서울특별시교육청', logo: '/brand/orgs/web/edu-seoul.svg' },
+  { name: '부산광역시교육청', logo: '/brand/orgs/web/edu-busan.svg' },
+  { name: '대구광역시교육청', logo: '/brand/orgs/web/edu-daegu.svg' },
+  { name: '인천광역시교육청', logo: '/brand/orgs/web/edu-incheon.svg' },
+  { name: '전남광주통합특별시교육청', logo: '/brand/orgs/web/edu-jeonnam-gwangju.svg' },
+  { name: '대전광역시교육청', logo: '/brand/orgs/web/edu-daejeon.svg' },
+  { name: '울산광역시교육청', logo: '/brand/orgs/web/edu-ulsan.svg' },
+  { name: '세종특별자치시교육청', logo: '/brand/orgs/web/edu-sejong.svg' },
+  { name: '경기도교육청', logo: '/brand/orgs/web/edu-gyeonggi.svg' },
+  { name: '강원특별자치도교육청', logo: '/brand/orgs/web/edu-gangwon.svg' },
+  { name: '충청북도교육청', logo: '/brand/orgs/web/edu-chungbuk.svg' },
+  { name: '충청남도교육청', logo: '/brand/orgs/web/edu-chungnam.svg' },
+  { name: '전북특별자치도교육청', logo: '/brand/orgs/web/edu-jeonbuk.svg' },
+  { name: '경상북도교육청', logo: '/brand/orgs/web/edu-gyeongbuk.svg' },
+  { name: '경상남도교육청', logo: '/brand/orgs/web/edu-gyeongnam.svg' },
+  { name: '제주특별자치도교육청', logo: '/brand/orgs/web/edu-jeju.svg' },
 ];
 
 function OrgMarquee() {

@@ -180,7 +180,7 @@ pre.out {
 /* 로그인 화면 상단 띠: 참고 기관 로고(원래 색, 반투명)가 한 줄로 흘러간다 */
 .topbar .orgs { flex: 1; min-width: 0; overflow: hidden; align-self: stretch; display: flex; align-items: center;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-.topbar .orgs ul { list-style: none; margin: 0; padding: 0; display: flex; width: max-content; animation: orgs-flow 48s linear infinite; }
+.topbar .orgs ul { list-style: none; margin: 0; padding: 0; display: flex; width: max-content; animation: orgs-flow 120s linear infinite; }
 .topbar .orgs li { flex-shrink: 0; padding: 0 30px; display: flex; align-items: center; height: 56px; }
 .topbar .orgs li span { font-size: 14px; font-weight: 700; color: #9AA0AA; letter-spacing: -0.01em; white-space: nowrap; }
 .topbar .orgs li img { display: block; height: 28px; width: auto; opacity: .6; transition: opacity .2s; }
@@ -208,9 +208,9 @@ pre.out {
 .login-card { position: relative; z-index: 1; width: 100%; max-width: 1160px; min-height: 600px; display: grid; grid-template-columns: 56fr 44fr;
   border-radius: 6px; overflow: hidden; box-shadow: 0 50px 100px -30px rgba(0, 0, 20, .9), 0 18px 40px -12px rgba(0, 0, 30, .6), 0 0 0 1px rgba(255, 255, 255, .08); }
 .login-hero { position: relative; overflow: hidden; color: #fff; padding: 56px 56px 48px; display: flex; flex-direction: column;
-  background: linear-gradient(155deg, #2A4BF0 0%, #1430D2 45%, #0A1BB0 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28); }
+  background: linear-gradient(160deg, #2240D8 0%, #1026A8 38%, #0A1784 72%, #060F66 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28); }
 .login-hero::before { content: ''; position: absolute; width: 520px; height: 520px; left: -160px; top: -260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 65%); pointer-events: none; }
+  background: radial-gradient(circle, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 65%); pointer-events: none; }
 .login-hero .motif { position: absolute; right: -60px; bottom: -80px; width: 360px; opacity: .14; pointer-events: none; }
 /* 마스코트가 앉는 자리(슬로건 오른쪽 위). 마스코트는 .login 위에 떠서 이 자리 좌표로 움직인다(Mascot.js) */
 .login-spot { position: absolute; left: 63%; top: 9%; width: 170px; aspect-ratio: 1; pointer-events: none; }
