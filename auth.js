@@ -4,7 +4,7 @@ import Google from 'next-auth/providers/google';
 // 구글 로그인(Auth.js v5). 앱 전체가 로그인해야 쓸 수 있다(middleware.js).
 // 환경변수(Vercel): AUTH_GOOGLE_ID · AUTH_GOOGLE_SECRET(구글 OAuth 클라이언트), AUTH_SECRET(쿠키 암호화 열쇠),
 // ADMIN_EMAILS(쉼표로 여러 개, 관리자: API 연결 테스트·/api/proxy). 받는 정보는 이메일·이름·프로필 사진뿐이고
-// DB 없이 암호화 쿠키(JWT)에만 둔다 — 바꾸면 /privacy(개인정보처리방침)를 먼저 고친다.
+// 로그인 세션은 DB 없이 암호화 쿠키(JWT)에만 둔다(최근 검색·작업은 계정 이메일로 /api/work — lib/db.js). 바꾸면 /privacy를 먼저 고친다.
 export function adminEmails() {
   return (process.env.ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 }
