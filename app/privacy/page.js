@@ -47,7 +47,7 @@ export default function Privacy() {
       <ul>
         <li>개인정보를 제3자에게 제공하지 않습니다.</li>
         <li>서비스는 Vercel Inc.의 호스팅 환경에서 운영되며, 로그인 요청이 처리되는 과정에서 위 정보가 이 환경을 거칩니다.</li>
-        <li>최근 검색 목록과 작업 내용은 Vercel과 연동된 데이터베이스 서비스에 저장됩니다.</li>
+        <li>최근 검색 목록과 작업 내용은 Vercel과 연동된 Neon Inc.의 데이터베이스(Postgres)에 저장됩니다.</li>
         <li>AI 기능(검색어 추천, 관련도 판정, 초안 작성 등)에는 공고 내용과 정책문서 발췌만 Anthropic의 API로 전송되며, 로그인 정보는 전송되지 않습니다.</li>
       </ul>
 
