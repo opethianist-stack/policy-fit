@@ -174,19 +174,68 @@ pre.out {
 .topbar .who .logout:hover { color: var(--ink); border-color: #c9ced6; }
 @media (max-width: 640px) { .topbar .who .email { display: none; } }
 
-/* ---------- 로그인 ---------- */
-.login { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 32px 16px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 45%, var(--bg) 100%); }
-.login-box { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 4px; padding: 36px 30px 28px; text-align: center; word-break: keep-all; box-shadow: none; }
-.login-mark { width: 44px; height: 44px; border-radius: 11px; background: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-.login h1 { font-size: 22px; color: var(--ink); margin: 0 0 8px; }
-.login-box > p { font-size: 13.5px; color: var(--slate); line-height: 1.6; margin: 0 0 24px; }
+/* ---------- 로그인: 왼쪽 대문 장면 + 오른쪽 로그인 상자 ---------- */
+.login { min-height: calc(100vh - 56px); display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(380px, 500px); align-items: center; gap: 56px;
+  max-width: 1360px; margin: 0 auto; padding: 32px 48px 40px; }
+.login-scene { display: flex; justify-content: center; }
+.login-box { width: 100%; background: var(--surface); border: 1px solid var(--hairline); border-top: 4px solid var(--brand); border-radius: 4px; padding: 64px 52px 44px; text-align: center; word-break: keep-all; }
+.login-mark { width: 64px; height: 64px; border-radius: 16px; background: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.login h1 { font-size: 32px; color: var(--ink); margin: 0 0 10px; letter-spacing: -0.01em; }
+.login-box > p { font-size: 16px; color: var(--slate); line-height: 1.6; margin: 0 0 40px; }
 .login-err { background: #ffe8ec; color: #a3122f; border-radius: 4px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; margin-bottom: 16px; text-align: left; }
-.gbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
-  background: #fff; border: 1px solid #c9ced6; border-radius: 4px; padding: 12px 16px; cursor: pointer; }
-.gbtn:hover { border-color: var(--brand); box-shadow: none; }
-.login-box .login-note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 18px 0 0; }
+.gbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink);
+  background: #fff; border: 1px solid #c9ced6; border-radius: 4px; padding: 18px 16px; cursor: pointer; }
+.gbtn:hover { border-color: var(--brand); color: var(--brand); }
+.login-box .login-note { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 22px 0 0; }
 .login-note a { color: var(--muted); text-decoration: underline; }
+
+/* 대문 장면(app/login/Gate.js). 좌표는 SVG viewBox 560×520 기준 % */
+.gate { --gate-line: #B8B8E6; --gate-flute: #DADAF0; --gate-shade: #F3F3FA; --gate-wall: #F7F7FB; --gate-joint: #E6E6F2;
+  --gate-in: #0B0B4A; --gate-dark: #0000A3; --gate-accent: #0000A3;
+  position: relative; width: 100%; max-width: 780px; aspect-ratio: 560 / 520; perspective: 1100px; }
+.gate-arch { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gate-sign-text { font-family: var(--font); font-size: 30px; font-weight: 800; fill: #fff; letter-spacing: 0.06em; }
+.gate-sign-led { fill: #8FB4FF; transform-box: fill-box; transform-origin: center; transform: scaleX(0); animation: gate-led .5s ease-out 2.7s forwards; }
+.gate-doorway { position: absolute; left: 33.036%; top: 41.154%; width: 33.929%; height: 55%; transform-style: preserve-3d; overflow: visible; }
+.gate-light { position: absolute; inset: 0; opacity: 0; animation: gate-light 1.2s ease-out 2.2s forwards;
+  background: radial-gradient(ellipse at 50% 70%, #FFFFFF 0%, #EBEBF7 38%, #B8B8E6 70%, #5B5BD6 100%); }
+.gate-door { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(180deg, #1414B8 0%, #0000A3 55%, #00007A 100%);
+  border: 1px solid #00006E; backface-visibility: visible; }
+.gate-door.l { left: 0; transform-origin: left center; animation: gate-open-l 1.3s cubic-bezier(.3, .7, .2, 1) 2.0s forwards; }
+.gate-door.r { right: 0; transform-origin: right center; animation: gate-open-r 1.3s cubic-bezier(.3, .7, .2, 1) 2.0s forwards; }
+.gate-door i { position: absolute; left: 14%; right: 14%; border: 1.5px solid rgba(255, 255, 255, 0.28); border-radius: 2px; }
+.gate-door i:first-child { top: 7%; height: 36%; }
+.gate-door i:nth-child(2) { top: 49%; height: 44%; }
+.gate-door b { position: absolute; top: 46%; width: 9px; height: 9px; border-radius: 50%; border: 2px solid #fff; }
+.gate-door.l b { right: 10%; }
+.gate-door.r b { left: 10%; }
+/* 마스코트: 왼쪽 위에서 휘어 날아와 문 앞에서 한 번 밀고(문이 열림) 문 안 빛 앞에 떠 있다 */
+.gate-mascot { position: absolute; left: 36.607%; top: 50.96%; width: 26.786%; opacity: 0; animation: gate-fly 2.4s cubic-bezier(.35, .1, .25, 1) .3s forwards; }
+.gate-mascot img { display: block; width: 100%; height: auto; animation: mascot-float 4.8s ease-in-out 2.8s infinite; }
+@keyframes gate-fly {
+  0% { opacity: 0; transform: translate(-230%, -150%) scale(.5) rotate(-28deg); }
+  12% { opacity: 1; }
+  55% { transform: translate(-70%, -20%) scale(.8) rotate(10deg); }
+  72% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  80% { opacity: 1; transform: translate(0, 2%) scale(1.08, .94); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@keyframes gate-open-l { to { transform: rotateY(-108deg); } }
+@keyframes gate-open-r { to { transform: rotateY(108deg); } }
+@keyframes gate-light { to { opacity: 1; } }
+@keyframes gate-led { to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .gate-mascot, .gate-mascot img, .gate-door, .gate-light, .gate-sign-led { animation: none; }
+  .gate-mascot, .gate-light { opacity: 1; }
+  .gate-sign-led { transform: none; }
+  .gate-door.l { transform: rotateY(-108deg); }
+  .gate-door.r { transform: rotateY(108deg); }
+}
+@media (max-width: 900px) {
+  .login { grid-template-columns: 1fr; gap: 16px; padding: 24px 16px 40px; max-width: 520px; }
+  .gate { max-width: 400px; }
+  .login-box { padding: 36px 24px 28px; }
+}
 .tabs { display: flex; gap: 4px; flex-shrink: 0; align-self: stretch; }
 /* 상단 탭은 밑줄형(DESIGN.md): 현재 탭은 군청 글자 700 + 아래 2px 밑줄 */
 .tab {
