@@ -1,7 +1,7 @@
 # Policy Fit — 작업 핸드오프
 
 레포 루트의 `CLAUDE.md`. Codespace의 Claude Code가 세션 시작 시 자동으로 읽는다.
-최종 갱신: 2026-09-30 (개인정보처리방침 페이지 — 구글 로그인 준비)
+최종 갱신: 2026-09-30 (STEP41 — 구글 로그인, 관리자·사용자 구분)
 
 ---
 
@@ -43,6 +43,7 @@ KMA 사내 AI 스프린트(바이브코딩 트랙)의 팀 과제. **입찰 공�
 | 경로 | 파일 | 상태 |
 |---|---|---|
 | `/` | `app/page.js` | 개요(STEP21). 제목(STEP37 슬로건 "입찰 공고에서 정책 근거까지, / 사업 이해도를 높이는 초안 완성" — 키워드 검색도 되므로 "공고번호 하나로"를 뺐다) + "공고 검색하기" 버튼(→ `/search`) + 작업 순서 8단계 흐름. 흐름은 CSS 애니메이션: 문서 아이콘 토큰이 단계마다 멈췄다 넘어가고 지나간 선이 채워지며, 켜진 단계의 설명이 아래 한 줄에 바뀐다(14.4초 주기, `--cycle`·`--step`은 `.landing-inner`에). 720px 이하는 세로 흐름(설명을 단계 옆에), 움직임 줄이기 설정이면 정지. "처리 흐름" 제목·과제 소개 문구·스프린트 문구는 뺐다. **STEP40**: "공고 검색하기" 옆 "매뉴얼 PDF" 버튼(`/manual.pdf` 내려받기), 흐름 아래 20px부터 켜진 단계의 실제 화면 캡처(`public/flow/1~8.jpg`, 가로 1200·각 25~92KB)를 흐리게(최대 불투명도 0.2, 아래로 갈수록 사라짐) 깔고 설명 한 줄을 그 위 알약 상자에 띄운다(`flow-shot` 키프레임, 캡션과 같은 주기). 720px 이하·움직임 줄이기에서는 배경 캡처를 숨긴다 |
+| (로그인) | `auth.js` · `middleware.js` · `app/login/page.js` · `app/api/auth/[...nextauth]/route.js` | **STEP41 구글 로그인(Auth.js `next-auth@5.0.0-beta.32` 고정, 멘토링 9/29 4번). 앱 전체가 로그인해야 쓸 수 있다**(사용자 결정: 스프린트 평가에 구현 가능성 포함). 미들웨어가 정적 빌드 파일만 빼고 모두 검사한다(public의 `prototype.html`·`manual.pdf`·`flow/*.jpg` 포함): 로그인 안 한 화면 요청은 `/login?next=원래주소`로, API는 401 JSON. 공개는 `/login`·`/privacy`·`/api/auth/*`뿐. **관리자**(`ADMIN_EMAILS`, 쉼표 구분, 지금 kmauni8@gmail.com·opethianist@gmail.com)만 `/api-test`(사용자는 `/`로 보냄)·`/api/proxy`(403, 라우트 안에서도 한 번 더 확인). 세션은 DB 없이 JWT 쿠키(30일), `session.user.role` = admin/user. 상단바 오른쪽에 역할 알약·이메일·로그아웃, API 연결 테스트 탭은 관리자에게만. 공고 검색 화면 왼쪽 아래(`#me`)는 `/api/auth/session`으로 프로필 사진(없으면 첫 글자)·이메일·관리자/사용자. 로그인 화면은 "Google 계정으로 로그인" 한 버튼 + 오류 안내(`?error=AccessDenied` → 테스트 사용자 등록 확인). 로그인 뒤 돌아갈 주소는 같은 사이트 경로만(`safeNext`). 환경변수 `AUTH_GOOGLE_ID`·`AUTH_GOOGLE_SECRET`·`AUTH_SECRET`·`ADMIN_EMAILS`(Vercel 등록 2026-09-30). 구글 콘솔: Google 인증 플랫폼 — 브랜딩(홈페이지·`/privacy`·승인된 도메인 `policy-fit-azure.vercel.app`), 대상(외부, **테스트 중** — 테스트 사용자만 로그인, 게시는 미정), 데이터 액세스(openid·email·profile), 클라이언트(웹, 리디렉션 URI `https://policy-fit-azure.vercel.app/api/auth/callback/google`). **로컬 점검**(`check_deck.mjs`·`scripts/manual/capture.js`)은 `POLICYFIT_AUTH_DISABLED=1 next start`로 로그인을 끈다(Vercel에서는 `VERCEL` 환경변수가 있어 무시). 시험: 같은 `AUTH_SECRET`로 세션 쿠키를 만들어(`next-auth/jwt` `encode`, salt `authjs.session-token`) 사용자·관리자 화면 확인. 후속: 관리자 검색 키워드 통계 대시보드(로그를 서버에 남기려면 DB와 `/privacy` 수정이 필요) |
 | `/privacy` | `app/privacy/page.js` | 개인정보처리방침(2026-09-30). 구글 로그인 앱 게시에 필요한 공개 페이지(로그인 없이 열림). 운영 AI미래교육본부, 문의 kmauni8@gmail.com. 받는 정보(이메일·이름·프로필 사진)·목적(로그인·관리자 구분)·보관(DB 없이 암호화 쿠키, 최대 30일)·위탁(Vercel, AI 기능은 공고·발췌만 Anthropic). **받는 정보나 보관 방식이 바뀌면(검색 기록을 서버에 남기는 등) 이 페이지를 먼저 고친다.** 개요 화면 맨 아래 링크 |
 | `/search` | `app/search/page.js` → `public/prototype.html` (iframe) | 사용자 화면 5종(홈·정책 근거 검색·정책 근거 선택·문서 산출·구도 추천). 바닐라 HTML/JS. **다섯 화면 모두 실데이터**(아래 API)로 동작한다 |
 | `/api-test` | `app/api-test/page.js` | 오픈API 연결 테스트. 프리셋 11개(포털 7 + 알리오플러스 4). **실제로 동작함.** 상단 탭 "API 연결 테스트"(2026-09-22부터) |

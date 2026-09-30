@@ -1,3 +1,5 @@
+import { currentUser } from '../../../auth';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +50,16 @@ function maskValue(sp, keyParam) {
   return copy.toString();
 }
 
+// 관리자만(미들웨어에서도 막지만 여기서 한 번 더 확인한다 — 서버 인증키로 외부 API를 부르는 통로라서)
+async function denied() {
+  const u = await currentUser();
+  if (!u) return Response.json({ ok: false, error: '로그인이 필요합니다.' }, { status: 401 });
+  if (u.role !== 'admin') return Response.json({ ok: false, error: '관리자만 쓸 수 있습니다.' }, { status: 403 });
+  return null;
+}
+
 export async function GET() {
+  const no = await denied(); if (no) return no;
   const configured = {};
   for (const [source, envName] of Object.entries(KEY_SOURCES)) {
     configured[source] = Boolean(process.env[envName]);
@@ -57,6 +68,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
+  const no = await denied(); if (no) return no;
   const started = Date.now();
 
   let body;
