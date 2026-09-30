@@ -15,6 +15,6 @@ export async function GET(req) {
   const all = await allBoards();
   if (!all.items.length && all.failed.length) return Response.json({ ok: false, error: all.failed.map((f) => f.error).join(' '), failed: all.failed }, { status: 502 });
   const terms = (sp.get('q') || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const limit = Math.min(50, Math.max(1, Number(sp.get('limit') || 30)));
+  const limit = Math.min(300, Math.max(1, Number(sp.get('limit') || 30)));
   return Response.json({ ok: true, pool: all.items.length, failed: all.failed, items: matchBoards(all.items, { terms, open: sp.get('open') === '1', limit }) });
 }

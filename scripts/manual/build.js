@@ -6,6 +6,7 @@ const { execFileSync } = require('child_process');
 const fs = require('fs');
 const D = process.argv[2], OUT = process.argv[3];
 const viaCurl = async (route) => { const u = route.request().url(); try { const body = execFileSync('curl', ['-s', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36', u], { maxBuffer: 50e6 }); await route.fulfill({ status: 200, body, headers: { 'content-type': /css2\?/.test(u) ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } }); } catch (e) { await route.abort(); } };
+const SUIT = fs.readFileSync(__dirname + '/../../public/fonts/SUIT-Variable.woff2').toString('base64');
 const img = (i) => 'data:image/jpeg;base64,' + fs.readFileSync(D + '/jpg/' + i + '.jpg').toString('base64');
 const STEPS = [
   ['login', '로그인', '로그인', [
@@ -14,9 +15,9 @@ const STEPS = [
     '관리자 계정은 상단에 "API 연결 테스트"·"관리자 대시보드" 탭이 더 보입니다.']],
   ['1', '공고 찾기', '홈', [
     '대상(입찰공고·사전규격)과 찾는 방법(키워드·번호)을 고른 뒤 조회합니다. 기본은 키워드 검색입니다.',
-    '키워드 검색 기간은 기본이 가장 긴 기간(입찰공고 최근 30일, 사전규격 최근 21일)이고, 기간 지정으로 입찰공고 최대 92일·사전규격 최대 21일까지 정합니다. 산하기관 게시판 사업공고도 함께 나옵니다.',
+    '키워드 검색 기간은 기본이 가장 긴 기간(입찰공고 최근 30일, 사전규격 최근 21일)이고, 기간 지정으로 입찰공고 최대 92일·사전규격 최대 21일까지 정합니다. 산하기관 게시판 공고(한국과학창의재단·정보통신산업진흥원 사업공고, 한국교육학술정보원 공지)도 함께 나옵니다. 게시판 공고는 최근 1년치이고, 기간 지정이면 그 기간 안의 글만 나옵니다.',
     '공고번호가 없는 사업은 "공고번호 없이 제안요청서로 시작"으로 파일과 사업명·발주기관을 넣어 시작합니다.',
-    '최근 검색은 입찰공고·사전규격을 20건까지 남기고, 넘치면 목록 안에서 스크롤합니다. 다시 열면 저장된 작업을 이어서 할 수 있고, "편집"으로 골라 지울 수 있습니다.']],
+    '최근 검색은 입찰공고·사전규격·게시판 공고·제안요청서 파일로 시작한 작업을 20건까지 남기고(번호가 없는 것은 게시판 이름이나 "제안요청서 별도"로 표시), 넘치면 목록 안에서 스크롤합니다. 다시 열면 저장된 작업을 이어서 할 수 있고, "편집"으로 골라 지울 수 있습니다.']],
   ['2', '공고와 발주처 계보', '정책 근거 검색', [
     '공고 카드에 공고명·수요기관·예산·마감, 투찰 제한(업종·지역·공동수급), 나라장터 링크와 첨부파일이 나옵니다. 사전규격은 의견등록 마감과 규격서 첨부가 나옵니다.',
     '제안요청서는 첨부에서 자동으로 찾아 읽고, 본문에서 뽑은 검색어를 공고명 검색어와 함께 씁니다. 읽지 못하면 "파일 올리기"로 직접 올립니다.',
@@ -39,7 +40,7 @@ const STEPS = [
   ['6', '초안 작성', '문서 산출', [
     '근거는 역할 블록(정책 기조·기술·환경·현장 수요·발주기관 계획)에 들어갑니다. 카드의 역할 칩을 누르면 다른 블록으로 옮겨집니다. "AI 역할 분류"로 한 번에 나눌 수도 있습니다.',
     '블록마다 헤드라인, 카드마다 문서 문장, 맨 아래 수렴점(사업 추진의 필요성)을 씁니다. 비워 두면 발췌문을 따옴표로 그대로 싣습니다.',
-    '"AI 초안"은 빈칸만 채우고 보라색으로 표시합니다. 원문에 없는 숫자·기관명이 든 문장은 넣지 않고 "검증에서 뺀 항목"으로 알립니다.']],
+    '"AI 초안"은 빈칸만 채우고 색칠해 표시합니다. 원문에 없는 숫자·기관명이 든 문장은 넣지 않고 "검증에서 뺀 항목"으로 알립니다.']],
   ['7', '문서 산출', '문서 산출', [
     '오른쪽 미리보기가 산출 문서와 같습니다: 1. 사업 추진 배경(역할 블록별 헤드라인과 개조식 문장, 괄호 출처) → 2. 추진 배경 종합 표 → 참고. 사업 개요 및 발주처 계보.',
     '산출 직전에 발췌문을 색인 원문과 다시 대조하고, 대조에 실패한 근거는 문서에 넣지 않습니다(출처 미확보 문장 차단).',
@@ -61,22 +62,23 @@ const page = (i, [k, t, where, lines]) => `<section class="pg"><div class="top">
 <div class="body"><ol>${lines.map((l) => `<li>${l}</li>`).join('')}</ol><div class="shot"><img src="${img(k)}"></div></div></section>`;
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Policy Fit 사용 매뉴얼</title>
 <style>@page{size:297mm 210mm;margin:0}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;font-family:'Noto Sans CJK KR','Noto Sans KR',sans-serif;color:#191F28}
+@font-face{font-family:'SUIT Variable';src:url(data:font/woff2;base64,${SUIT}) format('woff2');font-weight:100 900}
+body{margin:0;font-family:'SUIT Variable','Noto Sans CJK KR',sans-serif;color:#111111}
 .pg{width:297mm;height:210mm;padding:12mm 12mm 10mm;break-after:page;display:flex;flex-direction:column;overflow:hidden}
 .pg:last-child{break-after:auto}
-.cover{background:linear-gradient(180deg,#f6f3ff 0%,#efeaff 55%,#fff 100%);justify-content:center;padding:0 26mm}
-.cover .mk{width:16mm;height:16mm;border-radius:4mm;background:#7353EA;margin-bottom:10mm}
-.cover h1{font-size:30pt;margin:0 0 4mm;letter-spacing:-.02em}.cover p{font-size:14pt;color:#4E5968;margin:0 0 16mm}
+.cover{background:#fff;border-top:3mm solid #0000A3;justify-content:center;padding:0 26mm}
+.cover .mk{width:16mm;height:16mm;border-radius:4mm;background:#0000A3;margin-bottom:10mm}
+.cover h1{font-size:30pt;margin:0 0 4mm;letter-spacing:-.02em}.cover p{font-size:14pt;color:#494949;margin:0 0 16mm}
 .cover ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4mm 5mm;max-width:250mm}
-.cover li::before{display:none}.cover li{font-size:10.5pt;color:#343E4B;background:#fff;border:0.3mm solid #E3DCFB;border-radius:3mm;padding:3mm 4mm}.cover li b{color:#7353EA;margin-right:2mm}
-.top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #E9EBF0;padding-bottom:4mm;margin-bottom:7mm}
-.top .n{font-size:22pt;font-weight:800;color:#7353EA;line-height:1}.top .n.x{font-size:15pt}.top .t{font-size:17pt;font-weight:700}
-.top .w{font-size:9.5pt;color:#7353EA;background:#F1EDFE;border-radius:10mm;padding:1mm 3.5mm}.top .c{margin-left:auto;font-size:9pt;color:#8B95A1}
+.cover li::before{display:none}.cover li{font-size:10.5pt;color:#494949;background:#fff;border:0.3mm solid #DDDDDD;border-radius:1mm;padding:3mm 4mm}.cover li b{color:#0000A3;margin-right:2mm}
+.top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #DDDDDD;padding-bottom:4mm;margin-bottom:7mm}
+.top .n{font-size:22pt;font-weight:800;color:#0000A3;line-height:1}.top .n.x{font-size:15pt}.top .t{font-size:17pt;font-weight:700}
+.top .w{font-size:9.5pt;color:#0000A3;background:#EBEBF7;border-radius:0.5mm;padding:1mm 3.5mm}.top .c{margin-left:auto;font-size:9pt;color:#767676}
 .body{flex:1;display:grid;grid-template-columns:62mm 1fr;gap:7mm;min-height:0;align-items:center}
 ol{margin:0;padding:0;list-style:none;counter-reset:k}
-ol li{counter-increment:k;position:relative;padding-left:7mm;font-size:9.6pt;line-height:1.6;color:#343E4B;margin-bottom:4mm}
-ol li::before{content:counter(k);position:absolute;left:0;top:0.6mm;width:4.6mm;height:4.6mm;border-radius:50%;background:#7353EA;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center}
-.shot{align-self:center;border:0.3mm solid #D5D9E0;border-radius:2mm;overflow:hidden}
+ol li{counter-increment:k;position:relative;padding-left:7mm;font-size:9.6pt;line-height:1.6;color:#494949;margin-bottom:4mm}
+ol li::before{content:counter(k);position:absolute;left:0;top:0.6mm;width:4.6mm;height:4.6mm;border-radius:50%;background:#0000A3;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center}
+.shot{align-self:center;border:0.3mm solid #DDDDDD;border-radius:1mm;overflow:hidden}
 .shot img{display:block;width:100%}</style></head><body>
 <section class="pg cover"><div class="mk"></div><h1>Policy Fit 사용 매뉴얼</h1><p>공고 입력부터 사업 이해도 장표 구도 추천까지</p>
 <ol>${STEPS.map(([k, t]) => `<li><b>${num(k)}</b>${t}</li>`).join('')}</ol></section>
@@ -85,7 +87,7 @@ ${STEPS.map((s, i) => page(i, s)).join('\n')}</body></html>`;
   const b0 = await chromium.launch(); const b = await b0.newContext();
   await b.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
   const p = await b.newPage(); await p.setContent(html, { waitUntil: 'networkidle' });
-  await p.evaluate(async () => { await Promise.all(['400', '700', '800'].map((w) => document.fonts.load(w + ' 16px "Noto Sans CJK KR"', '가나다'))); await document.fonts.ready; });
+  await p.evaluate(async () => { await Promise.all(['400', '700', '800'].map((w) => document.fonts.load(w + ' 16px "SUIT Variable"', '가나다'))); await document.fonts.ready; });
   await p.pdf({ path: OUT, preferCSSPageSize: true, printBackground: true });
   await b0.close();
 })();

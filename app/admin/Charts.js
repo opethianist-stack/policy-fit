@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-// 단색(보라) 가로 막대. 막대마다 값·항목을 적고, 올리면 툴팁
+// 단색(파랑) 가로 막대. 막대마다 값·항목을 적고, 올리면 툴팁
 export function Bars({ data, unit }) {
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
