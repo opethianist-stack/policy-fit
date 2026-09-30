@@ -3,14 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+// 로그인 안 한 화면(로그인·개인정보처리방침)에서는 탭 없이 로고만. API 연결 테스트는 관리자에게만 보인다
 const TABS = [
   { href: '/', label: '개요' },
   { href: '/search', label: '공고 검색' },
-  { href: '/api-test', label: 'API 연결 테스트' },
+  { href: '/api-test', label: 'API 연결 테스트', admin: true },
 ];
 
-export default function Nav() {
+export default function Nav({ user, logout }) {
   const path = usePathname();
+  const admin = user && user.role === 'admin';
+  const tabs = user ? TABS.filter((t) => !t.admin || admin) : [];
   return (
     <div className="topbar">
       <Link href="/" className="mark">
@@ -23,12 +26,23 @@ export default function Nav() {
         <b>Policy Fit</b>
       </Link>
       <nav className="tabs">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <Link key={t.href} href={t.href} className={`tab ${path === t.href ? 'on' : ''}`}>
             {t.label}
           </Link>
         ))}
       </nav>
+      {user ? (
+        <div className="who">
+          <span className={`role ${admin ? 'admin' : ''}`}>{admin ? '관리자' : '사용자'}</span>
+          <span className="email" title={user.email}>{user.email}</span>
+          {logout ? (
+            <form action={logout}>
+              <button type="submit" className="logout">로그아웃</button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
