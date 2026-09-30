@@ -2,12 +2,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { signIn, currentUser } from '../../auth';
 
-// 로그인 화면 왼쪽 패널 자료(public/login/). 파일이 들어오면 null을 경로로 바꾼다.
-//  - VIDEO: KMA 영상 10~15초 mp4(1~3MB, 인물이 크게 나오지 않는 행사장 전경 컷). 소리 끄고 자동 재생·반복, 위에 군청 막
-//  - POSTER: 영상 첫 장면 정지 이미지(jpg). 영상을 못 불러오거나 움직임 줄이기 설정이면 이것만 보인다
-//  - LOGO: KMA 로고(흰색 또는 투명 배경 PNG) — 패널 왼쪽 위
-//  - MOTIF: KMA 그래픽 모티프(투명 PNG) — 패널 오른쪽 아래에 옅게
-const ASSET = { VIDEO: null, POSTER: null, LOGO: null, MOTIF: null };
+// 로그인 화면 왼쪽 패널 자료(public/brand/, 원본은 public/KMA CI_png·KMA Graphic Motif_png — 흰색판을 잘라 줄였다)
+const LOGO = '/brand/kma-logo-w.png';
+const MOTIF = '/brand/kma-motif-w.png';
 
 export const metadata = { title: 'Policy Fit · 로그인' };
 
@@ -33,13 +30,8 @@ export default async function Login({ searchParams }) {
   return (
     <main className="login">
       <section className="login-hero" aria-hidden="true">
-        {ASSET.POSTER ? <img className="login-poster" src={ASSET.POSTER} alt="" /> : null}
-        {ASSET.VIDEO ? <video className="login-film" src={ASSET.VIDEO} poster={ASSET.POSTER || undefined} autoPlay muted loop playsInline preload="auto" /> : null}
-        <div className="login-veil" />
-        {ASSET.MOTIF ? <img className="login-motif" src={ASSET.MOTIF} alt="" /> : null}
-        <div className="login-top">
-          {ASSET.LOGO ? <img className="login-logo" src={ASSET.LOGO} alt="" /> : <span className="login-logo-txt">Policy Fit</span>}
-        </div>
+        <img className="login-motif" src={MOTIF} alt="" />
+        <div className="login-top"><img className="login-logo" src={LOGO} alt="" width="480" height="126" /></div>
         <div className="login-copy">
           <p className="l1">정책과 함께하는<br />공공입찰의 세계</p>
           <p className="l2"><span>주요 부처와 연결되는 공간을 맛보세요</span></p>
