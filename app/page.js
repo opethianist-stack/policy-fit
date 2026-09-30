@@ -60,6 +60,7 @@ export default function Home() {
             {STEPS.map(([k, , d], i) => <span key={k} style={{ '--i': i }}>{d}</span>)}
           </div>
         </div>
+        <p className="landing-foot"><Link href="/privacy">개인정보처리방침</Link></p>
       </div>
     </div>
   );
