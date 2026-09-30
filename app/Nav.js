@@ -11,19 +11,20 @@ const TABS = [
   { href: '/admin', label: '관리자 대시보드', admin: true },
 ];
 
-// 로그인 화면 상단 띠에 흘러가는 기관 이름. 긴 로고 파일(투명 PNG·SVG)을 public/brand/orgs/에 두고 logo에 경로를 적으면 글자 대신 로고가 나온다
+// 로그인 화면 상단 띠에 흘러가는 참고 기관 로고. 원본은 public/brand/orgs/(사용자가 올림), 화면용은 public/brand/orgs/web/
+// (JPG는 흰 바탕을 투명하게·여백을 잘라 높이 72px PNG로, SVG는 viewBox를 내용에 맞게). logo가 없으면 이름 글자로 나온다
 const ORGS = [
-  { name: '교육부' },
-  { name: '과학기술정보통신부' },
-  { name: '고용노동부' },
-  { name: '국가인공지능전략위원회' },
-  { name: '조달청' },
-  { name: '한국교육학술정보원' },
-  { name: '한국과학창의재단' },
-  { name: '정보통신산업진흥원' },
-  { name: '한국지능정보사회진흥원' },
-  { name: '한국전문대학교육협의회' },
-  { name: '시도교육청' },
+  { name: '교육부', logo: '/brand/orgs/web/moe.svg' },
+  { name: '과학기술정보통신부', logo: '/brand/orgs/web/msit.png' },
+  { name: '고용노동부', logo: '/brand/orgs/web/moel.svg' },
+  { name: '국가인공지능전략위원회', logo: '/brand/orgs/web/aikorea.svg' },
+  { name: '조달청', logo: '/brand/orgs/web/pps.svg' },
+  { name: '한국교육학술정보원', logo: '/brand/orgs/web/keris.svg' },
+  { name: '한국과학창의재단', logo: '/brand/orgs/web/kofac.png' },
+  { name: '정보통신산업진흥원', logo: '/brand/orgs/web/nipa.png' },
+  { name: '한국지능정보사회진흥원', logo: '/brand/orgs/web/nia.png' },
+  { name: '정보통신기획평가원', logo: '/brand/orgs/web/iitp.svg' },
+  { name: '전문대학혁신지원사업발전협의회', logo: '/brand/orgs/web/ick.png' },
 ];
 
 function OrgMarquee() {
