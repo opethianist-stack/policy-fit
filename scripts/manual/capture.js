@@ -15,8 +15,6 @@ const BASE = 'http://localhost:3100';
   const value = await encode({ token: { email, name: email.split('@')[0], role: 'admin' }, secret: process.env.AUTH_SECRET, salt: 'authjs.session-token' });
   const b0 = await chromium.launch(); const b = await b0.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   await b.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
-  // 로그인 화면 소개 영상(YouTube)은 이 작업 환경에서 막혀 있어 재생 버튼만 있는 자리 화면으로 대신한다
-  await b.route(/youtube(-nocookie)?\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;height:100vh"><svg width="72" height="72" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="rgba(255,255,255,.14)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg></body>' }));
   const p = await b.newPage(); p.on('pageerror', e => console.log('ERR', e.message));
   const shot = async (n) => { await p.waitForTimeout(700); await p.screenshot({ path: D + n + '.png' }); console.log('shot', n); };
   // 로그인 화면(쿠키 없이)
