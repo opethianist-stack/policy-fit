@@ -10,7 +10,7 @@ const SUIT = fs.readFileSync(__dirname + '/../../public/fonts/SUIT-Variable.woff
 const img = (i) => 'data:image/jpeg;base64,' + fs.readFileSync(D + '/jpg/' + i + '.jpg').toString('base64');
 const STEPS = [
   ['login', '로그인', '로그인', [
-    'Google 계정으로 로그인해야 쓸 수 있습니다. 등록된 계정만 들어갈 수 있습니다. 오른쪽 상자의 "Google 계정으로 로그인"을 누릅니다.',
+    'Google 계정으로 로그인해야 쓸 수 있습니다. 등록된 계정만 들어갈 수 있습니다. 오른쪽 상자의 "Google 계정으로 로그인"을 누릅니다. 왼쪽에는 한국능률협회 소개 영상이 소리 없이 재생됩니다.',
     '한 번 로그인하면 30일 동안 유지됩니다. 오른쪽 위 계정 옆 "로그아웃"으로 나갑니다.',
     '관리자 계정은 상단에 "API 연결 테스트"·"관리자 대시보드" 탭이 더 보입니다.']],
   ['1', '공고 찾기', '홈', [

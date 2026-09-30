@@ -15,6 +15,8 @@ const BASE = 'http://localhost:3100';
   const value = await encode({ token: { email, name: email.split('@')[0], role: 'admin' }, secret: process.env.AUTH_SECRET, salt: 'authjs.session-token' });
   const b0 = await chromium.launch(); const b = await b0.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   await b.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
+  // 로그인 화면 소개 영상(YouTube)은 이 작업 환경에서 막혀 있어 재생 버튼만 있는 자리 화면으로 대신한다
+  await b.route(/youtube(-nocookie)?\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;height:100vh"><svg width="72" height="72" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="rgba(255,255,255,.14)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg></body>' }));
   const p = await b.newPage(); p.on('pageerror', e => console.log('ERR', e.message));
   const shot = async (n) => { await p.waitForTimeout(700); await p.screenshot({ path: D + n + '.png' }); console.log('shot', n); };
   // 로그인 화면(쿠키 없이)
@@ -22,12 +24,14 @@ const BASE = 'http://localhost:3100';
   await b.addCookies([{ name: 'authjs.session-token', value, url: BASE }]);
   await p.goto(BASE + '/search'); await p.waitForTimeout(1500);
   const f = p.frame({ url: /prototype\.html/ });
+  // 넓은 화면은 120% 배율(zoom)이라 Playwright가 iframe 안 좌표를 잘못 잡는다 → 좌표 없이 클릭 이벤트를 보낸다
+  const tap = (sel) => f.locator(sel).first().dispatchEvent('click');
   const scrollTo = (scr, sel, off) => f.evaluate(([scr, sel, off]) => { const s = document.querySelector(scr), el = document.querySelector(sel); s.scrollTop = el.getBoundingClientRect().top - s.getBoundingClientRect().top + s.scrollTop - off; }, [scr, sel, off]);
   // 1 공고 찾기: 키워드 목록을 보인 뒤 번호로 연다
-  await f.fill('#no-input', '연수'); await f.click('button[type=submit]');
+  await f.fill('#no-input', '연수'); await tap('button[type=submit]');
   await f.waitForFunction(() => document.querySelector('#find-state').classList.contains('done'), null, { timeout: 60000 }); await shot('1');
   await f.selectOption('#f-mode', 'no'); await f.fill('#no-input', 'R26BK01732376');
-  await f.click('button[type=submit]');
+  await tap('button[type=submit]');
   await f.waitForFunction(() => /관련도순|키워드순/.test(document.querySelector('#ai-rank-msg').textContent + document.querySelector('#result-count').textContent) && !document.querySelector('.rank-wait'), null, { timeout: 120000 });
   await f.waitForTimeout(1500);
   // 2 발주처 계보(공고 카드·제안요청서·계보)
@@ -37,13 +41,13 @@ const BASE = 'http://localhost:3100';
   // 4 정책 근거 카드
   await scrollTo('#s-search .scroll', '#result-grid .card:nth-child(3)', 10); await shot('4');
   // 5 근거 선택
-  for (let i = 0; i < 5; i++) await f.click('#result-grid .pick >> nth=' + i);
-  await f.click('#to-review'); await f.waitForTimeout(1500);
+  for (let i = 0; i < 5; i++) await tap('#result-grid .pick >> nth=' + i);
+  await tap('#to-review'); await f.waitForTimeout(1500);
   await f.evaluate(() => { var i = CARDS.findIndex(function (c) { return c.sel && !c.r.ocr; }); if (i >= 0) pick(i); });
   await f.waitForTimeout(2500); await shot('5');
   // 6 초안 생성
   await f.evaluate(() => go('export')); await f.waitForTimeout(1500);
-  await f.click('#ai-draft-btn');
+  await tap('#ai-draft-btn');
   await f.waitForFunction(() => !document.querySelector('#ai-draft-btn').disabled && document.querySelector('#ai-draft-msg').textContent, null, { timeout: 90000 });
   await f.waitForTimeout(1500); console.log('draft:', await f.textContent('#ai-draft-msg')); await shot('6');
   // 7 문서 산출(미리보기 + 형식)

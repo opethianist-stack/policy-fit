@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { signIn, currentUser } from '../../auth';
-import Gate from './Gate';
+
+// 로그인 화면 왼쪽 영상(한국능률협회 소개). 개인정보 보호 강화 모드, 소리 끄고 자동 재생·반복. /privacy 4항에 적어 둠
+const VIDEO_ID = 'MVqQQEluTLU';
+const VIDEO = `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${VIDEO_ID}&rel=0&playsinline=1`;
 
 export const metadata = { title: 'Policy Fit · 로그인' };
 
@@ -26,7 +29,10 @@ export default async function Login({ searchParams }) {
   }
   return (
     <main className="login">
-      <section className="login-scene"><Gate /></section>
+      <div className="login-in">
+      <section className="login-video">
+        <iframe src={VIDEO} title="한국능률협회 소개 영상" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+      </section>
       <div className="login-box">
         <div className="login-mark" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
@@ -41,6 +47,7 @@ export default async function Login({ searchParams }) {
           </button>
         </form>
         <p className="login-note">로그인하면 Google 계정의 이메일·이름·프로필 사진을 로그인 확인에만 씁니다. <Link href="/privacy">개인정보처리방침</Link></p>
+      </div>
       </div>
     </main>
   );
