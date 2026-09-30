@@ -11,6 +11,34 @@ const TABS = [
   { href: '/admin', label: '관리자 대시보드', admin: true },
 ];
 
+// 로그인 화면 상단 띠에 흘러가는 기관 이름. 긴 로고 파일(투명 PNG·SVG)을 public/brand/orgs/에 두고 logo에 경로를 적으면 글자 대신 로고가 나온다
+const ORGS = [
+  { name: '교육부' },
+  { name: '과학기술정보통신부' },
+  { name: '고용노동부' },
+  { name: '국가인공지능전략위원회' },
+  { name: '조달청' },
+  { name: '한국교육학술정보원' },
+  { name: '한국과학창의재단' },
+  { name: '정보통신산업진흥원' },
+  { name: '한국지능정보사회진흥원' },
+  { name: '한국전문대학교육협의회' },
+  { name: '시도교육청' },
+];
+
+function OrgMarquee() {
+  const row = (dup) => ORGS.map((o) => (
+    <li key={(dup ? 'b' : 'a') + o.name} aria-hidden={dup || undefined}>
+      {o.logo ? <img src={o.logo} alt={dup ? '' : o.name} /> : <span>{o.name}</span>}
+    </li>
+  ));
+  return (
+    <div className="orgs" aria-label="참고 기관">
+      <ul>{row(false)}{row(true)}</ul>
+    </div>
+  );
+}
+
 export default function Nav({ user, logout }) {
   const path = usePathname();
   const admin = user && user.role === 'admin';
@@ -26,6 +54,7 @@ export default function Nav({ user, logout }) {
         </div>
         <b>Policy Fit</b>
       </Link>
+      {path === '/login' ? <OrgMarquee /> : null}
       <nav className="tabs">
         {tabs.map((t) => (
           <Link key={t.href} href={t.href} className={`tab ${path === t.href ? 'on' : ''}`}>

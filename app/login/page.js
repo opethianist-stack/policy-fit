@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { signIn, currentUser } from '../../auth';
+import Mascot from './Mascot';
 
 // 로그인 화면 왼쪽 패널 자료(public/brand/, 원본은 public/KMA CI_png·KMA Graphic Motif_png — 흰색판을 잘라 줄였다)
 const LOGO = '/brand/kma-logo-w.png';
@@ -34,10 +35,11 @@ export default async function Login({ searchParams }) {
         <span className="dots d1" /><span className="dots d2" />
         <img className="motif" src={MOTIF} alt="" />
       </div>
+      <div className="login-top"><img className="login-logo" src={LOGO} alt="KMA" width="480" height="126" /></div>
       <div className="login-card">
       <section className="login-hero">
         <img className="motif" src={MOTIF} alt="" aria-hidden="true" />
-        <img className="login-logo" src={LOGO} alt="KMA" width="480" height="126" />
+        <div className="login-spot" aria-hidden="true" />
         <div className="login-copy">
           <p className="l1">정책과 함께하는<br />공공입찰의 세계</p>
           <p className="l2"><span>주요 부처와 연결되는 공간을 맛보세요</span></p>
@@ -47,7 +49,6 @@ export default async function Login({ searchParams }) {
           </ol>
         </div>
       </section>
-      <div className="login-mascot" aria-hidden="true"><img src="/mascot.svg" alt="" width="200" height="200" /></div>
       <section className="login-side">
         <div className="login-form">
           <div className="login-mark" aria-hidden="true">
@@ -66,6 +67,7 @@ export default async function Login({ searchParams }) {
         </div>
       </section>
       </div>
+      <Mascot />
     </main>
   );
 }
