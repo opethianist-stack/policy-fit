@@ -177,13 +177,14 @@ pre.out {
 .topbar .who .logout { font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 1px solid var(--hairline); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
 .topbar .who .logout:hover { color: var(--ink); border-color: #c9ced6; }
 @media (max-width: 640px) { .topbar .who .email { display: none; } }
-/* 로그인 화면 상단 띠: 참고 기관 이름(또는 긴 로고)이 한 줄로 흘러간다 */
+/* 로그인 화면 상단 띠: 참고 기관 로고(원래 색, 반투명)가 한 줄로 흘러간다 */
 .topbar .orgs { flex: 1; min-width: 0; overflow: hidden; align-self: stretch; display: flex; align-items: center;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
 .topbar .orgs ul { list-style: none; margin: 0; padding: 0; display: flex; width: max-content; animation: orgs-flow 48s linear infinite; }
-.topbar .orgs li { flex-shrink: 0; padding: 0 28px; display: flex; align-items: center; height: 56px; }
+.topbar .orgs li { flex-shrink: 0; padding: 0 30px; display: flex; align-items: center; height: 56px; }
 .topbar .orgs li span { font-size: 14px; font-weight: 700; color: #9AA0AA; letter-spacing: -0.01em; white-space: nowrap; }
-.topbar .orgs li img { height: 26px; width: auto; opacity: .55; filter: grayscale(1); }
+.topbar .orgs li img { display: block; height: 28px; width: auto; opacity: .6; transition: opacity .2s; }
+.topbar .orgs li img:hover { opacity: 1; }
 .topbar .orgs:hover ul { animation-play-state: paused; }
 @keyframes orgs-flow { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .topbar .orgs ul { animation: none; } }
