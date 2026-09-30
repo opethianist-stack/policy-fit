@@ -27,6 +27,7 @@ export default function Home() {
   return (
     <div className="landing">
       <div className="landing-inner">
+        <img className="mascot" src="/mascot.svg" alt="" width="220" height="220" decoding="async" />
         <h1>입찰 공고에서 정책 근거까지,<br />사업 이해도를 높이는 초안 완성</h1>
         <div className="cta-row">
           <Link href="/search" className="cta">
