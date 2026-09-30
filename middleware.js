@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth, isAdminEmail, AUTH_OFF } from './auth';
 
-// 앱 전체 로그인 필수. 예외: 로그인 화면, 개인정보처리방침(구글 앱 게시 요건이라 공개), 로그인 처리 경로.
+// 앱 전체 로그인 필수. 예외: 로그인 화면, 개인정보처리방침(구글 앱 게시 요건이라 공개), 로그인 처리 경로, 글꼴 파일(로그인 화면도 쓴다).
 // 로그인 안 한 요청: 화면은 /login으로 보내고, API는 401 JSON(화면이 오류 문구로 보여 준다).
 // 관리자만: API 연결 테스트 화면, 관리자 대시보드, /api/proxy(서버 인증키로 외부 API를 부르는 통로)
-const PUBLIC = [/^\/login(?:\/|$)/, /^\/privacy(?:\/|$)/, /^\/api\/auth\//];
+const PUBLIC = [/^\/login(?:\/|$)/, /^\/privacy(?:\/|$)/, /^\/api\/auth\//, /^\/fonts\//];
 const ADMIN_ONLY = [/^\/api-test(?:\/|$)/, /^\/api\/proxy(?:\/|$)/, /^\/admin(?:\/|$)/];
 
 export default auth((req) => {

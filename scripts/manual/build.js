@@ -6,6 +6,7 @@ const { execFileSync } = require('child_process');
 const fs = require('fs');
 const D = process.argv[2], OUT = process.argv[3];
 const viaCurl = async (route) => { const u = route.request().url(); try { const body = execFileSync('curl', ['-s', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36', u], { maxBuffer: 50e6 }); await route.fulfill({ status: 200, body, headers: { 'content-type': /css2\?/.test(u) ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } }); } catch (e) { await route.abort(); } };
+const SUIT = fs.readFileSync(__dirname + '/../../public/fonts/SUIT-Variable.woff2').toString('base64');
 const img = (i) => 'data:image/jpeg;base64,' + fs.readFileSync(D + '/jpg/' + i + '.jpg').toString('base64');
 const STEPS = [
   ['login', '로그인', '로그인', [
@@ -61,22 +62,23 @@ const page = (i, [k, t, where, lines]) => `<section class="pg"><div class="top">
 <div class="body"><ol>${lines.map((l) => `<li>${l}</li>`).join('')}</ol><div class="shot"><img src="${img(k)}"></div></div></section>`;
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Policy Fit 사용 매뉴얼</title>
 <style>@page{size:297mm 210mm;margin:0}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;font-family:'Noto Sans CJK KR','Noto Sans KR',sans-serif;color:#191F28}
+@font-face{font-family:'SUIT Variable';src:url(data:font/woff2;base64,${SUIT}) format('woff2');font-weight:100 900}
+body{margin:0;font-family:'SUIT Variable','Noto Sans CJK KR',sans-serif;color:#111111}
 .pg{width:297mm;height:210mm;padding:12mm 12mm 10mm;break-after:page;display:flex;flex-direction:column;overflow:hidden}
 .pg:last-child{break-after:auto}
-.cover{background:linear-gradient(180deg,#F3F6FD 0%,#E7EEFB 55%,#fff 100%);justify-content:center;padding:0 26mm}
-.cover .mk{width:16mm;height:16mm;border-radius:4mm;background:#1454C8;margin-bottom:10mm}
-.cover h1{font-size:30pt;margin:0 0 4mm;letter-spacing:-.02em}.cover p{font-size:14pt;color:#4E5968;margin:0 0 16mm}
+.cover{background:#fff;border-top:3mm solid #0000A3;justify-content:center;padding:0 26mm}
+.cover .mk{width:16mm;height:16mm;border-radius:4mm;background:#0000A3;margin-bottom:10mm}
+.cover h1{font-size:30pt;margin:0 0 4mm;letter-spacing:-.02em}.cover p{font-size:14pt;color:#494949;margin:0 0 16mm}
 .cover ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4mm 5mm;max-width:250mm}
-.cover li::before{display:none}.cover li{font-size:10.5pt;color:#343E4B;background:#fff;border:0.3mm solid #D5E1F7;border-radius:3mm;padding:3mm 4mm}.cover li b{color:#1454C8;margin-right:2mm}
-.top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #E9EBF0;padding-bottom:4mm;margin-bottom:7mm}
-.top .n{font-size:22pt;font-weight:800;color:#1454C8;line-height:1}.top .n.x{font-size:15pt}.top .t{font-size:17pt;font-weight:700}
-.top .w{font-size:9.5pt;color:#1454C8;background:#E8EFFC;border-radius:10mm;padding:1mm 3.5mm}.top .c{margin-left:auto;font-size:9pt;color:#8B95A1}
+.cover li::before{display:none}.cover li{font-size:10.5pt;color:#494949;background:#fff;border:0.3mm solid #DDDDDD;border-radius:1mm;padding:3mm 4mm}.cover li b{color:#0000A3;margin-right:2mm}
+.top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #DDDDDD;padding-bottom:4mm;margin-bottom:7mm}
+.top .n{font-size:22pt;font-weight:800;color:#0000A3;line-height:1}.top .n.x{font-size:15pt}.top .t{font-size:17pt;font-weight:700}
+.top .w{font-size:9.5pt;color:#0000A3;background:#EBEBF7;border-radius:0.5mm;padding:1mm 3.5mm}.top .c{margin-left:auto;font-size:9pt;color:#767676}
 .body{flex:1;display:grid;grid-template-columns:62mm 1fr;gap:7mm;min-height:0;align-items:center}
 ol{margin:0;padding:0;list-style:none;counter-reset:k}
-ol li{counter-increment:k;position:relative;padding-left:7mm;font-size:9.6pt;line-height:1.6;color:#343E4B;margin-bottom:4mm}
-ol li::before{content:counter(k);position:absolute;left:0;top:0.6mm;width:4.6mm;height:4.6mm;border-radius:50%;background:#1454C8;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center}
-.shot{align-self:center;border:0.3mm solid #D5D9E0;border-radius:2mm;overflow:hidden}
+ol li{counter-increment:k;position:relative;padding-left:7mm;font-size:9.6pt;line-height:1.6;color:#494949;margin-bottom:4mm}
+ol li::before{content:counter(k);position:absolute;left:0;top:0.6mm;width:4.6mm;height:4.6mm;border-radius:50%;background:#0000A3;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center}
+.shot{align-self:center;border:0.3mm solid #DDDDDD;border-radius:1mm;overflow:hidden}
 .shot img{display:block;width:100%}</style></head><body>
 <section class="pg cover"><div class="mk"></div><h1>Policy Fit 사용 매뉴얼</h1><p>공고 입력부터 사업 이해도 장표 구도 추천까지</p>
 <ol>${STEPS.map(([k, t]) => `<li><b>${num(k)}</b>${t}</li>`).join('')}</ol></section>
@@ -85,7 +87,7 @@ ${STEPS.map((s, i) => page(i, s)).join('\n')}</body></html>`;
   const b0 = await chromium.launch(); const b = await b0.newContext();
   await b.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
   const p = await b.newPage(); await p.setContent(html, { waitUntil: 'networkidle' });
-  await p.evaluate(async () => { await Promise.all(['400', '700', '800'].map((w) => document.fonts.load(w + ' 16px "Noto Sans CJK KR"', '가나다'))); await document.fonts.ready; });
+  await p.evaluate(async () => { await Promise.all(['400', '700', '800'].map((w) => document.fonts.load(w + ' 16px "SUIT Variable"', '가나다'))); await document.fonts.ready; });
   await p.pdf({ path: OUT, preferCSSPageSize: true, printBackground: true });
   await b0.close();
 })();
