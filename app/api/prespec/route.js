@@ -1,4 +1,4 @@
-import { rangePrespec, matchPrespec, prespecByNo, normSpecNo, MAX_SPAN_DAYS } from '../../../lib/prespec';
+import { rangePrespec, matchPrespec, prespecByNo, normSpecNo, MAX_SPAN_DAYS, specFileList, specDetailUrl } from '../../../lib/prespec';
 import { dateRange } from '../../../lib/bids';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,8 @@ export async function GET(req) {
     const no = normSpecNo(sp.get('no'));
     if (!/^[A-Z0-9-]{6,24}$/.test(no)) return Response.json({ ok: false, error: '사전규격등록번호 형식이 아닙니다.' }, { status: 400 });
     const r = await prespecByNo(no);
+    // 한 건 조회는 규격서 파일 이름과 나라장터 상세 주소도 붙인다(공고 카드에 첨부·링크를 입찰공고처럼 보여 준다)
+    if (r.ok && r.item) r.item = { ...r.item, fileList: await specFileList(r.item.files), detailUrl: specDetailUrl(r.item.no) };
     return Response.json(r, { status: r.ok ? 200 : r.notFound ? 404 : 502 });
   }
   const list = (k) => (sp.get(k) || '').split(',').map((s) => s.trim()).filter(Boolean);

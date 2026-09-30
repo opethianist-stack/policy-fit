@@ -8,6 +8,7 @@ const TABS = [
   { href: '/', label: '개요' },
   { href: '/search', label: '공고 검색' },
   { href: '/api-test', label: 'API 연결 테스트', admin: true },
+  { href: '/admin', label: '관리자 대시보드', admin: true },
 ];
 
 export default function Nav({ user, logout }) {

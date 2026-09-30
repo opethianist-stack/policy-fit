@@ -151,6 +151,8 @@
   .rows { max-width: 1040px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; }
   .row { display: grid; grid-template-columns: 130px minmax(0,1fr) 170px 190px; gap: 14px; align-items: center; width: 100%; padding: 13px 16px; text-align: left; border-top: 1px solid var(--hairline); }
   .row:first-child { border-top: none; }
+  #home-recent .rows { max-height: 470px; overflow-y: auto; }   /* 10줄쯤 넘으면 표 안에서 스크롤(최근 검색 20건) */
+  .row .no .kind { display: block; font-size: 10.5px; font-weight: 600; color: var(--violet); margin-top: 2px; }
   .row:hover { background: var(--tint); }
   .row .no { font-size: 12.5px; font-weight: 600; color: var(--ink); }
   .row .nm { font-size: 12.5px; color: var(--slate); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -158,7 +160,7 @@
   .row .st span { display: block; white-space: nowrap; }
   .row .st .sub { font-weight: 500; color: var(--slate); }
   .row.edit { grid-template-columns: 130px minmax(0,1fr) 170px 190px 20px; cursor: pointer; }
-  .notice { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; margin-bottom: 24px; }
+  .notice { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1.3fr) 150px 140px; gap: 18px; margin-bottom: 24px; }   /* 예산은 100억(14자리)까지, 마감은 yyyy-mm-dd hh:mm */
   .notice .k { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
   .notice .v { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.45; }
   .state { font-size: 11px; font-weight: 600; flex-shrink: 0; }
@@ -342,6 +344,11 @@
   .ai-drop summary::-webkit-details-marker { display: none; }
   .ai-drop ul { position: absolute; z-index: 30; top: 100%; left: 0; width: max-content; max-width: min(420px, 82vw); margin: 6px 0 0; padding: 8px 12px 8px 26px; background: #fff; border: 1px solid var(--hairline); border-radius: 8px; box-shadow: 0 4px 14px rgba(25,31,40,.12); color: var(--ink); font-size: 11.5px; line-height: 1.5; }
   .chip.term.weak { opacity: .55; }
+  .chip.term.fresh { background: #fff; box-shadow: inset 0 0 0 1.5px var(--violet); border-style: dashed; }
+  .redo { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; margin-top: 4px; }
+  .redo span { font-size: 11.5px; color: var(--violet); }
+  .redo-btn { font-size: 12.5px; font-weight: 700; color: #fff; background: var(--violet); border-radius: 8px; padding: 7px 14px; box-shadow: 0 3px 10px rgba(115,83,234,.25); }
+  .redo-btn:hover { background: #5a3fd1; }
   .chip.term .n { font-size: 10.5px; font-weight: 500; opacity: .75; }
   .chip.term.swap { cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--violet); opacity: 1; }
   .chip.term.swap:hover { background: var(--violet); color: #fff; }
@@ -727,7 +734,7 @@
           <form class="field" onsubmit="submitFind(event)">
             <div class="find-by">
               <select id="f-target" aria-label="검색 대상" onchange="findMode(true)"><option value="bid">입찰공고</option><option value="spec">사전규격</option></select>
-              <select id="f-mode" aria-label="검색 방법" onchange="findMode(true)"><option value="no">공고번호</option><option value="kw">키워드</option></select>
+              <select id="f-mode" aria-label="검색 방법" onchange="findMode(true)"><option value="kw" selected>키워드</option><option value="no">공고번호</option></select>
             </div>
             <input id="no-input" type="text" inputmode="text" autocomplete="off" placeholder="예: R26BK00412587" aria-label="입찰공고번호">
             <button class="btn primary" type="submit">조회</button>
@@ -992,11 +999,18 @@
   /* ---------- 최근 검색 (이 브라우저에만 저장) ---------- */
   var RECENT_MAX = 20;   // 최근 검색은 20건까지(멘토링 9/29). 목록에서 밀려난 공고의 저장된 작업도 지운다
   function loadRecent() { try { return JSON.parse(localStorage.getItem('pf-recent') || '[]'); } catch (e) { return []; } }
-  function saveRecent(n) {
-    var list = loadRecent().filter(function (x) { return x.no !== n.no; });
-    list.unshift({ no: n.no, name: n.name, org: n.demandOrg });
+  // no: 목록 키(입찰공고번호 또는 사전규격등록번호). 사전규격도 남긴다(2026-09-30, 예전에는 공고번호가 없어 빠졌다)
+  function saveRecent(n, no) {
+    no = no || n.no; if (!no) return;
+    var list = loadRecent().filter(function (x) { return x.no !== no; });
+    list.unshift({ no: no, name: n.name, org: n.demandOrg, kind: n.prespec ? 'spec' : 'bid' });
     list = list.slice(0, RECENT_MAX);
-    try { localStorage.setItem('pf-recent', JSON.stringify(list)); } catch (e) {}
+    var txt = JSON.stringify(list);
+    try { localStorage.setItem('pf-recent', txt); }
+    catch (e) {   // 저장 공간이 차면 오래된 작업부터 지우고 다시
+      var old = list.slice().reverse();
+      for (var i = 0; i < old.length; i++) { try { localStorage.removeItem(WORK + old[i].no); localStorage.setItem('pf-recent', txt); break; } catch (e2) {} }
+    }
     pruneWork(list);
     renderRecent();
   }
@@ -1014,7 +1028,7 @@
     return { w: w, sel: n, at: t, stage: (STEP_NAME[w.step] || '정책 근거') + ' 단계 · 선택 ' + n + '건', label: (STEP_NAME[w.step] || '정책 근거') + ' 단계 · 선택 ' + n + '건 · ' + t };
   }
   function snapshot() {
-    if (!S.no || !S.notice) return null;   // 입찰공고만 저장한다(최근 검색에 공고번호로 남는 것)
+    if (!S.no || !S.notice) return null;   // 입찰공고·사전규격만 저장한다(최근 검색에 번호로 남는 것. 게시판 공고·파일로 시작한 작업은 번호가 없어 빠진다)
     var rfp = S.rfp || { state: 'none' };
     if (rfp.text && rfp.text.length > 20000) rfp = Object.assign({}, rfp, { text: rfp.text.slice(0, 20000) });
     return { v: 1, no: S.no, step: CURSTEP === 'home' ? 'search' : CURSTEP, S: Object.assign({}, S, { rfp: rfp }), CARDS: CARDS, cur: cur, HEAD: HEAD, CONCL: CONCL,
@@ -1051,13 +1065,14 @@
     var info = workInfo(no);
     var desc = no + (r.name ? '\n' + r.name : '') + (info ? '\n\n저장된 작업: ' + info.label : '');
     if (S.no && S.notice) desc += '\n지금 작업 중인 공고(' + S.no + ')는 저장해 두었다가 다시 이어서 할 수 있습니다.';
+    var fresh = r.kind === 'spec' ? function () { saveWork(); go('home'); openSpecNo(no); } : function () { openNotice(no); };   // 사전규격은 규격번호로 다시 찾는다
     showAsk('해당 공고를 기반으로 다시 작업을 시작하시겠습니까?', desc, info ? [
       { label: '아니오' },
-      { label: '처음부터 다시', fn: function () { openNotice(no); } },
+      { label: '처음부터 다시', fn: fresh },
       { label: '저장된 작업 이어서', primary: true, fn: function () { resumeWork(no); } }
     ] : [
       { label: '아니오' },
-      { label: '예', primary: true, fn: function () { openNotice(no); } }
+      { label: '예', primary: true, fn: fresh }
     ]);
   }
   // 번호 입력·키워드 목록에서 여는 경우: 저장된 작업이 있을 때만 묻고, 없으면 바로 조회한다(사용자가 직접 고른 공고라서)
@@ -1098,12 +1113,13 @@
     $('deck-h1').value = DECKHL[0]; $('deck-h2').value = DECKHL[1];
     if (w.PAL) setPal(w.PAL);
     if (w.FONT) setFont(w.FONT);
-    $('no-view').textContent = S.no; $('no-label').textContent = '공고번호';
+    if (S.notice && S.notice.prespec) { $('no-view').textContent = S.notice.name; $('no-label').textContent = '사전규격 ' + S.no; }
+    else { $('no-view').textContent = S.no; $('no-label').textContent = '공고번호'; }
     renderNotice(); renderRfp(); renderLineage(); renderTerms(); renderSug();
     renderResults({ scopeDocs: S.scopeDocs || 0 });
     if (MSIT.key && isMsitLine()) { $('msit-box').style.display = ''; renderMsit({ ok: true, pool: MSIT.pool }); } else $('msit-box').style.display = 'none';
     $('search-main').style.display = ''; setState('');
-    saveRecent(S.notice);
+    saveRecent(S.notice, S.no);
     go(w.step || 'search');
   }
   // 최근 검색 지우기: "편집"을 누르면 행마다 오른쪽에 체크박스가 나오고, 고른 공고를 지운다(저장된 작업도 함께). 사이드바·홈 표가 같은 상태를 쓴다
@@ -1140,7 +1156,7 @@
     $('home-recent').innerHTML = !list.length ? '' :
       '<div class="sec-label recent-head"><span>최근 검색</span><span class="tools">' + tools + '</span></div><div class="rows">' + list.map(function (x) {
         var w = workInfo(x.no);
-        var cells = '<span class="no">' + esc(x.no) + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st">' + (w ? '<span>저장된 작업 · ' + esc(w.at) + '</span><span class="sub">' + esc(w.stage) + '</span>' : '') + '</span>';
+        var cells = '<span class="no">' + esc(x.no) + (x.kind === 'spec' ? '<span class="kind">사전규격</span>' : '') + '</span><span class="nm">' + esc(x.name) + '</span><span class="meta ag">' + esc(x.org) + '</span><span class="st">' + (w ? '<span>저장된 작업 · ' + esc(w.at) + '</span><span class="sub">' + esc(w.stage) + '</span>' : '') + '</span>';
         return ed ? '<label class="row edit">' + cells + tick(x) + '</label>'
           : '<button class="row" onclick="pickRecent(\'' + esc(x.no) + '\')">' + cells + '</button>';
       }).join('') + '</div>';
@@ -1158,13 +1174,13 @@
   var BIDS = [];
   function findMode(reset) {
     var t = $('f-target').value, m = $('f-mode'), f = FIND[t];
-    m.options[0].textContent = f.no[0];
+    m.querySelector('option[value="no"]').textContent = f.no[0];
     var kw = m.value === 'kw', inp = $('no-input');
     inp.placeholder = kw ? f.kw : f.no[1];
     inp.setAttribute('aria-label', kw ? '검색어' : f.no[0]);
     var keep = $('f-days').value;
     $('f-days').innerHTML = f.days.map(function (d) { return '<option value="' + d + '">최근 ' + d + '일</option>'; }).join('') + '<option value="range">기간 지정</option>';
-    $('f-days').value = keep === 'range' || f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[1]);
+    $('f-days').value = keep === 'range' || f.days.indexOf(Number(keep)) >= 0 ? keep : String(f.days[f.days.length - 1]);   // 기본: 가장 긴 기간(입찰공고 30일·사전규격 21일)
     periodMode();
     $('find-opts').classList.toggle('on', kw);
     $('f-days').style.display = kw ? '' : 'none';
@@ -1276,8 +1292,10 @@
     }).join('');
     var link = n.detailUrl ? '<a class="chip" href="' + esc(n.detailUrl) + '" target="_blank" rel="noopener">' + ICON_OPEN + '<span>' + esc(n.detailLabel || '나라장터 공고') + '</span></a>' : '';
     $('notice-card').innerHTML =
-      '<div><div class="k">공고명</div><div class="v">' + esc(n.name) + '</div></div>' +
-      '<div><div class="k">' + (n.manual ? '발주기관' : '수요기관') + '</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
+      '<div><div class="k">' + (n.prespec ? '사전규격명' : '공고명') + '</div><div class="v">' + esc(n.name) + '</div></div>' +
+      '<div><div class="k">' + (n.manual && !n.prespec ? '발주기관' : '수요기관') + '</div><div class="v">' + esc(n.demandOrg) + '</div></div>' +
+      (n.prespec ? '<div><div class="k">배정예산</div><div class="v">' + won(n.budget) + '</div></div>' +
+        '<div><div class="k">의견등록 마감</div><div class="v">' + esc((n.opinionCloseAt || '-').slice(0, 16)) + '</div></div>' : '') +
       (n.manual ? '' :
       '<div><div class="k">' + (n.budget ? '배정예산' : '추정가격') + '</div><div class="v">' + won(n.budget || n.estimatedPrice) + '</div></div>' +
       '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>') +
@@ -1368,7 +1386,7 @@
       if (my !== seq || sq !== SSEQ) return;
       if (!d.ok) { $('result-count').textContent = ''; $('result-grid').innerHTML = '<div class="state-msg err">' + esc(d.error || '검색하지 못했습니다.') + '</div>'; return; }
       if (params.add && S.rfp === r0) { r0.merged = true; r0.terms = r0.terms.filter(function (t) { return d.terms.indexOf(t) >= 0; }); renderRfp(); }
-      S.terms = d.terms; S.results = d.results; S.scopeDocs = d.scopeDocs;
+      S.terms = d.terms; S.searched = d.terms.slice(); S.results = d.results; S.scopeDocs = d.scopeDocs;
       if (d.coverage) { S.coverage = d.coverage; renderLineage(); }
       renderTerms(); renderResults(d, true);
       autoRank();
@@ -1387,42 +1405,33 @@
     var fromRfp = (S.rfp && S.rfp.terms) || [];
     var counted = (S.results || []).length > 0;
     $('terms').innerHTML = S.terms.map(function (t, i) {
-      var n = counted ? termHits(t) : -1, cls = 'chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + (n === 0 ? ' weak' : '') + (SWAP ? ' swap' : '');
-      return '<span class="' + cls + '"' + (SWAP ? ' role="button" onclick="swapTerm(' + i + ')"' : '') + (n === 0 ? ' title="지금 결과에 걸리지 않은 검색어"' : fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) +
+      var fresh = S.searched && S.searched.indexOf(t) < 0;   // 아직 검색에 쓰지 않은 검색어
+      var n = counted && !fresh ? termHits(t) : -1, cls = 'chip term' + (fromRfp.indexOf(t) >= 0 ? ' rfp' : '') + (n === 0 ? ' weak' : '') + (fresh ? ' fresh' : '') + (SWAP ? ' swap' : '');
+      return '<span class="' + cls + '"' + (SWAP ? ' role="button" onclick="swapTerm(' + i + ')"' : '') + (fresh ? ' title="재검색하면 반영됩니다"' : n === 0 ? ' title="지금 결과에 걸리지 않은 검색어"' : fromRfp.indexOf(t) >= 0 ? ' title="제안요청서에서 뽑은 검색어"' : '') + '>' + esc(t) +
         (SWAP && n >= 0 ? '<span class="n">' + n + '건</span>' : '') +
         '<button aria-label="' + esc(t) + ' 삭제" onclick="event.stopPropagation();removeTerm(' + i + ')">×</button></span>';
     }).join('') +
       '<form onsubmit="addTerm(event)" style="display:inline-flex;"><input id="term-input" placeholder="' + (S.terms.length >= MAX_TERMS ? '검색어 교체' : '검색어 추가') + '" aria-label="검색어 추가"></form>' +
       '<button class="ai-btn" id="ai-terms-btn" onclick="aiTerms()">AI 검색어 추천</button><span class="ai-msg" id="ai-terms-msg"></span>' +
       '<span class="scope"><button class="' + (S.scope === 'lineage' ? 'on' : '') + '" onclick="setScope(\'lineage\')">유관기관 문서</button><button class="' + (S.scope === 'all' ? 'on' : '') + '" onclick="setScope(\'all\')">관련 정책문서 전체</button></span>' +
+      (termsDirty() ? '<span class="redo"><button class="redo-btn" onclick="researchTerms()">관련 정책 근거 재검색</button><span>검색어가 바뀌었습니다. 누르면 다시 찾고 관련도를 판정합니다</span></span>' : '') +
       (SWAP ? '<span class="swap-note">검색어는 ' + MAX_TERMS + '개까지입니다. ‘' + esc(SWAP.term) + '’ 대신 뺄 검색어를 누르세요 (건수 = 지금 결과에서 그 검색어가 걸린 카드 수)<button onclick="cancelSwap()">취소</button></span>' : '');
   }
+  // 검색어를 넣거나 빼도 바로 다시 찾지 않는다. "관련 정책 근거 재검색"을 눌러야 검색과 관련도 판정을 다시 한다
+  // (멘토링 9/29: 바꿀 때마다 새로 판정하면 기다림이 너무 잦음 / 9/30 사용자 의견: 지우기만 하면 검색어가 의미가 없어짐)
+  function termsDirty() { return !!S.searched && S.terms.join('\u0001') !== S.searched.join('\u0001'); }
+  function researchTerms() { SWAP = null; runEvidence(false); }
   function removeTerm(i) {
     SWAP = null;
     S.terms.splice(i, 1);
-    var keep = S.terms.map(function (t) { return String(t).toLowerCase(); });
-    var before = S.results.length;
-    S.results = S.results.map(function (r) {
-      var m = (r.matched || []).filter(function (t) { return keep.indexOf(String(t).toLowerCase()) >= 0; });
-      return m.length === (r.matched || []).length ? r : Object.assign({}, r, { matched: m });
-    }).filter(function (r) { return r.matched.length; });
-    ++SSEQ;   // 진행 중인 검색 응답은 버린다
-    if (RANKING) { ++RANKSEQ; clearTimeout(RANKT); rankMsg(''); }   // 판정 중이었으면 버리고 키워드순으로
-    RANKING = false;
-    syncCards(); renderTerms();
-    if (!S.results.length) {
-      $('result-grid').innerHTML = '<div class="state-msg" style="grid-column:1/-1;">' + (S.terms.length ? '남은 검색어로 걸린 근거가 없습니다. 검색어를 추가해 다시 찾아 보세요.' : '검색어를 추가해 주세요.') + '</div>';
-      renderPickCount();
-    } else renderGrid();
-    $('result-count').textContent = S.results.length + '건' + (before > S.results.length ? ' · 검색어 삭제로 ' + (before - S.results.length) + '건 뺌' : '');
-    repaintSteps(); snapScope();
+    renderTerms();
   }
   function addTerm(e) {
     e.preventDefault();
     var v = $('term-input').value.trim();
     if (!v || S.terms.indexOf(v) >= 0) { $('term-input').value = ''; return; }
     if (S.terms.length >= MAX_TERMS) { SWAP = { term: v, sug: -1 }; renderTerms(); return; }
-    S.terms.push(v); runEvidence(false);
+    S.terms.push(v); renderTerms();
   }
   function swapTerm(i) {
     if (!SWAP) return;
@@ -1430,7 +1439,7 @@
     SWAP = null;
     if (k >= 0 && AI.sug[k] && AI.sug[k].term === t) { AI.sug.splice(k, 1); renderSug(); }
     if (S.terms.indexOf(t) < 0) S.terms[i] = t;
-    runEvidence(false);
+    renderTerms();
   }
   function cancelSwap() { SWAP = null; renderTerms(); }
   // 범위(유관기관 문서 ↔ 관련 정책문서 전체)마다 결과·관련도 판정을 저장해 두고, 같은 검색어로 다시 오가면 바로 보여 준다
@@ -1740,12 +1749,20 @@
     var x = SPEC[i]; if (!x || !x.files.length) return;
     saveWork(); lastWork = '';
     var my = ++seq;
-    S = { no: '', notice: { no: '', name: x.name, demandOrg: x.org, files: [], manual: true, prespec: x.no }, lineage: null, terms: [], scope: 'lineage', results: [],
+    // 사전규격도 입찰공고처럼 카드에 규격서 첨부와 나라장터 링크를 보여 준다. 파일 이름은 API에 없어 /api/prespec?no=가 받아 온다
+    var files = x.fileList || x.files.map(function (u, k) { return { name: '규격서 ' + (k + 1), url: u }; });
+    S = { no: x.no, notice: { no: '', name: x.name, demandOrg: x.org, files: files, manual: true, prespec: x.no, budget: x.budget, opinionCloseAt: x.opinionCloseAt,
+      detailUrl: x.detailUrl || '', detailLabel: '나라장터 사전규격' }, lineage: null, terms: [], scope: 'lineage', results: [],
       rfp: { state: 'loading', name: '\uaddc\uaca9\uc11c', prev: [], src: 'spec' } };
     CARDS = []; HEAD = {}; CONCL = ''; cur = 0; MSIT = { key: '', items: [], loose: [] }; $('msit-box').style.display = 'none';
     AIF = { head: {}, concl: false }; COPY = null; DECKHL = ['', '']; SWAP = null; DECKSEL = '';
     $('no-view').textContent = x.name; $('no-label').textContent = '\uc0ac\uc804\uaddc\uaca9 ' + x.no;
     renderNotice(); renderRfp();
+    saveRecent(S.notice, x.no);
+    if (!x.fileList) api('/api/prespec', { no: x.no }).then(function (d) {
+      if (my !== seq || !d.ok || !d.item) return;
+      S.notice.files = d.item.fileList || S.notice.files; S.notice.detailUrl = d.item.detailUrl || ''; renderNotice();
+    }).catch(function () {});
     $('search-main').style.display = ''; setState('');
     $('lineage-card').innerHTML = '<div class="meta">\ud655\uc778 \uc911</div>';
     $('result-grid').innerHTML = ''; $('terms').innerHTML = ''; $('result-count').textContent = '';
@@ -1905,7 +1922,7 @@
   function addSug(i) {
     if (S.terms.length >= MAX_TERMS) { SWAP = { term: AI.sug[i].term, sug: i }; renderTerms(); return; }
     var t = AI.sug[i].term; AI.sug.splice(i, 1); renderSug();
-    if (S.terms.indexOf(t) < 0) { S.terms.push(t); runEvidence(false); }
+    if (S.terms.indexOf(t) < 0) { S.terms.push(t); renderTerms(); }
   }
   function aiRoles() {
     var body = payload();
