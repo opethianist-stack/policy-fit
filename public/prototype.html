@@ -1081,6 +1081,32 @@
   // 다른 기기에서 작업하고 돌아오면 목록을 다시 맞춘다(1분에 한 번까지)
   window.addEventListener('focus', function () { if (SYNC.on && Date.now() - SYNC.at > 60000) syncPull(); });
 
+  /* ---------- 이용 기록 (STEP60) ----------
+     공고 찾기·정책 근거 검색·산출 때 한 줄씩 /api/event로 보낸다. 관리자 대시보드 "실제 기록" 집계와
+     정책문서 보강 우선순위(색인 문서가 없는 기관)에 쓴다. 실패해도 화면에는 영향이 없다 */
+  function track(kind, data) {
+    try {
+      var txt = JSON.stringify({ kind: kind, data: data || {} });
+      fetch('/api/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: txt, keepalive: txt.length < 60000 }).catch(function () {});
+    } catch (e) {}
+  }
+  // 발주처 계보 중 색인 문서가 없는 기관(학교·대학 제외). 화면 경고(renderLineage)와 같은 기준
+  function missingOrgs() {
+    var cov = {}; (S.coverage || []).forEach(function (x) { cov[x.name] = x; });
+    return ((S.lineage && S.lineage.chain) || []).filter(function (c) {
+      var x = cov[c.name], school = /학교$|대학$|대학교$|산학협력단$/.test(c.name) || /학교|대학/.test(c.role || '');
+      return x && !x.count && !school;
+    }).map(function (c) { return c.name; });
+  }
+  function trackEvidence(ranked) {
+    if (!S.notice) return;
+    var top = 0, n5 = 0, scale = 0;
+    (S.results || []).forEach(function (r) { if (r.aiScore != null) { scale = r.aiScale || 3; top = Math.max(top, r.aiScore); if (r.aiScore >= 5) n5++; } });
+    track('evidence', { no: S.no || '', name: S.notice.name || '', org: S.notice.demandOrg || '', ministry: (S.lineage && S.lineage.ministry) || '',
+      scope: S.scope, terms: (S.terms || []).slice(0, 10), n: (S.results || []).length, ranked: !!ranked && !!scale, top: top, scale: scale, n5: n5,
+      match: (S.results[0] && S.results[0].aiMatch) || '', missing: missingOrgs() });
+  }
+
   /* ---------- 최근 검색 (계정별 서버 저장 + 이 브라우저 사본) ---------- */
   var RECENT_MAX = 20;   // 최근 검색은 20건까지(멘토링 9/29). 목록에서 밀려난 공고의 저장된 작업도 지운다
   function loadRecent() { try { return JSON.parse(localStorage.getItem('pf-recent') || '[]'); } catch (e) { return []; } }
@@ -1355,6 +1381,7 @@
       findState(pd.label + ' 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고' + (fr ? '' : '(최근 1년)') + ' ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
         (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : d.ok && d.total > BIDS.length ? ' · 최근 ' + BIDS.length + '건만 표시(검색어를 더 구체적으로 넣으면 좁혀집니다)' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')), false, 'done');
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
+      track('find', { target: 'bid', q: q || '', period: pd.label, n: BIDS.length, boards: AGN.length });
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   function bidRow(x) {
@@ -1784,6 +1811,7 @@
       SPEC = d.items;
       findState(pd.label + ' 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.partial ? ' · 건수가 많아 일부만 봤습니다' : ''), false, 'done');
       renderSpec();
+      track('find', { target: 'spec', q: q || '', period: pd.label, n: SPEC.length });
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
   }
   // 규격번호로 찾으면 규격서가 있고 이어진 공고가 없을 때 바로 시작한다. 공고가 이미 났거나 규격서가 없으면 목록에 한 건을 보여 고르게 한다
@@ -1999,7 +2027,7 @@
       RANKING = false;
       if (S.results.length) { $('result-count').textContent = $('result-count').textContent.replace(/^키워드 후보 /, '키워드순 '); renderGrid(); repaintSteps(); }
     };
-    if (!S.notice || !S.lineage || !S.terms.length || !(S.results || []).length) { rankMsg(''); reveal(); return; }
+    if (!S.notice || !S.lineage || !S.terms.length || !(S.results || []).length) { rankMsg(''); reveal(); if (S.notice && S.lineage) trackEvidence(false); return; }
     var my = seq, t0 = Date.now();
     RANK_LABEL = '관련도 판정 중'; rankMsg(RANK_LABEL, 'busy');
     var tick = setInterval(function () {
@@ -2008,7 +2036,8 @@
         RANK_LABEL = t; rankMsg(t, 'busy'); var w = $('rank-wait-t'); if (w) w.textContent = t;
       } else clearInterval(tick);
     }, 1000);
-    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) { rankMsg(t, cls); reveal(); snapScope(); } };
+    var logged = false;   // 40초 시간 초과 뒤에 늦게 온 판정이 한 번 더 부를 수 있어 기록은 한 번만
+    var done = function (t, cls) { clearInterval(tick); if (rid === RANKSEQ && my === seq) { rankMsg(t, cls); reveal(); snapScope(); if (!logged) { logged = true; trackEvidence(cls === 'ok'); } } };
     RANKT = setTimeout(function () {
       var params = evParams(); params.terms = S.terms.join(','); params.limit = 20;
       api('/api/evidence', params).then(function (ev) {
@@ -2328,6 +2357,7 @@
     document.body.appendChild(f);
     var head = Array.prototype.map.call(document.querySelectorAll('head style, head link[rel=stylesheet]'), function (n) { return n.outerHTML; }).join('');
     var name = '장표구도_' + (S.notice && (S.notice.no || S.notice.name) || 'draft') + (all ? '' : '_' + opts[0].name);
+    track('export', { no: S.no || '', fmt: 'deck', decks: opts.map(function (o) { return o.key; }), cards: payload().cards.length });
     var doc = f.contentDocument;
     doc.open();
     doc.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(name) + '</title>' + head +
@@ -2518,6 +2548,7 @@
   // 서버에서 PDF를 만들려면 한글 글꼴을 싣고 쪽 배치를 새로 짜야 해서, 미리보기와 똑같이 나오는 인쇄 쪽을 쓴다
   function printPdf() {
     var paper = $('ex-paper'); if (!paper.innerHTML) return;
+    track('export', { no: S.no || '', fmt: 'pdf', cards: payload().cards.length });
     var old = document.getElementById('print-frame'); if (old) old.remove();
     var f = document.createElement('iframe');
     f.id = 'print-frame'; f.setAttribute('aria-hidden', 'true');
@@ -2544,6 +2575,7 @@
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob); a.download = '사업이해도_' + (S.notice.no || 'draft') + '.docx';
         document.body.appendChild(a); a.click(); a.remove();
+        track('export', { no: S.no || '', fmt: 'docx', cards: payload().cards.length });
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
       })
       .catch(function (e) { $('ex-state').style.display = ''; $('ex-state').className = 'state-msg err'; $('ex-state').textContent = (e && e.message) || '파일을 만들지 못했습니다.'; })
