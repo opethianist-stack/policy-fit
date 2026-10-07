@@ -19,7 +19,9 @@ def to_out(t):
         acc += (min(t, nxt) - m['t']) / m['speed']
     return acc
 
-frames = [f for f in frames if f['t'] >= start - 0.5]
+# 시작 표시 앞 프레임은 버리되, 그 직전 한 장은 남긴다(화면이 멈춰 있으면 새 프레임이 안 와서 처음 화면이 통째로 빠진다)
+before = [f for f in frames if f['t'] < start]
+frames = before[-1:] + [f for f in frames if f['t'] >= start]
 lines = []
 for i, f in enumerate(frames):
     t1 = frames[i + 1]['t'] if i + 1 < len(frames) else end

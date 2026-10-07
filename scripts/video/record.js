@@ -92,34 +92,36 @@ async function overlay(p) {
   async function card(html) {
     await p.evaluate((html) => { const c = document.getElementById('vid-card'); if (!html) { c.classList.remove('on'); return; } c.innerHTML = html; c.classList.add('on'); }, html);
   }
-  // 페이지를 옮길 때 불러오는 과정이 찍히지 않게: 옅은 회색 막을 0.45초에 걸쳐 덮고 → 이동 → 다 그려진 뒤 0.6초에 걸쳐 걷는다
-  const COVER = '#F4F4F4';
-  async function cover(on, ms) {
-    await p.evaluate(([on, ms, bg]) => {
-      let c = document.getElementById('vid-cover');
-      if (!c) { c = document.createElement('div'); c.id = 'vid-cover'; c.style.cssText = 'position:fixed;inset:0;z-index:99995;background:' + bg + ';opacity:' + (on ? 0 : 1) + ';pointer-events:none'; document.body.appendChild(c); c.getBoundingClientRect(); }
-      c.style.transition = 'opacity ' + ms + 'ms ease'; c.style.opacity = on ? 1 : 0;
-    }, [on, ms, COVER]);
-    await wait(ms + 60);
+  // 페이지를 옮길 때 불러오는 과정(글꼴이 대체 글꼴 → SUIT로 바뀌는 순간 등)은 영상에서 잘라 낸다:
+  // 이동 직전에 1000배속 표시(배지 없이)를 남기고, 글꼴·이미지까지 다 그려진 뒤 1배속으로 돌린다. 화면은 바로 넘어간다
+  async function settled(fr) {
+    await fr.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all([...document.images].filter((i) => !i.complete).map((i) => new Promise((ok) => { i.onload = i.onerror = ok; })));
+    }).catch(() => {});
   }
-  async function nav(url, settle = 900) {
-    await cover(true, 450);
+  async function nav(url, settle = 300, fontsOnly = false) {
+    marks.push({ t: now(), speed: 1000 });
     await p.goto(url); await overlay(p);
-    await p.evaluate((bg) => { const c = document.createElement('div'); c.id = 'vid-cover'; c.style.cssText = 'position:fixed;inset:0;z-index:99995;background:' + bg + ';opacity:1;pointer-events:none'; document.body.appendChild(c); }, COVER);
-    await p.waitForLoadState('networkidle').catch(() => {}); await wait(settle);
-    await cover(false, 600);
+    if (fontsOnly) await p.evaluate(() => document.fonts.ready).catch(() => {});   // 로그인: 마스코트가 불러오자마자 날기 시작해 글꼴만 기다린다
+    else {
+      await p.waitForLoadState('networkidle').catch(() => {});
+      for (const fr of p.frames()) await settled(fr);
+    }
+    await wait(settle);
+    marks.push({ t: now(), speed: 1 });
   }
 
   // 0 처음 화면: 카드를 바로 덮은 뒤에 녹화 시각을 연다(개인정보처리방침 화면이 비치지 않게)
   await p.goto(BASE + '/privacy'); await overlay(p);
   await p.evaluate(() => { document.getElementById('vid-card').style.transition = 'none'; });
   await card('<img src="/brand/kma-logo-w.png" alt=""><div class="t">Policy Fit</div><div class="s">입찰 공고에서 정책 근거까지,<br>사업 이해도를 높이는 초안 완성</div>');
-  await wait(700);
+  await settled(p); await wait(700);
   await speed(1);
   await wait(3600);
 
-  // 1 로그인 화면(마스코트가 카드를 한 바퀴 돈다). 처음 화면 → 회색 막 → 로그인
-  await nav(BASE + '/login', 300);
+  // 1 로그인 화면(마스코트가 카드를 한 바퀴 돈다). 처음 화면 → 로그인
+  await nav(BASE + '/login', 0, true);
   await cap('', '구글 계정으로 로그인합니다. 최근 검색과 작업은 계정에 저장돼 어느 PC에서나 이어집니다');
   await wait(6600);
 
@@ -130,7 +132,7 @@ async function overlay(p) {
   await wait(4500);
 
   // 3 공고 찾기(키워드)
-  await nav(BASE + '/search', 1500);
+  await nav(BASE + '/search', 500);
   const f = p.frame({ url: /prototype\.html/ });
   await f.evaluate(() => { const s = document.createElement('style'); s.textContent = '.vid-hl{outline:3px solid #3868F4!important;outline-offset:3px;transition:outline-color .2s}'; document.head.appendChild(s); });
   const hl = (sel, i = 0) => f.evaluate(([sel, i]) => { const el = document.querySelectorAll(sel)[i]; if (!el) return; el.classList.add('vid-hl'); setTimeout(() => el.classList.remove('vid-hl'), 900); }, [sel, i]);
