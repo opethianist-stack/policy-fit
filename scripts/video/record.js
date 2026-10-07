@@ -12,11 +12,16 @@ const fs = require('fs');
 const OUT = process.argv[2]; const FR = OUT + '/frames/'; fs.mkdirSync(FR, { recursive: true });
 const BASE = process.env.BASE || 'http://localhost:3100';
 const NOTICE = 'R26BK01732376';
-// harvest 장면 재료: harvest-data.js 결과(HARVEST_DATA), 실제 화면 캡처 폴더(HARVEST_SHOTS: actions·sheet·script·drive .png/.jpg, 있는 것만)
+// harvest 장면 재료: harvest-data.js 결과(HARVEST_DATA), 실제 화면 캡처 폴더(HARVEST_SHOTS, 있는 것만):
+//   sheet.webm(승인 시트 화면 녹화, VP9 — 녹화용 Chromium은 H.264를 못 튼다) 또는 sheet.png, script.png(Apps Script), drive.png(정책문서 폴더), actions.png
 const HDATA = process.env.HARVEST_DATA ? JSON.parse(fs.readFileSync(process.env.HARVEST_DATA, 'utf8')) : null;
-const HSHOTS = (() => { const o = {}, d = process.env.HARVEST_SHOTS; if (!d) return o;
-  for (const k of ['actions', 'sheet', 'script', 'drive']) for (const ext of ['png', 'jpg', 'jpeg']) { const f = d + '/' + k + '.' + ext; if (fs.existsSync(f)) { o[k] = 'data:image/' + (ext === 'png' ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(f).toString('base64'); break; } }
-  return o; })();
+const SHOT_DIR = process.env.HARVEST_SHOTS || '';
+const HSHOT_FILES = {};   // 장면에 넘길 키 → 파일 이름
+if (SHOT_DIR) {
+  if (fs.existsSync(SHOT_DIR + '/sheet.webm')) HSHOT_FILES.sheetVideo = 'sheet.webm';
+  for (const k of ['actions', 'sheet', 'script', 'drive']) for (const ext of ['png', 'jpg', 'jpeg', 'webp']) if (!HSHOT_FILES[k] && fs.existsSync(SHOT_DIR + '/' + k + '.' + ext)) HSHOT_FILES[k] = k + '.' + ext;
+}
+const MIME = { webm: 'video/webm', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
 const DOCS = (() => { try { return require('../../data/corpus-index.json').docs.length; } catch (e) { return 0; } })();
 const viaCurl = async (route) => { const u = route.request().url(); try { const body = execFileSync('curl', ['-s', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36', u], { maxBuffer: 50e6 }); await route.fulfill({ status: 200, body, headers: { 'content-type': /css2\?|\.css/.test(u) ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } }); } catch (e) { await route.abort(); } };
 
@@ -55,6 +60,12 @@ async function overlay(p) {
   await ctx.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
   // harvest 장면(scripts/video/harvest.html)은 앱과 같은 출처로 내보내 공고 검색 화면 위에 덧씌운다(아래 앱 상태는 그대로 남는다)
   await ctx.route(BASE + '/__video/harvest.html', (route) => route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: fs.readFileSync(__dirname + '/harvest.html') }));
+  await ctx.route((url) => url.href.startsWith(BASE + '/__video/shots/'), (route) => {
+    const name = decodeURIComponent(route.request().url().split('/__video/shots/')[1]);
+    if (!Object.values(HSHOT_FILES).includes(name)) return route.abort();
+    route.fulfill({ status: 200, contentType: MIME[name.split('.').pop()], body: fs.readFileSync(SHOT_DIR + '/' + name) });
+  });
+  const HSHOTS = {}; for (const k in HSHOT_FILES) HSHOTS[k] = BASE + '/__video/shots/' + HSHOT_FILES[k];
   const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('ERR', e.message));
 
   // 화면 전송 시작
@@ -81,26 +92,45 @@ async function overlay(p) {
   async function card(html) {
     await p.evaluate((html) => { const c = document.getElementById('vid-card'); if (!html) { c.classList.remove('on'); return; } c.innerHTML = html; c.classList.add('on'); }, html);
   }
-  await speed(1);
+  // 페이지를 옮길 때 불러오는 과정이 찍히지 않게: 옅은 회색 막을 0.45초에 걸쳐 덮고 → 이동 → 다 그려진 뒤 0.6초에 걸쳐 걷는다
+  const COVER = '#F4F4F4';
+  async function cover(on, ms) {
+    await p.evaluate(([on, ms, bg]) => {
+      let c = document.getElementById('vid-cover');
+      if (!c) { c = document.createElement('div'); c.id = 'vid-cover'; c.style.cssText = 'position:fixed;inset:0;z-index:99995;background:' + bg + ';opacity:' + (on ? 0 : 1) + ';pointer-events:none'; document.body.appendChild(c); c.getBoundingClientRect(); }
+      c.style.transition = 'opacity ' + ms + 'ms ease'; c.style.opacity = on ? 1 : 0;
+    }, [on, ms, COVER]);
+    await wait(ms + 60);
+  }
+  async function nav(url, settle = 900) {
+    await cover(true, 450);
+    await p.goto(url); await overlay(p);
+    await p.evaluate((bg) => { const c = document.createElement('div'); c.id = 'vid-cover'; c.style.cssText = 'position:fixed;inset:0;z-index:99995;background:' + bg + ';opacity:1;pointer-events:none'; document.body.appendChild(c); }, COVER);
+    await p.waitForLoadState('networkidle').catch(() => {}); await wait(settle);
+    await cover(false, 600);
+  }
 
-  // 0 처음 화면
+  // 0 처음 화면: 카드를 바로 덮은 뒤에 녹화 시각을 연다(개인정보처리방침 화면이 비치지 않게)
   await p.goto(BASE + '/privacy'); await overlay(p);
+  await p.evaluate(() => { document.getElementById('vid-card').style.transition = 'none'; });
   await card('<img src="/brand/kma-logo-w.png" alt=""><div class="t">Policy Fit</div><div class="s">입찰 공고에서 정책 근거까지,<br>사업 이해도를 높이는 초안 완성</div>');
-  await wait(3800);
+  await wait(700);
+  await speed(1);
+  await wait(3600);
 
-  // 1 로그인 화면(마스코트가 카드를 한 바퀴 돈다)
-  await p.goto(BASE + '/login'); await overlay(p);
+  // 1 로그인 화면(마스코트가 카드를 한 바퀴 돈다). 처음 화면 → 회색 막 → 로그인
+  await nav(BASE + '/login', 300);
   await cap('', '구글 계정으로 로그인합니다. 최근 검색과 작업은 계정에 저장돼 어느 PC에서나 이어집니다');
-  await wait(7200);
+  await wait(6600);
 
   // 2 개요(8단계 흐름)
   await ctx.addCookies([{ name: 'authjs.session-token', value, url: BASE }]);
-  await p.goto(BASE + '/'); await overlay(p);
+  await nav(BASE + '/');
   await cap('', '공고 하나로 정책 근거 검색부터 문서·장표까지 8단계를 잇습니다');
   await wait(4500);
 
   // 3 공고 찾기(키워드)
-  await p.goto(BASE + '/search'); await overlay(p); await wait(1500);
+  await nav(BASE + '/search', 1500);
   const f = p.frame({ url: /prototype\.html/ });
   await f.evaluate(() => { const s = document.createElement('style'); s.textContent = '.vid-hl{outline:3px solid #3868F4!important;outline-offset:3px;transition:outline-color .2s}'; document.head.appendChild(s); });
   const hl = (sel, i = 0) => f.evaluate(([sel, i]) => { const el = document.querySelectorAll(sel)[i]; if (!el) return; el.classList.add('vid-hl'); setTimeout(() => el.classList.remove('vid-hl'), 900); }, [sel, i]);
@@ -138,17 +168,31 @@ async function overlay(p) {
   // 4-1 정책문서 자동 수집(harvest): 공고 검색 화면 위에 장면을 덧씌웠다가 걷어 낸다
   if (HDATA) {
     await cap('③ 정책문서 자동 수집', '근거가 될 정책문서는 부처·공공기관·시도교육청 게시판에서 매주 모아 지식베이스에 쌓습니다');
-    await p.evaluate((src) => { const f = document.createElement('iframe'); f.id = 'vid-scene'; f.src = src;
-      f.style.cssText = 'position:fixed;left:0;top:0;width:1920px;height:1080px;border:0;z-index:99990;background:#F4F4F4;opacity:0;transition:opacity .5s;zoom:' + (1 / parseFloat(getComputedStyle(document.documentElement).zoom || 1));
-      document.body.appendChild(f); }, BASE + '/__video/harvest.html');
+    // 화면 전체가 넘어가는 전환: 장면이 오른쪽에서 밀려 들어오며 앱 화면을 왼쪽으로 밀고, 끝나면 반대로 빠진다(1초)
+    const EASE = '1000ms cubic-bezier(.65,0,.35,1)';
+    await p.evaluate(([src, ease]) => { const f = document.createElement('iframe'); f.id = 'vid-scene'; f.src = src;
+      f.style.cssText = 'position:fixed;left:0;top:0;width:1920px;height:1080px;border:0;z-index:99990;background:#F4F4F4;transform:translateX(100%);transition:transform ' + ease + ';zoom:' + (1 / parseFloat(getComputedStyle(document.documentElement).zoom || 1));
+      document.body.appendChild(f); }, [BASE + '/__video/harvest.html', EASE]);
     const hf = await (await p.waitForSelector('#vid-scene')).contentFrame();
     await hf.waitForFunction(() => typeof init === 'function');
     await hf.evaluate(([d, b, s]) => init(d, b, s), [HDATA, BASE, HSHOTS]);
-    await p.evaluate(() => { document.getElementById('vid-scene').style.opacity = 1; }); await wait(1800);
-    const HOLD = [6500, 6500, 6500, 7000, 7500];
-    for (let i = 0; i < 5; i++) { await hf.evaluate((i) => go(i), i); await wait(HOLD[i]); }
-    if (Object.keys(HSHOTS).length) { await hf.evaluate(() => go(5)); await wait(6500); }
-    await p.evaluate(() => { const f = document.getElementById('vid-scene'); f.style.opacity = 0; setTimeout(() => f.remove(), 600); }); await wait(900);
+    await wait(1500);   // 실제 화면 그림·영상을 미리 받아 둔다
+    await p.evaluate((ease) => { const a = document.querySelector('iframe.frame'); a.style.transition = 'transform ' + ease; a.style.transform = 'translateX(-35%)';
+      document.getElementById('vid-scene').style.transform = 'translateX(0)'; }, EASE);
+    await wait(2000);
+    const step = async (i, ms) => { await hf.evaluate((i) => go(i), i); await wait(ms); };
+    const realView = async (id, ms) => { if (await hf.evaluate((id) => showReal(id, true), id)) { await wait(ms); await hf.evaluate((id) => showReal(id, false), id); await wait(500); } };
+    await step(0, 6500);
+    await step(1, 6500);
+    await step(2, 6000); await realView('r-sheet', 5200);
+    await step(3, 6500); await realView('r-script', 4200); await realView('r-drive', 4200);
+    await step(4, 7500);
+    if (HSHOT_FILES.actions) await step(5, 5000);
+    await p.evaluate((ease) => { const f = document.getElementById('vid-scene'), a = document.querySelector('iframe.frame');
+      a.style.transition = 'none'; a.style.transform = 'translateX(35%)'; a.getBoundingClientRect();
+      a.style.transition = 'transform ' + ease; a.style.transform = 'translateX(0)'; f.style.transform = 'translateX(-100%)';
+      setTimeout(() => { f.remove(); a.style.transition = ''; a.style.transform = ''; }, 1100); }, EASE);
+    await wait(1500);
   }
 
   // 5 정책 근거 검색
