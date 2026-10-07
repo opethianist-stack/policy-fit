@@ -12,6 +12,11 @@ const fs = require('fs');
 const OUT = process.argv[2]; const FR = OUT + '/frames/'; fs.mkdirSync(FR, { recursive: true });
 const BASE = process.env.BASE || 'http://localhost:3100';
 const NOTICE = 'R26BK01732376';
+// harvest 장면 재료: harvest-data.js 결과(HARVEST_DATA), 실제 화면 캡처 폴더(HARVEST_SHOTS: actions·sheet·script·drive .png/.jpg, 있는 것만)
+const HDATA = process.env.HARVEST_DATA ? JSON.parse(fs.readFileSync(process.env.HARVEST_DATA, 'utf8')) : null;
+const HSHOTS = (() => { const o = {}, d = process.env.HARVEST_SHOTS; if (!d) return o;
+  for (const k of ['actions', 'sheet', 'script', 'drive']) for (const ext of ['png', 'jpg', 'jpeg']) { const f = d + '/' + k + '.' + ext; if (fs.existsSync(f)) { o[k] = 'data:image/' + (ext === 'png' ? 'png' : 'jpeg') + ';base64,' + fs.readFileSync(f).toString('base64'); break; } }
+  return o; })();
 const DOCS = (() => { try { return require('../../data/corpus-index.json').docs.length; } catch (e) { return 0; } })();
 const viaCurl = async (route) => { const u = route.request().url(); try { const body = execFileSync('curl', ['-s', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36', u], { maxBuffer: 50e6 }); await route.fulfill({ status: 200, body, headers: { 'content-type': /css2\?|\.css/.test(u) ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } }); } catch (e) { await route.abort(); } };
 
@@ -48,6 +53,8 @@ async function overlay(p) {
   // 1920×1080 그대로(화면 전송은 화면 밀도를 무시하고 CSS 크기로 보내서, 밀도를 올리지 않고 창 크기를 맞춘다). 앱은 120% 배율이 걸린다
   const ctx = await br.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1, acceptDownloads: true });
   await ctx.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, viaCurl);
+  // harvest 장면(scripts/video/harvest.html)은 앱과 같은 출처로 내보내 공고 검색 화면 위에 덧씌운다(아래 앱 상태는 그대로 남는다)
+  await ctx.route(BASE + '/__video/harvest.html', (route) => route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: fs.readFileSync(__dirname + '/harvest.html') }));
   const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('ERR', e.message));
 
   // 화면 전송 시작
@@ -128,15 +135,31 @@ async function overlay(p) {
   await speed(1); await wait(600);
   await glide('#s-search .scroll', '#notice-card', 1000); await wait(3800);
 
+  // 4-1 정책문서 자동 수집(harvest): 공고 검색 화면 위에 장면을 덧씌웠다가 걷어 낸다
+  if (HDATA) {
+    await cap('③ 정책문서 자동 수집', '근거가 될 정책문서는 부처·공공기관·시도교육청 게시판에서 매주 모아 지식베이스에 쌓습니다');
+    await p.evaluate((src) => { const f = document.createElement('iframe'); f.id = 'vid-scene'; f.src = src;
+      f.style.cssText = 'position:fixed;left:0;top:0;width:1920px;height:1080px;border:0;z-index:99990;background:#F4F4F4;opacity:0;transition:opacity .5s;zoom:' + (1 / parseFloat(getComputedStyle(document.documentElement).zoom || 1));
+      document.body.appendChild(f); }, BASE + '/__video/harvest.html');
+    const hf = await (await p.waitForSelector('#vid-scene')).contentFrame();
+    await hf.waitForFunction(() => typeof init === 'function');
+    await hf.evaluate(([d, b, s]) => init(d, b, s), [HDATA, BASE, HSHOTS]);
+    await p.evaluate(() => { document.getElementById('vid-scene').style.opacity = 1; }); await wait(1800);
+    const HOLD = [6500, 6500, 6500, 7000, 7500];
+    for (let i = 0; i < 5; i++) { await hf.evaluate((i) => go(i), i); await wait(HOLD[i]); }
+    if (Object.keys(HSHOTS).length) { await hf.evaluate(() => go(5)); await wait(6500); }
+    await p.evaluate(() => { const f = document.getElementById('vid-scene'); f.style.opacity = 0; setTimeout(() => f.remove(), 600); }); await wait(900);
+  }
+
   // 5 정책 근거 검색
-  await cap('③ 정책 근거 검색', '정책문서 ' + (DOCS ? DOCS + '건' : '색인') + '에서 근거를 찾고, 제안요청서 문장과 대조해 관련도를 매깁니다');
+  await cap('④ 정책 근거 검색', '정책문서 ' + (DOCS ? DOCS + '건' : '색인') + '에서 근거를 찾고, 제안요청서 문장과 대조해 관련도를 매깁니다');
   await glide('#s-search .scroll', '#terms', 1300); await wait(3000);
   await glide('#s-search .scroll', '#result-grid', 1300); await wait(4500);
   const sc = await f.evaluate(() => document.querySelector('#s-search .scroll').scrollTop);
   await glide('#s-search .scroll', sc + 520, 2600); await wait(1800);
 
   // 6 선택 → 원문 대조
-  await cap('④ 원문 대조', '쓸 근거만 고르고, 발췌한 문장을 원문 쪽에서 직접 확인합니다');
+  await cap('⑤ 원문 대조', '쓸 근거만 고르고, 발췌한 문장을 원문 쪽에서 직접 확인합니다');
   await glide('#s-search .scroll', '#result-grid', 900);
   for (let i = 0; i < 5; i++) await tap('#result-grid .pick', 280, i);
   await wait(500); await tap('#to-review', 600); await wait(800);
@@ -144,7 +167,7 @@ async function overlay(p) {
   await wait(6000);
 
   // 7 AI 초안
-  await cap('⑤ AI 초안', '역할을 나누고 빈 칸을 채웁니다. 원문에 없는 숫자·기관명이 든 문장은 걸러 냅니다');
+  await cap('⑥ AI 초안', '역할을 나누고 빈 칸을 채웁니다. 원문에 없는 숫자·기관명이 든 문장은 걸러 냅니다');
   await tap('#rv-next', 700); await wait(1200);
   await tap('#ai-roles-btn', 600); await speed(3);
   await f.waitForFunction(() => !document.querySelector('#ai-roles-btn').disabled && document.querySelector('#ai-roles-msg').textContent, null, { timeout: 90000 });
@@ -154,7 +177,7 @@ async function overlay(p) {
   await speed(1); await wait(4500);
 
   // 8 문서 산출
-  await cap('⑥ 문서 산출', "출처가 붙은 '사업 이해도·추진 배경' 절을 docx·PDF로 받습니다");
+  await cap('⑦ 문서 산출', "출처가 붙은 '사업 이해도·추진 배경' 절을 docx·PDF로 받습니다");
   await glide('#s-export .scroll', '#ex-paper', 1600); await wait(1500);
   const sp = await f.evaluate(() => document.querySelector('#s-export .scroll').scrollTop);
   await glide('#s-export .scroll', sp + 700, 3000); await wait(1200);
@@ -163,7 +186,7 @@ async function overlay(p) {
   await tap('#dl-btn', 700); await dl; await wait(1600);
 
   // 9 장표 구도
-  await cap('⑦ 장표 구도 추천', '고른 근거에 맞는 사업 이해도 장표 구도를 실제 문구로 보여 줍니다');
+  await cap('⑧ 장표 구도 추천', '고른 근거에 맞는 사업 이해도 장표 구도를 실제 문구로 보여 줍니다');
   await tap('#s-export .actions .btn.outline', 600);
   await f.waitForSelector('#deck-grid .sl', { timeout: 30000 }); await wait(3000);
   await tap('#ai-deck-btn', 600); await speed(4);
