@@ -1,7 +1,7 @@
 # Policy Fit — 작업 핸드오프
 
 레포 루트의 `CLAUDE.md`. Codespace의 Claude Code가 세션 시작 시 자동으로 읽는다.
-최종 갱신: 2026-10-07 (STEP63 — 영상 페이지 전환 덮개·수집 장면 밀어 넣기·실제 시트 영상/Apps Script/드라이브 화면, STEP62 — 발표 영상에 정책문서 자동 수집(harvest) 장면, STEP61 — 발표용 시연 영상 녹화·조립 스크립트 `scripts/video/`, STEP60 — 이용 기록(`/api/event`, `pf_event`) 수집 시작, 관리자 대시보드 "예시 화면/실제 기록" 전환과 ⑤ 정책문서 보강 우선순위, STEP59 — 매뉴얼 관리자 대시보드 쪽에 시연용·추후 개발 예정 명시, 구글 로그인 앱 프로덕션 게시 반영, STEP58 — 제출 전 점검: 매뉴얼 PDF를 로그인 없이 공개, 공고번호 예시를 합덕제철고로, STEP57 — 최근 검색·저장된 작업을 계정별로 서버(Neon Postgres, `/api/work`)에 저장해 다른 PC에서도 이어짐, STEP56 — 개인정보처리방침을 계정별 서버 저장(최근 검색·작업, 이용 통계) 기준으로 먼저 개정, 저장 구현은 DB 연결 뒤, STEP55 — KERIS 공지 거르기 규칙을 두 단으로(공모전·논문 공모가 빠지던 문제), STEP54 — 매뉴얼 표지 개편·개요(브랜드·마스코트) 쪽 추가, STEP53 상단 띠 시도교육청 로고 16종·카드 색 어둡게, STEP52 로그인 상단 띠 기관 로고 11종, STEP51 로그인 카드 입체감·마스코트 카드 궤도, STEP50 로그인 화면 배경+카드 구도, STEP49 로그인 패널 KMA 로고·모티프, STEP48 로그인 화면 좌우 패널 구도, STEP47 화면 120% 배율, STEP44 KMA 디자인 체계)
+최종 갱신: 2026-10-19 (Claude API 키를 회사 발급 키로 교체 — Vercel `ANTHROPIC_API_KEY`·작업 환경 `POLICYFIT_ANTHROPIC_KEY`, STEP63 — 영상 페이지 전환 덮개·수집 장면 밀어 넣기·실제 시트 영상/Apps Script/드라이브 화면, STEP62 — 발표 영상에 정책문서 자동 수집(harvest) 장면, STEP61 — 발표용 시연 영상 녹화·조립 스크립트 `scripts/video/`, STEP60 — 이용 기록(`/api/event`, `pf_event`) 수집 시작, 관리자 대시보드 "예시 화면/실제 기록" 전환과 ⑤ 정책문서 보강 우선순위, STEP59 — 매뉴얼 관리자 대시보드 쪽에 시연용·추후 개발 예정 명시, 구글 로그인 앱 프로덕션 게시 반영, STEP58 — 제출 전 점검: 매뉴얼 PDF를 로그인 없이 공개, 공고번호 예시를 합덕제철고로, STEP57 — 최근 검색·저장된 작업을 계정별로 서버(Neon Postgres, `/api/work`)에 저장해 다른 PC에서도 이어짐, STEP56 — 개인정보처리방침을 계정별 서버 저장(최근 검색·작업, 이용 통계) 기준으로 먼저 개정, 저장 구현은 DB 연결 뒤, STEP55 — KERIS 공지 거르기 규칙을 두 단으로(공모전·논문 공모가 빠지던 문제), STEP54 — 매뉴얼 표지 개편·개요(브랜드·마스코트) 쪽 추가, STEP53 상단 띠 시도교육청 로고 16종·카드 색 어둡게, STEP52 로그인 상단 띠 기관 로고 11종, STEP51 로그인 카드 입체감·마스코트 카드 궤도, STEP50 로그인 화면 배경+카드 구도, STEP49 로그인 패널 KMA 로고·모티프, STEP48 로그인 화면 좌우 패널 구도, STEP47 화면 120% 배율, STEP44 KMA 디자인 체계)
 
 ---
 
@@ -415,9 +415,9 @@ Codespace ──(git push)──▶ GitHub(정본) ──(자동)──▶ Verce
 |---|---|
 | `DATA_GO_KR_KEY` | 등록됨 |
 | `ALIO_APBA_KEY` · `ALIO_BIZ_KEY` · `ALIO_FACILITY_KEY` · `ALIO_EVENT_KEY` | 등록됨 (2026-09-20) |
-| `ANTHROPIC_API_KEY` | 멘토에게 받은 Claude API 키. 사용자가 등록 (등록 여부는 `GET /api/ai`의 `ready`) |
+| `ANTHROPIC_API_KEY` | 회사(KMA)에서 발급한 Claude API 키(2026-10-19 멘토 키에서 교체). 사용자가 등록 (등록 여부는 `GET /api/ai`의 `ready`) |
 | `ANTHROPIC_MODEL` | 선택. 비우면 `claude-haiku-4-5-20251001` |
-| `POLICYFIT_ANTHROPIC_KEY` | `ANTHROPIC_API_KEY`와 같은 키의 다른 이름. **Claude Code 클라우드 작업 환경**은 `ANTHROPIC_API_KEY`를 "요청 인증에 사용되지 않습니다"로 걸러 내 세션에 넘기지 않는다 → 거기서는 이 이름으로 넣는다. Vercel은 기존 이름 그대로 |
+| `POLICYFIT_ANTHROPIC_KEY` | `ANTHROPIC_API_KEY`와 같은 키의 다른 이름. **Claude Code 클라우드 작업 환경**은 `ANTHROPIC_API_KEY`를 "요청 인증에 사용되지 않습니다"로 걸러 내 세션에 넘기지 않는다 → 거기서는 이 이름으로 넣는다. Vercel은 기존 이름 그대로. 2026-10-19 회사 키로 교체(새 세션부터 적용) |
 
 등록 여부는 배포본의 `GET /api/proxy` 응답(`configured`)으로 확인할 수 있다. 변수 이름 템플릿은 `.env.example`.
 
@@ -425,7 +425,7 @@ Codespace ──(git push)──▶ GitHub(정본) ──(자동)──▶ Verce
 
 - `policy-fit.vercel.app` 도메인은 다른 사람이 선점해서 Vercel이 `policy-fit-azure`를 배정했다. 이름과 주소가 안 맞아 보이는 게 정상이다
 - **운영 주소는 공개 링크다**(2026-09-22 로그인 없이 확인: `/`·`/prototype.html`·`/api/ai` 모두 200). 예전 문서의 "Vercel SSO 보호가 켜져 있다"는 틀린 기록이었다. 멘토에게 링크만 줘도 열린다
-- 공개라서 서버 기능도 누구나 부를 수 있다. `/api/ai`는 접속자(IP)별 10분 30회·인스턴스당 1시간 300회 한도(`allow`, 넘으면 429 "AI 호출이 너무 잦습니다"). 인스턴스마다 따로 세므로 완벽하지 않다 — **요금 상한은 Anthropic 콘솔의 사용 한도로 건다**(키 발급자=멘토에게 요청). `/api/proxy`는 허용 호스트 고정이라 키가 새지 않고 호출 한도만 소모된다
+- 공개라서 서버 기능도 누구나 부를 수 있다. `/api/ai`는 접속자(IP)별 10분 30회·인스턴스당 1시간 300회 한도(`allow`, 넘으면 429 "AI 호출이 너무 잦습니다"). 인스턴스마다 따로 세므로 완벽하지 않다 — **요금 상한은 Anthropic 콘솔의 사용 한도로 건다**(회사 키 콘솔에서 설정). `/api/proxy`는 허용 호스트 고정이라 키가 새지 않고 호출 한도만 소모된다
 - **`policy-fit-api` 프로젝트가 따로 남아 있다.** 2026-09-14 첫 시도본(API 테스터만)이고 방치 상태. 삭제 검토 대상. 지우기 전에 거기 등록된 환경변수가 있는지 확인할 것
 - 알리오플러스는 80포트 HTTP만 받는다. Vercel 서버에서 이 호스트로 실제 호출이 나가는지는 `/api-test` 알리오 프리셋으로 확인한다
 
