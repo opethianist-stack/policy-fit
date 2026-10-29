@@ -1,6 +1,6 @@
 // 매뉴얼·개요 배경용 화면 캡처. 합덕제철고 공고(R26BK01732376)로 공고 입력부터 구도 추천까지 진행하며 1440×900으로 찍는다.
 // 사용: 로그인을 켠 채(POLICYFIT_AUTH_DISABLED 없이) AUTH_SECRET=<아무 값> ADMIN_EMAILS=user@example.com next start -p 3100 을 띄우고
-//       같은 AUTH_SECRET을 넣어 node scripts/manual/capture.js <출력 폴더>  → <출력 폴더>/shots/login·1~8·admin.png
+//       같은 AUTH_SECRET을 넣어 node scripts/manual/capture.js <출력 폴더>  → <출력 폴더>/shots/login·1~8·awards·admin.png
 // 로그인 쿠키는 AUTH_SECRET으로 직접 만든다(구글 로그인을 거치지 않음, 화면에 보이는 계정은 MANUAL_EMAIL, 기본 user@example.com)
 // AI 관련도 판정·AI 초안을 실제로 부른다(키 필요). 이 클라우드 작업 환경의 헤드리스 브라우저는 외부 글꼴을 직접 못 받아(프록시 인증서) 글꼴 요청을 curl로 넘긴다
 // 이어서: png → 가로 1200·품질 66 jpg(<출력 폴더>/jpg/). 1~8.jpg는 public/flow/에도 복사(개요 배경). 그다음 build.js
@@ -55,6 +55,15 @@ const BASE = 'http://localhost:3100';
   // 8 장표 구도
   await f.evaluate(() => go('deck')); await f.waitForSelector('#deck-grid .sl', { timeout: 30000 }); await f.waitForTimeout(1200);
   await shot('8');
+  // 수주 현황(낙찰·계약 조회): 디지털배움터 2026-01~10, 첫 사업을 펼쳐 개찰순위·계약을 보인다
+  await p.goto(BASE + '/awards'); await p.waitForTimeout(800);
+  await p.fill('.aw-form input:not([type=month])', '디지털배움터');
+  await p.locator('.aw-form input[type=month]').nth(0).fill('2026-01');
+  await p.locator('.aw-form input[type=month]').nth(1).fill('2026-10');
+  await p.locator('.aw-form button').dispatchEvent('click');
+  await p.waitForSelector('.aw-summary', { timeout: 90000 });
+  await p.locator('.aw-link').nth(0).dispatchEvent('click');
+  await p.evaluate(() => window.scrollTo(0, document.querySelector('.aw-summary').getBoundingClientRect().top + window.scrollY - 20)); await shot('awards');
   // 관리자 대시보드
   await p.goto(BASE + '/admin'); await p.waitForTimeout(1200); await shot('admin');
   await b0.close();

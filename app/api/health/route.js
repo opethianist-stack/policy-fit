@@ -56,6 +56,18 @@ async function checkG2b(key) {
   return { ok: false, ms: r.ms, reason: (hdr && hdr.resultMsg) || portalError(r.text) || `HTTP ${r.status}` };
 }
 
+// 낙찰정보서비스·계약정보서비스(수주 현황, STEP64). 활용신청이 따로라 각각 확인한다
+async function checkPps(key, path, params) {
+  const r = await call('https://apis.data.go.kr/1230000' + path, { serviceKey: key, pageNo: '1', numOfRows: '1', type: 'json', ...params });
+  const code = r.json && r.json.response && r.json.response.header && r.json.response.header.resultCode;
+  if (r.status === 200 && code === '00') return { ok: true, ms: r.ms };
+  const err = r.json && r.json['nkoneps.com.response.ResponseError'];
+  const hdr = (r.json && r.json.response && r.json.response.header) || (err && err.header);
+  return { ok: false, ms: r.ms, reason: (hdr && hdr.resultMsg) || portalError(r.text) || `HTTP ${r.status}` };
+}
+const checkAward = (key) => checkPps(key, '/as/ScsbidInfoService/getScsbidListSttusServcPPSSrch', { inqryDiv: '1', inqryBgnDt: ymd(-7) + '0000', inqryEndDt: ymd(0) + '2359' });
+const checkCntrct = (key) => checkPps(key, '/ao/CntrctInfoService/getCntrctInfoListServcPPSSrch', { inqryDiv: '1', inqryBgnDate: ymd(-7), inqryEndDate: ymd(0) });
+
 async function checkInst(key) {
   const r = await call('https://apis.data.go.kr/1051000/public_inst/list', {
     serviceKey: key, pageNo: '1', numOfRows: '1', resultType: 'json',
@@ -77,10 +89,10 @@ export async function GET() {
   let body;
   if (!key) {
     const miss = { ok: false, reason: '인증키 미등록' };
-    body = { g2b: miss, inst: miss };
+    body = { g2b: miss, inst: miss, award: miss, cntrct: miss };
   } else {
-    const [g2b, inst] = await Promise.all([safe(checkG2b, key), safe(checkInst, key)]);
-    body = { g2b, inst };
+    const [g2b, inst, award, cntrct] = await Promise.all([safe(checkG2b, key), safe(checkInst, key), safe(checkAward, key), safe(checkCntrct, key)]);
+    body = { g2b, inst, award, cntrct };
   }
   body.checkedAt = new Date().toISOString();
   cache = { at: Date.now(), body };
