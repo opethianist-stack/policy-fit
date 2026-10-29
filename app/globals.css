@@ -548,6 +548,7 @@ table.weak .n { text-align: right; font-variant-numeric: tabular-nums; }
 .aw-summary b { color: var(--brand); }
 .aw-summary .btn { margin-left: auto; }
 .aw-warn { color: var(--warn); }
+.aw-busy { color: var(--brand); font-weight: 700; }
 .aw-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--hairline); margin-bottom: 12px; overflow-x: auto; }
 .aw-tabs button { font-size: 13px; padding: 9px 14px; color: var(--slate); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .aw-tabs button.on { color: var(--brand); font-weight: 700; border-bottom-color: var(--brand); }

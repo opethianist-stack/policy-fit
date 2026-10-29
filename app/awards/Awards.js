@@ -134,6 +134,8 @@ export default function Awards() {
   const [view, setView] = useState('status');
   const [open, setOpen] = useState(null);
   const timer = useRef(null);
+  const rankSeq = useRef(0);
+  const [rankState, setRankState] = useState(null);
 
   useEffect(() => () => clearInterval(timer.current), []);
 
@@ -153,10 +155,44 @@ export default function Awards() {
         setData(j);
         setSel(new Set(j.groups.filter((g) => g.status !== '공고 취소').map((g) => g.key)));
         setView('status'); setOpen(null);
+        clearInterval(timer.current); setBusy(false);
+        loadRanks(j);
+        return;
       }
     } catch { setErr('조회에 실패했습니다. 잠시 뒤 다시 시도해 주세요.'); }
     clearInterval(timer.current);
     setBusy(false);
+  }
+
+  // 표를 먼저 띄운 뒤 개찰순위 전체를 12건씩 나눠 함께 받는다(2순위·평가점수·업체 집계가 여기서 채워진다)
+  async function loadRanks(j) {
+    const keys = [...new Set(j.groups.filter((g) => g.opening && /개찰완료/.test(g.opening.status) && g.opening.count > 0)
+      .map((g) => g.opening.no + '-' + g.opening.ord))];
+    if (!keys.length) return;
+    const seq = ++rankSeq.current;
+    setRankState({ done: 0, total: keys.length, failed: 0 });
+    const chunks = [];
+    for (let i = 0; i < keys.length; i += 12) chunks.push(keys.slice(i, i + 12));
+    await Promise.all(chunks.map(async (c) => {
+      let got = {};
+      try {
+        const r = await fetch('/api/awards?ranks=' + c.join(','), { cache: 'no-store' });
+        const x = await r.json();
+        got = (x && x.rankings) || {};
+      } catch { /* 아래에서 실패로 센다 */ }
+      if (seq !== rankSeq.current) return;
+      setData((d) => (d && d.q === j.q && d.from === j.from && d.to === j.to ? {
+        ...d, groups: d.groups.map((g) => {
+          const k = g.opening ? g.opening.no + '-' + g.opening.ord : '';
+          const rk = got[k];
+          if (!rk) return g;
+          const rows = rk.ok ? rk.rows : [];
+          return { ...g, ranking: rk, top: rows.find((r) => r.rank === 1) || null, second: rows.find((r) => r.rank === 2) || null };
+        }),
+      } : d));
+      const bad = c.filter((k) => !got[k] || !got[k].ok).length;
+      setRankState((s) => (s ? { ...s, done: s.done + c.length, failed: s.failed + bad } : s));
+    }));
   }
 
   const chosen = useMemo(() => (data ? data.groups.filter((g) => sel.has(g.key)) : []), [data, sel]);
@@ -164,6 +200,20 @@ export default function Awards() {
     status: statusTable(chosen), rank: rankTable(chosen), consortium: consortiumTable(chosen),
     company: companyTable(chosen), matrix: matrixTable(chosen), related: relatedTable(data.related),
   } : null), [data, chosen]);
+
+  // 펼칠 때 개찰순위가 아직 없거나 실패했으면 그 공고만 다시 받는다
+  async function toggleOpen(g) {
+    if (open === g.key) { setOpen(null); return; }
+    setOpen(g.key);
+    if (!g.opening || !/개찰완료/.test(g.opening.status) || !g.opening.count || (g.ranking && g.ranking.ok)) return;
+    try {
+      const r = await fetch(`/api/awards?no=${g.opening.no}&ord=${g.opening.ord}`, { cache: 'no-store' });
+      const rk = await r.json();
+      if (!rk.ok) return;
+      setData((d) => (d ? { ...d, groups: d.groups.map((x) => (x.key === g.key
+        ? { ...x, ranking: rk, top: rk.rows.find((v) => v.rank === 1) || null, second: rk.rows.find((v) => v.rank === 2) || null } : x)) } : d));
+    } catch { /* 그대로 둔다 */ }
+  }
 
   function toggle(k) { const s = new Set(sel); s.has(k) ? s.delete(k) : s.add(k); setSel(s); }
   function all(on) { setSel(on ? new Set(data.groups.map((g) => g.key)) : new Set()); }
@@ -205,7 +255,7 @@ export default function Awards() {
           <input value={org} onChange={(e) => setOrg(e.target.value)} placeholder="예: 경상북도" /></label>
         <button className="btn primary" disabled={busy}>{busy ? `조회 중 ${sec}초` : '조회'}</button>
       </form>
-      <p className="aw-hint">기간은 최대 12개월입니다. 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 20~40초 걸리고, 같은 조건은 다시 부르지 않습니다.</p>
+      <p className="aw-hint">기간은 최대 12개월입니다. 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 10초 안팎 걸리고, 같은 조건은 한 시간 동안 바로 나옵니다. 2순위·평가점수는 표가 뜬 뒤 이어서 채워집니다.</p>
       {err && <p className="aw-err" role="alert">{err}</p>}
 
       <details className="aw-limits">
@@ -221,6 +271,8 @@ export default function Awards() {
       {data && (<>
         <div className="aw-summary">
           <span>사업 <b>{data.groups.length}</b>건 · 선택 <b>{sel.size}</b>건 · 관련 계약 <b>{data.related.length}</b>건</span>
+          {rankState && rankState.done < rankState.total && <span className="aw-busy">개찰순위 불러오는 중 {rankState.done}/{rankState.total}</span>}
+          {rankState && rankState.done >= rankState.total && rankState.failed > 0 && <span className="aw-warn">개찰순위 {rankState.failed}건을 불러오지 못했습니다(사업명을 눌러 다시 보기)</span>}
           {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}</span>}
           <button type="button" className="btn soft" onClick={exportXlsx} disabled={!sel.size}>엑셀 내보내기</button>
         </div>
@@ -247,7 +299,7 @@ export default function Awards() {
                       <td className="ck"><input type="checkbox" aria-label={`${label(g)} 선택`} checked={sel.has(g.key)} onChange={() => toggle(g.key)} /></td>
                       <td className="rg" title={g.org}>{label(g)}</td>
                       <td className="nm">
-                        <button type="button" className="aw-link" onClick={() => setOpen(open === g.key ? null : g.key)} aria-expanded={open === g.key}>{g.name}</button>
+                        <button type="button" className="aw-link" onClick={() => toggleOpen(g)} aria-expanded={open === g.key}>{g.name}</button>
                         <span className="no">{g.no}-{g.ord}{g.notices.length > 1 ? ` 외 공고 ${g.notices.length - 1}건` : ''}{g.budget ? ` · 예산 ${won(g.budget)}원` : ''}</span>
                         {g.flags.length > 0 && <span className="fl">{g.flags.join(' · ')}</span>}
                       </td>
