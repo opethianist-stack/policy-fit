@@ -1,5 +1,5 @@
-// 매뉴얼 PDF(public/manual.pdf) 만들기: 표지 + 개요(브랜드·마스코트) + 로그인 + 8단계 + 관리자 대시보드, 한 쪽에 설명 + 화면 캡처, A4 가로.
-// 사용: node scripts/manual/build.js <캡처 폴더(jpg/login·1~8·admin.jpg가 있는 곳)> public/manual.pdf
+// 매뉴얼 PDF(public/manual.pdf) 만들기: 표지 + 개요(브랜드·마스코트) + 로그인 + 8단계 + 수주 현황 + 관리자 대시보드, 한 쪽에 설명 + 화면 캡처, A4 가로.
+// 사용: node scripts/manual/build.js <캡처 폴더(jpg/login·1~8·awards·admin.jpg가 있는 곳)> public/manual.pdf
 // 화면 설명 문구는 아래 STEPS. 화면이 바뀌면 capture.js로 다시 찍고 이 파일의 문구도 고친다
 const { chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright');
 const { execFileSync } = require('child_process');
@@ -52,6 +52,12 @@ const STEPS = [
     '위 입력칸에서 두 줄 헤드라인을 바로 고치고, "AI 문구 다듬기"로 칸 요약 문구를 채웁니다.',
     '글꼴(Noto Sans KR·Pretendard·나눔고딕 등)과 색을 바꿔 볼 수 있고, "이 구도 PDF로 저장"·"추천 구도 전체 PDF"로 내려받습니다.',
     '제안사 쪽 칸(수행 실적, 대응 방향)은 비워 두고 들어갈 내용만 흐리게 적습니다.']],
+  ['awards', '수주 현황', '수주 현황', [
+    '사업명 키워드와 공고 게시 기간(최대 12개월), 필요하면 수요기관을 넣고 조회합니다. 나라장터의 입찰공고·개찰결과·최종낙찰·계약을 사업 단위로 묶어 보여 줍니다. 처음 조회는 20~40초 걸립니다.',
+    '기관별 수주 현황에는 배정예산, 개찰일·참여 수, 1순위와 투찰액(예산 대비)·평가점수, 2순위, 상태, 계약업체와 공동수급 지분이 나옵니다. 사업명을 누르면 개찰순위 전체와 공고·계약 내역이 펼쳐집니다.',
+    '취소·재공고·가격협상 공고는 같은 사업으로 묶고, 계약에 공고번호가 없으면 계약명·기관으로 맞춥니다. 1순위만 있고 최종낙찰·계약이 없으면 "1순위(낙찰 미등록)"로 두고 낙찰자로 단정하지 않습니다.',
+    '키워드가 들어간 다른 사업도 잡히므로 체크박스로 대상 사업만 남깁니다. 개찰순위 전체·낙찰 컨소시엄·업체별 집계·업체×기관 순위는 남긴 사업으로 계산하고, "엑셀 내보내기"로 여섯 표를 한 파일로 받습니다.',
+    '탈락한 입찰자의 컨소시엄 구성은 나라장터 공개 데이터에 없습니다.']],
   ['admin', '관리자 대시보드', '관리자 대시보드', [
     '관리자 계정에만 보이는 탭입니다.',
     '검색 키워드 상위 10개, 일별 검색 수, 근거가 약했던 발주기관과 위 요약 타일은 화면 구성을 보여 주는 시연용 예시 데이터입니다("예시" 표시).',
@@ -59,7 +65,7 @@ const STEPS = [
     '정책문서 색인 현황은 현재 색인 값입니다. 문서 수·쪽 수·OCR 쪽 수와 분류별 문서 수, 마지막 갱신 시각이 나옵니다.',
     '근거가 약했던 발주기관은 그 기관·주무부처 문서를 정책문서 폴더에 더 넣으라는 신호로 봅니다.']],
 ];
-const LABEL = { login: '시작', admin: '관리' };
+const LABEL = { login: '시작', awards: '수주', admin: '관리' };
 const num = (k) => LABEL[k] || k.padStart(2, '0');
 const page = (i, [k, t, where, lines]) => `<section class="pg"><div class="top"><span class="n${LABEL[k] ? ' x' : ''}">${num(k)}</span><span class="t">${t}</span><span class="w">${where} 화면</span><span class="c">${i + 1} / ${STEPS.length}</span></div>
 <div class="body"><ol>${lines.map((l) => `<li>${l}</li>`).join('')}</ol><div class="shot"><img src="${img(k)}"></div></div></section>`;
@@ -103,7 +109,7 @@ body{margin:0;font-family:'SUIT Variable','Noto Sans CJK KR',sans-serif;color:#1
 .hero .motif{position:absolute;width:60mm;left:50%;top:50%;transform:translate(-8mm,-54%);opacity:.28}
 .hero h1{position:relative;font-size:30pt;font-weight:800;margin:0 0 4mm;letter-spacing:-.02em}.hero h1 em{font-style:normal;color:#0000A3}
 .hero p{position:relative;font-size:12pt;color:#494949;margin:0}
-.cover ol{list-style:none;padding:0;margin:0 0 30mm;display:grid;grid-template-columns:repeat(5,1fr);gap:5mm}
+.cover ol{list-style:none;padding:0;margin:0 0 30mm;display:grid;grid-template-columns:repeat(4,1fr);gap:5mm}
 .cover li::before{display:none}.cover li{font-size:10pt;color:#494949;background:#fff;border:0.3mm solid #DDDDDD;border-radius:1.2mm;padding:3.6mm 5mm;margin:0}.cover li b{color:#0000A3;margin-right:2.6mm;font-weight:800}
 .foot{display:flex;justify-content:space-between;font-size:8pt;color:#9A9A9A}
 .top{display:flex;align-items:baseline;gap:4mm;border-bottom:0.4mm solid #DDDDDD;padding-bottom:4mm;margin-bottom:7mm}

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const TABS = [
   { href: '/', label: '개요' },
   { href: '/search', label: '공고 검색' },
+  { href: '/awards', label: '수주 현황' },
   { href: '/api-test', label: 'API 연결 테스트', admin: true },
   { href: '/admin', label: '관리자 대시보드', admin: true },
 ];
