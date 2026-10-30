@@ -1497,6 +1497,8 @@
     if (cnt) f.push(['참여', cnt + '곳']);
     var t = it.rank && it.rank.top;
     if (t && (t.tech || t.price)) f.push(['1순위 점수', '기술 ' + esc(t.tech || '-') + ' · 가격 ' + esc(t.price || '-')]);
+    var t2 = it.rank && it.rank.second;   // 2순위 업체와 점수(기술점수가 없는 입찰·1인 투찰은 줄을 내지 않는다)
+    if (t2 && (t2.tech || t2.price)) f.push(['2순위', esc(t2.name) + ' <span class="meta">기술 ' + esc(t2.tech || '-') + ' · 가격 ' + esc(t2.price || '-') + '</span>']);
     return f;
   }
   function prevWinner(it) {
