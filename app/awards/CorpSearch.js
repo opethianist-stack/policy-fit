@@ -128,6 +128,14 @@ export default function CorpSearch({ initial }) {
         <button type="button" className="btn soft" onClick={exportXlsx} disabled={!data.awards.length}>엑셀 내보내기</button>
       </div>
 
+      {data.catalog && data.catalog.length > 0 && (
+        <details className="aw-limits">
+          <summary>카탈로그 등록 {data.catalog.length}건(낙찰 집계에서 뺌)</summary>
+          <p className="aw-muted">디지털서비스 카탈로그처럼 조달청에 상품을 등록한 수의계약입니다. 금액은 계약 한도액이고, 수요기관이 따로 주문해야 실제 계약이 됩니다.</p>
+          <ul>{data.catalog.map((a) => <li key={a.no}>{a.awardedAt} · {a.name} · {a.no}-{a.ord} · 한도 {won(a.amount)}원</li>)}</ul>
+        </details>
+      )}
+
       {data.awards.length ? (
         <div className="aw-scroll">
           <table className="aw-table">
