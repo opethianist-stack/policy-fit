@@ -166,6 +166,8 @@
   .sig.ok { color: var(--slate); }
   .sig.fail i { background: #E5484D; }
   .sig.fail { color: #B42318; }
+  .sig.warn i { background: #F79009; }
+  .sig.warn { color: var(--warn); }
   .rows { max-width: 1040px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 4px; overflow: hidden; }
   .row { display: grid; grid-template-columns: 130px minmax(0,1fr) 170px 190px; gap: 14px; align-items: center; width: 100%; padding: 13px 16px; text-align: left; border-top: 1px solid var(--hairline); }
   .row:first-child { border-top: none; }
@@ -1396,7 +1398,7 @@
         .concat(AGN.map(function (x, i) { return { at: x.postedAt || '', html: agencyRow(x, i) }; }))
         .sort(function (a, b) { return b.at.localeCompare(a.at); });
       findState(pd.label + ' 용역 입찰공고 ' + BIDS.length + '건' + (AGN.length ? ' · 기관 게시판 공고' + (fr ? '' : '(최근 1년)') + ' ' + AGN.length + '건' : '') + (q ? ' (검색어: ' + q + ')' : '') +
-        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : d.ok && d.total > BIDS.length ? ' · 최근 ' + BIDS.length + '건만 표시(검색어를 더 구체적으로 넣으면 좁혀집니다)' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')), false, 'done');
+        (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : d.ok && d.total > BIDS.length ? ' · 최근 ' + BIDS.length + '건만 표시(검색어를 더 구체적으로 넣으면 좁혀집니다)' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' + (d.error ? '(' + d.error + ')' : '') : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')), false, 'done');
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
       track('find', { target: 'bid', q: q || '', period: pd.label, n: BIDS.length, boards: AGN.length });
     }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
@@ -2678,17 +2680,20 @@
 
   /* ---------- 연결 상태 ---------- */
   var SIG = { g2b: '나라장터', inst: '공공기관 정보' };
-  function setSig(id, state, reason) {
+  // 실패 종류(/api/health kind)마다 문구를 달리한다 — 일일 한도 초과·포털 오류·응답 지연은 "연결 안 됨"과 다르다
+  var SIGKIND = { limit: ' 일일 호출 한도 초과', error: ' 포털 일시 오류', slow: ' 응답 지연', down: ' 연결 안 됨' };
+  function setSig(id, state, reason, kind) {
     var el = $('sig-' + id);
-    el.className = 'sig' + (state ? ' ' + state : '');
-    el.lastElementChild.textContent = SIG[id] + (state === 'fail' ? ' 연결 안 됨' : state === 'ok' ? '' : ' 확인 불가');
-    el.title = reason || '';
+    var warn = state === 'fail' && (kind === 'slow' || kind === 'error');
+    el.className = 'sig' + (state ? ' ' + (warn ? 'warn' : state) : '');
+    el.lastElementChild.textContent = SIG[id] + (state === 'fail' ? (SIGKIND[kind] || ' 연결 안 됨') : state === 'ok' ? '' : ' 확인 불가');
+    el.title = (reason || '') + (kind === 'limit' ? ' · 공고 키워드 검색이 자정(KST)까지 안 될 수 있습니다' : '');
   }
   function checkHealth() {
     fetch('/api/health', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (d) {
-        ['g2b', 'inst'].forEach(function (id) { var x = d[id] || {}; setSig(id, x.ok ? 'ok' : 'fail', x.reason); });
+        ['g2b', 'inst'].forEach(function (id) { var x = d[id] || {}; setSig(id, x.ok ? 'ok' : 'fail', x.reason, x.kind); });
       })
       .catch(function () { setSig('g2b', ''); setSig('inst', ''); });
   }
