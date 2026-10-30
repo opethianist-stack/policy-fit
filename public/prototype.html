@@ -1497,26 +1497,10 @@
     if (cnt) f.push(['참여', cnt + '곳']);
     var t = it.rank && it.rank.top;
     if (t && (t.tech || t.price)) f.push(['1순위 점수', '기술 ' + esc(t.tech || '-') + ' · 가격 ' + esc(t.price || '-')]);
-    var g = scoreGap(t, it.rank && it.rank.second);
-    if (g) f.push(['2순위와 차이', '기술 ' + gapNum(g.dt) + ' · 가격 ' + gapNum(g.dp) + ' <span class="meta">→ ' + g.verdict + ' (2순위 ' + esc(it.rank.second.name) + ')</span>']);
+    var t2 = it.rank && it.rank.second;   // 2순위 업체와 점수(기술점수가 없는 입찰·1인 투찰은 줄을 내지 않는다)
+    if (t2 && (t2.tech || t2.price)) f.push(['2순위', esc(t2.name) + ' <span class="meta">기술 ' + esc(t2.tech || '-') + ' · 가격 ' + esc(t2.price || '-') + '</span>']);
     return f;
   }
-  // 1·2순위 기술·가격 점수 차이로 "어디서 갈렸는지"를 한마디로. 기술점수가 없는 입찰(가격만)·1인 투찰은 null
-  function scoreGap(a, b) {
-    if (!a || !b) return null;
-    var n = function (v) { var x = parseFloat(v); return isFinite(x) ? x : null; };
-    var t1 = n(a.tech), p1 = n(a.price), t2 = n(b.tech), p2 = n(b.price);
-    if (t1 == null || p1 == null || t2 == null || p2 == null || (!t1 && !t2)) return null;
-    var dt = t1 - t2, dp = p1 - p2, v;
-    // 판정은 0.05점 미만 차이를 같은 것으로 본다(가격 −0.01 같은 차이로 "2순위가 높음"이라 하지 않게). 보이는 숫자는 그대로
-    var T = Math.abs(dt) < 0.05 ? 0 : dt, P = Math.abs(dp) < 0.05 ? 0 : dp;
-    if (T > 0 && P > 0) v = T >= P * 2 ? '주로 기술에서 앞섬(가격도 앞섬)' : P >= T * 2 ? '주로 가격에서 앞섬(기술도 앞섬)' : '기술·가격 모두 앞섬';
-    else if (T > 0) v = P < 0 ? '기술로 앞섬, 가격은 2순위가 높음' : '기술에서 앞섬';
-    else if (P > 0) v = T < 0 ? '가격으로 앞섬, 기술은 2순위가 높음' : '가격에서 앞섬';
-    else v = T || P ? '기술·가격 점수만으로는 순위가 설명되지 않음' : '점수 차이가 거의 없음';   // 감점·동점 처리 등
-    return { dt: dt, dp: dp, verdict: v };
-  }
-  function gapNum(d) { var a = Math.abs(d).toFixed(2); return (a === '0.00' ? '±' : d > 0 ? '+' : '−') + a; }
   function prevWinner(it) {
     var c = it.contract, a = it.award, o = it.opening;
     if (c && c.corps.length) return c.corps[0].name + (c.corps.length > 1 ? ' 외 ' + (c.corps.length - 1) : '');
