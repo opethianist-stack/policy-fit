@@ -59,10 +59,10 @@ const BASE = 'http://localhost:3100';
   await shot('8');
   // 수주 현황(낙찰·계약 조회): 디지털배움터 2026-01~10, 첫 사업을 펼쳐 개찰순위·계약을 보인다
   await p.goto(BASE + '/awards'); await p.waitForTimeout(800);
-  await p.fill('.aw-form input:not([type=month])', '디지털배움터');
-  await p.locator('.aw-form input[type=month]').nth(0).fill('2026-01');
-  await p.locator('.aw-form input[type=month]').nth(1).fill('2026-10');
-  await p.locator('.aw-form button').dispatchEvent('click');
+  await p.fill('div:not([hidden]) > .aw-form input:not([type=month])', '디지털배움터');
+  await p.locator('div:not([hidden]) > .aw-form input[type=month]').nth(0).fill('2026-01');
+  await p.locator('div:not([hidden]) > .aw-form input[type=month]').nth(1).fill('2026-10');
+  await p.locator('div:not([hidden]) > .aw-form button').dispatchEvent('click');
   await p.waitForSelector('.aw-summary', { timeout: 90000 });
   await p.locator('.aw-link').nth(0).dispatchEvent('click');
   await p.evaluate(() => window.scrollTo(0, document.querySelector('.aw-summary').getBoundingClientRect().top + window.scrollY - 20)); await shot('awards');

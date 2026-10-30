@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { downloadXlsx } from './xlsx';
+import CorpSearch from './CorpSearch';
 
 // 수주 현황: 사업명 키워드 + 기간으로 나라장터 공고·개찰순위·최종낙찰·계약(공동수급 지분)을 공고 단위로 묶어 본다.
 // 서버(/api/awards)가 묶어 주고, 표 여섯 개와 엑셀은 화면에서 고른 사업만으로 만든다(키워드 잡음은 담당자가 빼게)
@@ -122,6 +123,8 @@ const VIEWS = [
 ];
 
 export default function Awards() {
+  const [mode, setMode] = useState('name');
+  const [corpQ, setCorpQ] = useState(null);
   const [q, setQ] = useState('');
   const [from, setFrom] = useState(monthNow().slice(0, 4) + '-01');
   const [to, setTo] = useState(monthNow());
@@ -141,6 +144,7 @@ export default function Awards() {
   // 공고 검색 화면의 "작년 같은 사업"에서 넘어오면(?q=&from=&to=&org=) 바로 조회한다
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
+    if (p.get('corp')) { setMode('corp'); setCorpQ({ v: p.get('corp').trim(), n: 1 }); return; }
     const q0 = (p.get('q') || '').trim();
     if (!q0) return;
     const ym = /^\d{4}-\d{2}$/;
@@ -226,6 +230,7 @@ export default function Awards() {
     } catch { /* 그대로 둔다 */ }
   }
 
+  function openCorp(biz) { setCorpQ({ v: biz, n: Date.now() }); setMode('corp'); window.scrollTo(0, 0); }
   function toggle(k) { const s = new Set(sel); s.has(k) ? s.delete(k) : s.add(k); setSel(s); }
   function all(on) { setSel(on ? new Set(data.groups.map((g) => g.key)) : new Set()); }
 
@@ -251,7 +256,15 @@ export default function Awards() {
   return (
     <main className="page awards">
       <h1>수주 현황</h1>
-      <p className="aw-lead">사업명 키워드와 기간으로 나라장터 공고의 개찰순위·최종낙찰·계약(공동수급 지분)을 사업 단위로 묶어 봅니다.</p>
+      <p className="aw-lead">{mode === 'name'
+        ? '사업명 키워드와 기간으로 나라장터 공고의 개찰순위·최종낙찰·계약(공동수급 지분)을 사업 단위로 묶어 봅니다.'
+        : '업체의 조달청 등록 정보와 그 업체가 대표로 낙찰받은 사업을 봅니다.'}</p>
+      <nav className="aw-mode" aria-label="찾는 방법">
+        <button type="button" className={mode === 'name' ? 'on' : ''} aria-pressed={mode === 'name'} onClick={() => setMode('name')}>사업명으로 찾기</button>
+        <button type="button" className={mode === 'corp' ? 'on' : ''} aria-pressed={mode === 'corp'} onClick={() => setMode('corp')}>업체로 찾기</button>
+      </nav>
+      <div hidden={mode !== 'corp'}><CorpSearch initial={corpQ} /></div>
+      <div hidden={mode !== 'name'}>
 
       <form className="aw-form" onSubmit={run}>
         <label className="grow"><span>사업명 키워드</span>
@@ -337,7 +350,9 @@ export default function Awards() {
                                 <thead><tr><th className="n">순위</th><th>업체</th><th className="n">투찰액</th><th className="n">기술</th><th className="n">가격</th><th className="n">종합</th><th>비고</th></tr></thead>
                                 <tbody>{rows.map((r, i) => (
                                   <tr key={i} className={r.rank === 1 ? 'top' : r.rank == null ? 'bad' : ''}>
-                                    <td className="n">{r.rank ?? '–'}</td><td>{r.name}</td><td className="n">{won(r.amount)}</td>
+                                    <td className="n">{r.rank ?? '–'}</td>
+                                    <td>{r.biz ? <button type="button" className="aw-link plain" title="이 업체의 낙찰 사업 보기" onClick={() => openCorp(r.biz)}>{r.name}</button> : r.name}</td>
+                                    <td className="n">{won(r.amount)}</td>
                                     <td className="n">{r.tech}{r.techRaw ? ` (${r.techRaw})` : ''}</td><td className="n">{r.price}</td><td className="n">{r.total}</td><td>{r.note}</td>
                                   </tr>))}</tbody>
                               </table>
@@ -396,6 +411,7 @@ export default function Awards() {
           </>);
         })()}
       </>)}
+      </div>
     </main>
   );
 }
