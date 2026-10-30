@@ -32,7 +32,9 @@ const BASE = 'http://localhost:3100';
   await tap('button[type=submit]');
   await f.waitForFunction(() => /관련도순|키워드순/.test(document.querySelector('#ai-rank-msg').textContent + document.querySelector('#result-count').textContent) && !document.querySelector('.rank-wait'), null, { timeout: 120000 });
   await f.waitForTimeout(1500);
-  // 2 발주처 계보(공고 카드·제안요청서·계보)
+  // 공고 카드의 "작년 같은 사업"이 다 찾아질 때까지
+  await f.waitForFunction(() => { const x = document.querySelector('#prev-box'); return !x || !/찾고 있습니다/.test(x.textContent); }, null, { timeout: 120000 });
+  // 2 발주처 계보(공고 카드·작년 같은 사업·제안요청서·계보)
   await scrollTo('#s-search .scroll', '#notice-card', 10); await shot('2');
   // 3 정책 근거 검색(검색어·결과)
   await scrollTo('#s-search .scroll', '#terms', 14); await shot('3');

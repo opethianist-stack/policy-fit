@@ -138,16 +138,27 @@ export default function Awards() {
   const [rankState, setRankState] = useState(null);
 
   useEffect(() => () => clearInterval(timer.current), []);
+  // 공고 검색 화면의 "작년 같은 사업"에서 넘어오면(?q=&from=&to=&org=) 바로 조회한다
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const q0 = (p.get('q') || '').trim();
+    if (!q0) return;
+    const ym = /^\d{4}-\d{2}$/;
+    const o = { q: q0, from: ym.test(p.get('from') || '') ? p.get('from') : from, to: ym.test(p.get('to') || '') ? p.get('to') : to, org: p.get('org') || '' };
+    setQ(o.q); setFrom(o.from); setTo(o.to); setOrg(o.org);
+    run(null, o);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function run(e) {
+  async function run(e, over) {
     if (e) e.preventDefault();
-    if (!q.trim()) { setErr('사업명 키워드를 넣어 주세요.'); return; }
+    const c = over || { q, from, to, org };
+    if (!c.q.trim()) { setErr('사업명 키워드를 넣어 주세요.'); return; }
     setBusy(true); setErr(''); setSec(0);
     const t0 = Date.now();
     clearInterval(timer.current);
     timer.current = setInterval(() => setSec(Math.round((Date.now() - t0) / 1000)), 500);
     try {
-      const u = `/api/awards?q=${encodeURIComponent(q.trim())}&from=${from}&to=${to}&org=${encodeURIComponent(org.trim())}`;
+      const u = `/api/awards?q=${encodeURIComponent(c.q.trim())}&from=${c.from}&to=${c.to}&org=${encodeURIComponent(c.org.trim())}`;
       const r = await fetch(u, { cache: 'no-store' });
       const j = await r.json().catch(() => ({ ok: false, error: '응답을 읽지 못했습니다.' }));
       if (!j.ok) { setErr(j.error || '조회에 실패했습니다.'); setData(null); }

@@ -209,6 +209,23 @@
   .lm-code::before { content: '('; } .lm-code::after { content: ')'; }
   .lm .meta { font-weight: 400; }
   .lm-or { font-weight: 500; color: var(--muted); font-size: 11.5px; }
+  .notice .prev { grid-column: 1 / -1; padding-top: 12px; border-top: 1px solid var(--hairline); }
+  .notice .prev .k { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .notice .prev .k .meta { margin-left: 6px; }
+  .pv-name { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.45; }
+  .pv-st { display: inline-block; font-size: 11px; font-weight: 600; color: var(--brand); background: var(--brand-tint); border-radius: 2px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+  .pv-st.weak { color: var(--slate); background: var(--soft); }
+  .pv-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .prev .lm-list { margin-top: 6px; }
+  .pv-flags { font-size: 11.5px; color: var(--warn); margin-top: 4px; }
+  .pv-more { margin-top: 8px; }
+  .pv-more summary { font-size: 12px; color: var(--slate); cursor: pointer; }
+  .pv-row { font-size: 12px; color: var(--slate); padding: 5px 0 0 12px; line-height: 1.45; }
+  .pv-row b { font-weight: 600; color: var(--ink); }
+  .pv-foot { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+  .pv-link { font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; }
+  .pv-link:hover { text-decoration: underline; }
+  .pv-busy { font-size: 12px; color: var(--brand); font-weight: 700; }
   .notice .files { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--hairline); }
   .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; color: var(--slate); background: var(--soft); border-radius: 2px; padding: 5px 11px; text-decoration: none; max-width: 100%; }
   .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1443,7 +1460,84 @@
       '<div><div class="k">' + (n.budget ? '배정예산' : '추정가격') + '</div><div class="v">' + won(n.budget || n.estimatedPrice) + '</div></div>' +
       '<div><div class="k">입찰마감</div><div class="v">' + esc((n.closeAt || '-').slice(0, 16)) + '</div></div>') +
       (n.manual ? '' : limitsHtml(n.limits)) +
+      (prevEligible(n) ? '<div class="prev" id="prev-box"></div>' : '') +
       (files || link ? '<div class="files">' + link + files + '</div>' : '');
+    if (prevEligible(n)) { paintPrev(); loadPrev(); }
+  }
+
+  // 작년 같은 사업: 공고명 핵심어로 지난 12개월 공고를 찾아 같은 기관(또는 한 기관이 시도별로 낸 같은 사업)의 낙찰·계약을 보인다.
+  // 결과는 작업에 함께 저장한다(S.prev). 실패하면 저장하지 않고 다음에 다시 찾는다
+  var PREVSEQ = 0, PREVBUSY = '';
+  function prevEligible(n) { var k = recentMeta(n).kind; return (k === 'bid' || k === 'spec') && !!n.name && !!n.demandOrg; }
+  function loadPrev() {
+    var n = S.notice;
+    if (!n || (S.prev && S.prev.state === 'done') || PREVBUSY === S.no) return;
+    var my = ++PREVSEQ, key = S.no;
+    PREVBUSY = key;
+    function fin(v) {
+      if (PREVBUSY === key) PREVBUSY = '';
+      if (my !== PREVSEQ || S.no !== key) return;
+      S.prev = v; paintPrev();
+    }
+    api('/api/awards', { prev: 1, no: S.no, name: n.name, org: n.demandOrg, at: String(n.postedAt || '').slice(0, 10) })
+      .then(function (d) { fin(d.ok ? { state: 'done', data: d } : { state: 'err', error: d.error || '조회하지 못했습니다.' }); })
+      .catch(function () { fin({ state: 'err', error: '서버에 연결하지 못했습니다.' }); });
+  }
+  function prevFacts(it) {
+    var f = [], c = it.contract, a = it.award, o = it.opening;
+    var multi = c && c.corps.length > 1;
+    if (c && c.corps.length) f.push(['계약', c.corps.map(function (x) { return esc(x.name) + (multi && x.share != null ? ' ' + x.share + '%' : ''); }).join(', ')]);
+    else if (a && a.name) f.push(['낙찰', esc(a.name)]);
+    else if (o && o.first) f.push(['1순위', esc(o.first.name)]);
+    var amt = c ? c.amount : a ? a.amount : o && o.first ? o.first.amount : 0;
+    if (amt) f.push([c ? '계약액' : a ? '낙찰액' : '투찰액', won(amt) + (it.budget ? ' <span class="meta">(예산 대비 ' + (amt / it.budget * 100).toFixed(1) + '%)</span>' : '')]);
+    var cnt = it.rank ? it.rank.count : o ? o.count : 0;
+    if (cnt) f.push(['참여', cnt + '곳']);
+    var t = it.rank && it.rank.top;
+    if (t && (t.tech || t.price)) f.push(['1순위 점수', '기술 ' + esc(t.tech || '-') + ' · 가격 ' + esc(t.price || '-')]);
+    return f;
+  }
+  function prevWinner(it) {
+    var c = it.contract, a = it.award, o = it.opening;
+    if (c && c.corps.length) return c.corps[0].name + (c.corps.length > 1 ? ' 외 ' + (c.corps.length - 1) : '');
+    return (a && a.name) || (o && o.first && o.first.name + '(1순위)') || '';
+  }
+  function prevLink(it) {
+    var m = it.months || [];
+    return '/awards?q=' + encodeURIComponent(it.kw || '') + '&from=' + (m[0] || '') + '&to=' + (m[m.length - 1] || '') + '&org=' + encodeURIComponent(it.org || '');
+  }
+  function paintPrev() {
+    var box = $('prev-box'); if (!box) return;
+    var p = S.prev, head = '<div class="k">작년 같은 사업';
+    if (!p || p.state !== 'done') {
+      box.innerHTML = head + '</div>' + (PREVBUSY === S.no || !p ? '<span class="pv-busy">지난 1년 공고에서 찾고 있습니다</span>'
+        : '<span class="meta">' + esc(p.error) + '</span>');
+      return;
+    }
+    var d = p.data, items = d.items || [];
+    head += '<span class="meta">' + esc(d.from) + ' ~ ' + esc(d.to) + ' 공고' + ((d.keywords || []).length ? ' · 찾은 말 ' + esc(d.keywords.join(', ')) : '') + '</span></div>';
+    if (!items.length) {
+      box.innerHTML = head + '<span class="meta">' + (d.reason ? esc(d.reason) : '같은 기관이 낸 이름이 비슷한 사업이 없습니다.') + '</span>';
+      return;
+    }
+    var it = items[0];
+    var weak = !/^계약|^낙찰/.test(it.status || '');
+    var html = head +
+      '<div class="pv-name">' + esc(it.name) + '<span class="pv-st' + (weak ? ' weak' : '') + '">' + esc(it.status || '') + '</span></div>' +
+      '<div class="pv-sub">' + esc(it.posted || '') + ' 공고 · ' + (it.same ? '이름이 같은 사업' : '이름이 비슷한 사업') +
+        (it.sameOrg ? '' : ' · ' + esc(it.org) + ' 발주') + '</div>';
+    var f = prevFacts(it);
+    if (f.length) html += '<div class="lm-list">' + f.map(function (x) { return '<span class="lm"><b>' + x[0] + '</b>' + x[1] + '</span>'; }).join('') + '</div>';
+    if ((it.flags || []).length) html += '<div class="pv-flags">' + esc(it.flags.join(' · ')) + '</div>';
+    if (items.length > 1) {
+      html += '<details class="pv-more"><summary>이름이 비슷한 사업 ' + (items.length - 1) + '건 더</summary>' + items.slice(1).map(function (x) {
+        var w = prevWinner(x);
+        return '<div class="pv-row"><b>' + esc(x.name) + '</b> · ' + esc(x.status || '') + (w ? ' · ' + esc(w) : '') + ' · ' + esc(x.posted || '') +
+          (x.sameOrg ? '' : ' · ' + esc(x.org)) + ' <a class="pv-link" target="_top" href="' + esc(prevLink(x)) + '">수주 현황</a></div>';
+      }).join('') + '</details>';
+    }
+    html += '<div class="pv-foot"><a class="pv-link" target="_top" href="' + esc(prevLink(it)) + '">수주 현황에서 개찰순위·컨소시엄 보기</a></div>';
+    box.innerHTML = html;
   }
   // 투찰 제한 한 줄: 업종(면허)제한 · 참가가능지역 · 지역의무 공동도급 · 공동수급.
   // 업종 제한 그룹은 서로 대안(그룹 중 하나 충족), 같은 그룹 안의 업종은 함께 필요한 것으로 보고 "또는"·"+"로 잇는다
