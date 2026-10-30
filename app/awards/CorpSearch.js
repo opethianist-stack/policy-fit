@@ -77,7 +77,7 @@ export default function CorpSearch({ initial }) {
   return (<>
     <form className="aw-form" onSubmit={run}>
       <label className="grow"><span>업체 이름 또는 사업자등록번호</span>
-        <input value={c} onChange={(e) => setC(e.target.value)} placeholder="예: 581-88-00303 또는 엘리스그룹" /></label>
+        <input value={c} onChange={(e) => setC(e.target.value)} placeholder="예: 105-82-01810 또는 한국능률협회" /></label>
       <label><span>공고 게시 기간</span>
         <span className="aw-period">
           <input type="month" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="시작 월" />

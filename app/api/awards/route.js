@@ -7,8 +7,8 @@ export const maxDuration = 60;
 // GET /api/awards?q=디지털배움터&from=2026-01&to=2026-10&org= → 공고 단위로 묶은 개찰·낙찰·계약(개찰순위는 빼고)
 // GET /api/awards?ranks=R26BK01330784-000,R26BK01394978-000 → 여러 공고의 개찰순위 전체(화면이 표를 띄운 뒤 부른다)
 // GET /api/awards?no=R26BK01330784&ord=000 → 공고 하나의 개찰순위 전체
-// GET /api/awards?corp=581-88-00303&from=2026-01&to=2026-10 → 업체 정보 + 그 업체의 대표 낙찰 사업
-// GET /api/awards?corp=엘리스 → 받아 둔 자료에 나온 업체 중 이름이 맞는 후보(사업자번호)
+// GET /api/awards?corp=105-82-01810&from=2026-01&to=2026-10 → 업체 정보 + 그 업체의 대표 낙찰 사업
+// GET /api/awards?corp=한국능률협회 → 받아 둔 자료에 나온 업체 중 이름이 맞는 후보(사업자번호)
 // GET /api/awards?prev=1&no=&name=&org=&at=2026-02-11 → 작년 같은 사업(공고 검색 화면의 공고 카드)
 export async function GET(req) {
   const sp = new URL(req.url).searchParams;
