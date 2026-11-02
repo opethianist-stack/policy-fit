@@ -460,6 +460,12 @@ Vercel 환경변수에만 둔다. 로컬·Codespace 실행이 필요하면 `.env
 
 "이 보고서는 OOO 프로젝트의 일환으로 작성되었음" 류의 문장. 워드·PPT뿐 아니라 다이어그램·아티팩트 등 모든 산출물에 적용. 구조적 라벨(제목/헤더)만 유지한다.
 
+**⑤ 회사 PC 제약**
+
+- Cloudoc 때문에 브라우저 자동 다운로드가 안 된다. 다운로드가 필요하면 링크 목록을 주고 직접 받는 방식으로
+- 보안 정책상 `Program Files` 쓰기가 막혀 Git 설치가 실패한다(관리자 권한으로도 동일). 그래서 Codespaces를 쓴다. 정식 설치는 IT팀에 요청 중
+
+
 **⑥ AI·검색·구도 코드를 고치면 PR 전에 회귀 검사를 돌린다(STEP74, 2026-11-02)**
 
 STEP66(#53)에서 관련도 판정을 고치다 같은 파일의 역할 분류·검색어 추천이 함께 깨졌고(프롬프트 변수 이름이 바뀌어 `user is not defined`), 배포본에서 3일 동안 아무도 몰랐다. 그래서:
@@ -467,11 +473,6 @@ STEP66(#53)에서 관련도 판정을 고치다 같은 파일의 역할 분류·
 - `lib/ai.js`·`lib/llm.js`·`lib/search.js`·`lib/match.js`·`lib/rfp.js`·`app/api/ai`를 고치면 → `node scripts/check_ai.mjs`. 합덕제철고 공고로 색인 검색을 한 뒤 다섯 작업(terms·rank·roles·draft·deck)을 실제 키로 한 번씩 부른다. 오류이거나 결과가 비면(추천 0개, 판정 0건·묶음 호출 실패·3점 이상 없음, 분류 0건, 불릿·헤드라인·수렴점 중 빈 것, 장표 문구 없음) 실패로 보고 종료 코드 1. 작업별 소요 시간과 검증에서 뺀 항목 수도 찍는다. 실측(2026-11-02): 다섯 작업 모두 통과, 2~6초씩, 한 번 약 22초. 역할 분류에 예전 버그를 일부러 다시 넣어 돌리면 "실패 역할 분류 — AI 처리 중 오류"로 잡힌다(확인함). 실제 모델을 불러 한 번에 몇 센트
 - `lib/draft.js`(구도)·`public/prototype.html`의 `slideHtml`을 고치면 → `node scripts/check_deck.mjs`(빈 장표 검사, 4절 ⑧)
 - 둘 다 `POLICYFIT_AUTH_DISABLED=1 next start -p 3100`을 띄운 상태에서. `check_ai`는 키(`POLICYFIT_ANTHROPIC_KEY` — 이 작업 환경 이름)가 있어야 한다. GitHub Actions에서 자동으로 돌리려면 Anthropic 키를 Secrets에 따로 넣어야 해서 지금은 로컬 실행만
-
-**⑤ 회사 PC 제약**
-
-- Cloudoc 때문에 브라우저 자동 다운로드가 안 된다. 다운로드가 필요하면 링크 목록을 주고 직접 받는 방식으로
-- 보안 정책상 `Program Files` 쓰기가 막혀 Git 설치가 실패한다(관리자 권한으로도 동일). 그래서 Codespaces를 쓴다. 정식 설치는 IT팀에 요청 중
 
 ---
 
