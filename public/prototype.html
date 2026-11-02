@@ -377,6 +377,10 @@
   .rank-wait span { font-size: 12px; color: var(--slate); line-height: 1.55; }
   @keyframes rw-spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .rank-wait i { animation: none; } }
+  /* 공고 찾기 진행 중: 조회 버튼이 취소로 바뀌고 목록 자리에 진행 상자 */
+  .find-wait { margin-top: 10px; align-items: center; }
+  .find-wait > div { flex: 1; min-width: 0; }
+  .field .btn.cancel { background: #fff; color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
   .ai-drop { display: inline-block; position: relative; }
   .ai-drop summary { cursor: pointer; list-style: none; color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
   .ai-drop summary::-webkit-details-marker { display: none; }
@@ -775,7 +779,7 @@
               <select id="f-mode" aria-label="검색 방법" onchange="findMode(true)"><option value="kw" selected>키워드</option><option value="no">공고번호</option></select>
             </div>
             <input id="no-input" type="text" inputmode="text" autocomplete="off" placeholder="예: R26BK01732376" aria-label="입찰공고번호">
-            <button class="btn primary" type="submit">조회</button>
+            <button class="btn primary" type="submit" id="find-go">조회</button>
           </form>
           <div class="find-opts" id="find-opts">
             <select id="f-days" aria-label="조회 기간" onchange="periodMode()"></select>
@@ -1008,9 +1012,9 @@
   }
   function $(id) { return document.getElementById(id); }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function api(path, params) {
+  function api(path, params, signal) {
     var q = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
-    return fetch(path + '?' + q, { cache: 'no-store' }).then(function (r) {
+    return fetch(path + '?' + q, { cache: 'no-store', signal: signal }).then(function (r) {
       return r.json().catch(function () { return { ok: false, error: '응답을 읽지 못했습니다.' }; });
     });
   }
@@ -1332,6 +1336,7 @@
   };
   var BIDS = [];
   function findMode(reset) {
+    if (reset && FINDJOB) FINDJOB.stop();
     var t = $('f-target').value, m = $('f-mode'), f = FIND[t];
     m.querySelector('option[value="no"]').textContent = f.no[0];
     var kw = m.value === 'kw', inp = $('no-input');
@@ -1369,8 +1374,41 @@
     $('find-state').className = 'meta' + (isErr ? ' err' : kind ? ' ' + kind : '');
     if ($('f-mode').value !== 'kw') $('find-opts').classList.toggle('on', !!msg);
   }
+  // 찾는 동안: 조회 버튼은 취소로, 목록 자리에 경과 초를 보이는 진행 상자. 취소하면 요청을 끊고 늦게 온 응답은 버린다
+  var FINDJOB = null;
+  function findStart(label, hint) {
+    if (FINDJOB) FINDJOB.stop();
+    var ctl = window.AbortController ? new AbortController() : null, t0 = Date.now();
+    var job = { signal: ctl && ctl.signal, live: true };
+    var tick = function () {
+      var sec = Math.floor((Date.now() - t0) / 1000);
+      var b = $('find-wait-sec'); if (b) b.textContent = label + (sec ? ' ' + sec + '초' : '');
+    };
+    job.stop = function () { job.live = false; clearInterval(job.timer); if (ctl) ctl.abort(); if (FINDJOB === job) FINDJOB = null; findBusy(false); };
+    job.done = function () { if (!job.live) return false; job.live = false; clearInterval(job.timer); if (FINDJOB === job) FINDJOB = null; findBusy(false); return true; };
+    FINDJOB = job;
+    findState('');
+    $('find-list').innerHTML = '<div class="rank-wait find-wait" role="status"><i></i><div><b id="find-wait-sec">' + esc(label) + '</b><span>' + esc(hint || '나라장터에서 받아 오는 중입니다. 기간이 길거나 검색어가 넓으면 시간이 더 걸립니다. 오래 걸리면 취소하고 조건을 좁혀 보세요.') + '</span></div></div>';
+    findBusy(true);
+    job.timer = setInterval(tick, 500);
+    return job;
+  }
+  function findBusy(on) {
+    var b = $('find-go');
+    b.textContent = on ? '취소' : '조회';
+    b.className = on ? 'btn cancel' : 'btn primary';
+  }
+  function cancelFind() {
+    if (!FINDJOB) return;
+    FINDJOB.stop();
+    $('find-list').innerHTML = '';
+    findState('검색을 취소했습니다. 기간을 줄이거나 검색어를 더 구체적으로 넣어 보세요.');
+  }
+  // 취소로 끊긴 요청은 오류로 알리지 않는다
+  function findFail(job, msg) { if (job.done()) { $('find-list').innerHTML = ''; findState(msg, true); } }
   function submitFind(e) {
     e.preventDefault();
+    if (FINDJOB) { cancelFind(); return; }   // 찾는 동안 조회 버튼은 취소
     var t = $('f-target').value, kw = $('f-mode').value === 'kw', v = $('no-input').value.trim();
     if (!kw && !v) return;
     // 입찰공고 번호칸에 한국과학창의재단 사업공고 번호(2026-P094)를 넣으면 그 공고를 찾는다
@@ -1382,14 +1420,15 @@
   function loadBids(q) {
     var pd = findPeriod();
     if (pd.error) { findState(pd.error, true); return; }
-    findState('입찰공고를 찾는 중' + (pd.span > 31 ? ' (기간이 길어 몇 초 더 걸립니다)' : ''), false, 'busy'); $('find-list').innerHTML = '';
+    var job = findStart('입찰공고를 찾는 중', pd.span > 31 ? '기간이 길어 31일씩 나눠 받습니다. 몇 초 더 걸립니다.' : '');
     var bq = { q: q, limit: pd.span > 31 ? '50' : '20' }; for (var k0 in pd.q) bq[k0] = pd.q[k0];
     Promise.all([
-      api('/api/bids', bq),
-      api('/api/boards', { q: q, limit: pd.q.from ? '300' : '50' }).catch(function () { return { ok: false }; })
+      api('/api/bids', bq, job.signal),
+      api('/api/boards', { q: q, limit: pd.q.from ? '300' : '50' }, job.signal).catch(function () { return { ok: false }; })
     ]).then(function (r) {
+      if (!job.done()) return;
       var d = r[0], k = r[1];
-      if (!d.ok && !k.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
+      if (!d.ok && !k.ok) { $('find-list').innerHTML = ''; findState(d.error || '불러오지 못했습니다.', true); return; }
       BIDS = d.ok ? d.items : [];
       // 기간을 지정하면 게시판 글도 그 기간으로 자른다. 최근 N일을 고르면 게시판은 최근 1년치(지난 공고도 참고)
       var fr = pd.q.from && pd.q.from.replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3'), to = pd.q.to && pd.q.to.replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3');
@@ -1401,7 +1440,7 @@
         (d.capped ? ' · 결과가 많아 최근 공고 위주로 봅니다' : d.ok && d.total > BIDS.length ? ' · 최근 ' + BIDS.length + '건만 표시(검색어를 더 구체적으로 넣으면 좁혀집니다)' : '') + (!d.ok ? ' · 나라장터를 불러오지 못했습니다' + (d.error ? '(' + d.error + ')' : '') : '') + (!k.ok ? ' · 기관 게시판 공고는 불러오지 못했습니다' : (k.failed || []).map(function (f) { return ' · ' + f.org + ' 게시판은 불러오지 못했습니다'; }).join('')), false, 'done');
       $('find-list').innerHTML = rows.map(function (x) { return x.html; }).join('') || '<div class="meta">맞는 공고가 없습니다.</div>';
       track('find', { target: 'bid', q: q || '', period: pd.label, n: BIDS.length, boards: AGN.length });
-    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+    }).catch(function () { findFail(job, '서버에 연결하지 못했습니다.'); });
   }
   function bidRow(x) {
     return '<div class="spec-item"><div class="nm">' + esc(x.name) + '</div>' +
@@ -1902,26 +1941,29 @@
   function loadSpec(q) {
     var pd = findPeriod();
     if (pd.error) { findState(pd.error, true); return; }
-    findState('사전규격을 불러오는 중', false, 'busy'); $('find-list').innerHTML = '';
+    var job = findStart('사전규격을 불러오는 중', '사전규격은 검색어 조건이 없어 기간 안의 규격을 모두 받아 거릅니다. 21일이면 20초 가까이 걸릴 수 있습니다.');
     var sq = { q: q, limit: '15' }; for (var k0 in pd.q) sq[k0] = pd.q[k0];
-    api('/api/prespec', sq).then(function (d) {
-      if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
+    api('/api/prespec', sq, job.signal).then(function (d) {
+      if (!job.done()) return;
+      if (!d.ok) { $('find-list').innerHTML = ''; findState(d.error || '불러오지 못했습니다.', true); return; }
       SPEC = d.items;
       findState(pd.label + ' 사전규격 ' + d.pool + '건 중 ' + SPEC.length + '건' + (q ? ' (검색어: ' + q + ')' : '') + (d.partial ? ' · 건수가 많아 일부만 봤습니다' : ''), false, 'done');
       renderSpec();
       track('find', { target: 'spec', q: q || '', period: pd.label, n: SPEC.length });
-    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+    }).catch(function () { findFail(job, '서버에 연결하지 못했습니다.'); });
   }
   // 규격번호로 찾으면 규격서가 있고 이어진 공고가 없을 때 바로 시작한다. 공고가 이미 났거나 규격서가 없으면 목록에 한 건을 보여 고르게 한다
   function openSpecNo(no) {
-    findState('사전규격을 찾는 중', false, 'busy'); $('find-list').innerHTML = '';
-    api('/api/prespec', { no: no }).then(function (d) {
+    var job = findStart('사전규격을 찾는 중', '규격번호로 찾고 있습니다.');
+    api('/api/prespec', { no: no }, job.signal).then(function (d) {
+      if (!job.done()) return;
+      $('find-list').innerHTML = '';
       if (!d.ok) { findState(d.error || '찾지 못했습니다.', true); return; }
       SPEC = [d.item];
       if (d.item.files.length && !d.item.notices.length) { findState(''); startSpec(0); return; }
       findState(d.item.notices.length ? '이미 입찰공고가 난 사전규격입니다. 공고로 시작하면 제안요청서·첨부를 함께 봅니다.' : '');
       renderSpec();
-    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+    }).catch(function () { findFail(job, '서버에 연결하지 못했습니다.'); });
   }
   function renderSpec() {
     $('find-list').innerHTML = SPEC.map(function (x, i) {
@@ -1939,13 +1981,15 @@
   var AGN = [];
   // 공고번호(2026-P094)로 찾을 때
   function loadAgency(q, no) {
-    findState('한국과학창의재단 사업공고를 찾는 중', false, 'busy'); $('find-list').innerHTML = '';
-    api('/api/boards', { q: q, limit: '50' }).then(function (d) {
+    var job = findStart('한국과학창의재단 사업공고를 찾는 중', '기관 게시판을 읽고 있습니다.');
+    api('/api/boards', { q: q, limit: '50' }, job.signal).then(function (d) {
+      if (!job.done()) return;
+      $('find-list').innerHTML = '';
       if (!d.ok) { findState(d.error || '불러오지 못했습니다.', true); return; }
       AGN = no ? d.items.filter(function (x) { return x.src === 'kosac' && x.no.toUpperCase() === no.toUpperCase(); }) : d.items;
       findState(AGN.length ? '' : '최근 한국과학창의재단 사업공고 중 공고번호 ' + no + '이(가) 없습니다.', !AGN.length);
       $('find-list').innerHTML = AGN.map(agencyRow).join('');
-    }).catch(function () { findState('서버에 연결하지 못했습니다.', true); });
+    }).catch(function () { findFail(job, '서버에 연결하지 못했습니다.'); });
   }
   function agencyRow(x, i) {
     return '<div class="spec-item"><div class="nm">' + esc(x.title) + '</div>' +
