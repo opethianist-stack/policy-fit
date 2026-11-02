@@ -28,30 +28,49 @@ export default function CorpSearch({ initial }) {
   const [open, setOpen] = useState(null);
   const [ranks, setRanks] = useState({});
   const timer = useRef(null);
+  const ctrl = useRef(null);   // 조회 취소(STEP76)
+  const [note, setNote] = useState('');
 
-  useEffect(() => () => clearInterval(timer.current), []);
+  useEffect(() => () => { clearInterval(timer.current); if (ctrl.current) ctrl.current.abort(); }, []);
   useEffect(() => { if (initial && initial.v) { setC(/^\d{10}$/.test(initial.v) ? bizFmt(initial.v) : initial.v); run(null, initial.v); } }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function run(e, value) {
     if (e) e.preventDefault();
     const v = String(value ?? c).trim();
+    if (e && ctrl.current) return;   // 조회 중 Enter는 무시
     if (!v) { setErr('업체 이름이나 사업자등록번호를 넣어 주세요.'); return; }
-    setBusy(true); setErr(''); setSec(0); setCands(null);
+    if (ctrl.current) ctrl.current.abort();
+    const my = new AbortController();
+    ctrl.current = my;
+    setBusy(true); setErr(''); setNote(''); setSec(0); setCands(null);
     const t0 = Date.now();
     clearInterval(timer.current);
     timer.current = setInterval(() => setSec(Math.round((Date.now() - t0) / 1000)), 500);
     try {
-      const r = await fetch(`/api/awards?corp=${encodeURIComponent(v)}&from=${from}&to=${to}`, { cache: 'no-store' });
+      const r = await fetch(`/api/awards?corp=${encodeURIComponent(v)}&from=${from}&to=${to}`, { cache: 'no-store', signal: my.signal });
       const j = await r.json().catch(() => ({ ok: false, error: '응답을 읽지 못했습니다.' }));
+      if (ctrl.current !== my) return;
+      ctrl.current = null;
       if (!j.ok) { setErr(j.error || '조회에 실패했습니다.'); }
       else if (j.candidates) {
         if (j.candidates.length === 1) { clearInterval(timer.current); setBusy(false); setC(bizFmt(j.candidates[0].biz)); return run(null, j.candidates[0].biz); }
         setCands(j.candidates);
         if (!j.candidates.length) setErr('받아 둔 자료에서 이 이름의 업체를 찾지 못했습니다. 사업자등록번호로 찾아 주세요.');
       } else { setData(j); setOpen(null); setRanks({}); }
-    } catch { setErr('조회에 실패했습니다. 잠시 뒤 다시 시도해 주세요.'); }
+    } catch {
+      if (ctrl.current !== my) return;   // 취소했거나 새 조회가 시작됨
+      ctrl.current = null;
+      setErr('조회에 실패했습니다. 잠시 뒤 다시 시도해 주세요.');
+    }
     clearInterval(timer.current);
     setBusy(false);
+  }
+
+  function cancel() {
+    if (!ctrl.current) return;
+    ctrl.current.abort(); ctrl.current = null;
+    clearInterval(timer.current); setBusy(false);
+    setNote('조회를 취소했습니다. 기간을 줄이면 더 빨리 끝납니다.');
   }
 
   async function toggleOpen(a) {
@@ -84,10 +103,13 @@ export default function CorpSearch({ initial }) {
           <em>~</em>
           <input type="month" value={to} onChange={(e) => setTo(e.target.value)} aria-label="끝 월" />
         </span></label>
-      <button className="btn primary" disabled={busy}>{busy ? `조회 중 ${sec}초` : '조회'}</button>
+      {busy
+        ? <span className="aw-go"><button type="button" className="btn primary" disabled>조회 중 {sec}초</button><button type="button" className="btn ghost" onClick={cancel}>취소</button></span>
+        : <button className="btn primary">조회</button>}
     </form>
     <p className="aw-hint">사업자등록번호로 찾으면 기간 안에 그 업체가 대표로 낙찰받은 사업이 나옵니다(최대 12개월). 이름으로는 수주 현황에서 한 번이라도 조회된 업체 중에서 찾습니다.</p>
     {err && <p className="aw-err" role="alert">{err}</p>}
+    {note && <p className="aw-note" role="status">{note}</p>}
 
     <details className="aw-limits">
       <summary>이 화면으로 알 수 없는 것</summary>
