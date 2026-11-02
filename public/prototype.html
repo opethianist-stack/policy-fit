@@ -2198,7 +2198,7 @@
           RANKING = false;
           $('result-count').textContent = '관련도순 ' + S.results.length + '건 · 후보 ' + d.candidates + '건';
           syncCards(); renderTerms(); renderGrid(); repaintSteps();
-          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : '') + (d.match === 'none' ? ' · 제안요청서 문장 대조 없음' : ''), 'ok');
+          done('AI 관련도순' + (d.hidden.length ? ' · 관련 없음 ' + d.hidden.length + '건 제외' : '') + (d.broken ? ' · OCR 글자 깨짐 ' + d.broken + '건 내림' : '') + (d.match === 'none' ? ' · 제안요청서 문장 대조 없음' : ''), 'ok');
         });
       }).catch(function () { done('키워드순 · 관련도 판정 못 함', 'err'); });
       // 서버가 응답하지 않으면 40초 뒤 키워드순으로 보여 준다
