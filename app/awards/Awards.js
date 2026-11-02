@@ -139,8 +139,12 @@ export default function Awards() {
   const timer = useRef(null);
   const rankSeq = useRef(0);
   const [rankState, setRankState] = useState(null);
+  const [note, setNote] = useState('');
+  // 조회 취소(STEP76): 화면의 요청을 끊는다. 서버 쪽 호출은 끝까지 돌 수 있지만 결과는 캐시에만 남고, 늦게 온 응답은 버린다
+  const ctrl = useRef(null);
+  const rankCtrl = useRef(null);
 
-  useEffect(() => () => clearInterval(timer.current), []);
+  useEffect(() => () => { clearInterval(timer.current); if (ctrl.current) ctrl.current.abort(); if (rankCtrl.current) rankCtrl.current.abort(); }, []);
   // 공고 검색 화면의 "작년 같은 사업"에서 넘어오면(?q=&from=&to=&org=) 바로 조회한다
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -156,15 +160,21 @@ export default function Awards() {
   async function run(e, over) {
     if (e) e.preventDefault();
     const c = over || { q, from, to, org };
+    if (ctrl.current) return;   // 조회 중 Enter는 무시(취소는 취소 버튼으로)
     if (!c.q.trim()) { setErr('사업명 키워드를 넣어 주세요.'); return; }
-    setBusy(true); setErr(''); setSec(0);
+    stopRanks(false);
+    const my = new AbortController();
+    ctrl.current = my;
+    setBusy(true); setErr(''); setNote(''); setSec(0);
     const t0 = Date.now();
     clearInterval(timer.current);
     timer.current = setInterval(() => setSec(Math.round((Date.now() - t0) / 1000)), 500);
     try {
       const u = `/api/awards?q=${encodeURIComponent(c.q.trim())}&from=${c.from}&to=${c.to}&org=${encodeURIComponent(c.org.trim())}`;
-      const r = await fetch(u, { cache: 'no-store' });
+      const r = await fetch(u, { cache: 'no-store', signal: my.signal });
       const j = await r.json().catch(() => ({ ok: false, error: '응답을 읽지 못했습니다.' }));
+      if (ctrl.current !== my) return;
+      ctrl.current = null;
       if (!j.ok) { setErr(j.error || '조회에 실패했습니다.'); setData(null); }
       else {
         setData(j);
@@ -174,9 +184,26 @@ export default function Awards() {
         loadRanks(j);
         return;
       }
-    } catch { setErr('조회에 실패했습니다. 잠시 뒤 다시 시도해 주세요.'); }
+    } catch {
+      if (ctrl.current !== my) return;   // 취소했거나 새 조회가 시작됨
+      ctrl.current = null;
+      setErr('조회에 실패했습니다. 잠시 뒤 다시 시도해 주세요.');
+    }
     clearInterval(timer.current);
     setBusy(false);
+  }
+
+  function cancel() {
+    if (!ctrl.current) return;
+    ctrl.current.abort(); ctrl.current = null;
+    clearInterval(timer.current); setBusy(false);
+    setNote('조회를 취소했습니다. 기간을 줄이거나 수요기관을 넣으면 더 빨리 끝납니다.');
+  }
+  // 개찰순위 불러오기 멈춤: 이미 받은 것은 남기고, 못 받은 공고는 사업명을 펼칠 때 하나씩 받는다
+  function stopRanks(show) {
+    if (rankCtrl.current) { rankCtrl.current.abort(); rankCtrl.current = null; }
+    rankSeq.current++;
+    setRankState((s) => (show && s && s.done < s.total ? { ...s, stopped: true } : show ? s : null));
   }
 
   // 표를 먼저 띄운 뒤 개찰순위 전체를 12건씩 나눠 함께 받는다(2순위·평가점수·업체 집계가 여기서 채워진다)
@@ -185,13 +212,15 @@ export default function Awards() {
       .map((g) => g.opening.no + '-' + g.opening.ord))];
     if (!keys.length) return;
     const seq = ++rankSeq.current;
+    const my = new AbortController();
+    rankCtrl.current = my;
     setRankState({ done: 0, total: keys.length, failed: 0 });
     const chunks = [];
     for (let i = 0; i < keys.length; i += 12) chunks.push(keys.slice(i, i + 12));
     await Promise.all(chunks.map(async (c) => {
       let got = {};
       try {
-        const r = await fetch('/api/awards?ranks=' + c.join(','), { cache: 'no-store' });
+        const r = await fetch('/api/awards?ranks=' + c.join(','), { cache: 'no-store', signal: my.signal });
         const x = await r.json();
         got = (x && x.rankings) || {};
       } catch { /* 아래에서 실패로 센다 */ }
@@ -208,6 +237,7 @@ export default function Awards() {
       const bad = c.filter((k) => !got[k] || !got[k].ok).length;
       setRankState((s) => (s ? { ...s, done: s.done + c.length, failed: s.failed + bad } : s));
     }));
+    if (rankCtrl.current === my) rankCtrl.current = null;
   }
 
   const chosen = useMemo(() => (data ? data.groups.filter((g) => sel.has(g.key)) : []), [data, sel]);
@@ -277,10 +307,13 @@ export default function Awards() {
           </span></label>
         <label><span>수요기관(선택)</span>
           <input value={org} onChange={(e) => setOrg(e.target.value)} placeholder="예: 경상북도" /></label>
-        <button className="btn primary" disabled={busy}>{busy ? `조회 중 ${sec}초` : '조회'}</button>
+        {busy
+          ? <span className="aw-go"><button type="button" className="btn primary" disabled>조회 중 {sec}초</button><button type="button" className="btn ghost" onClick={cancel}>취소</button></span>
+          : <button className="btn primary">조회</button>}
       </form>
       <p className="aw-hint">기간은 최대 12개월입니다. 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 10초 안팎 걸리고, 같은 조건은 한 시간 동안 바로 나옵니다. 2순위·평가점수는 표가 뜬 뒤 이어서 채워집니다.</p>
       {err && <p className="aw-err" role="alert">{err}</p>}
+      {note && <p className="aw-note" role="status">{note}</p>}
 
       <details className="aw-limits">
         <summary>데이터로 알 수 없는 것</summary>
@@ -295,8 +328,9 @@ export default function Awards() {
       {data && (<>
         <div className="aw-summary">
           <span>사업 <b>{data.groups.length}</b>건 · 선택 <b>{sel.size}</b>건 · 관련 계약 <b>{data.related.length}</b>건</span>
-          {rankState && rankState.done < rankState.total && <span className="aw-busy">개찰순위 불러오는 중 {rankState.done}/{rankState.total}</span>}
-          {rankState && rankState.done >= rankState.total && rankState.failed > 0 && <span className="aw-warn">개찰순위 {rankState.failed}건을 불러오지 못했습니다(사업명을 눌러 다시 보기)</span>}
+          {rankState && !rankState.stopped && rankState.done < rankState.total && <span className="aw-busy">개찰순위 불러오는 중 {rankState.done}/{rankState.total} <button type="button" className="aw-stop" onClick={() => stopRanks(true)}>멈춤</button></span>}
+          {rankState && rankState.stopped && <span className="aw-warn">개찰순위 불러오기를 멈췄습니다({rankState.done}/{rankState.total}). 남은 공고는 사업명을 눌러 하나씩 볼 수 있습니다</span>}
+          {rankState && !rankState.stopped && rankState.done >= rankState.total && rankState.failed > 0 && <span className="aw-warn">개찰순위 {rankState.failed}건을 불러오지 못했습니다(사업명을 눌러 다시 보기)</span>}
           {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}</span>}
           <button type="button" className="btn soft" onClick={exportXlsx} disabled={!sel.size}>엑셀 내보내기</button>
         </div>
