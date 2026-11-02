@@ -1,6 +1,7 @@
 import index from '../../data/corpus-index.json';
 import { Bars, Trend } from './Charts';
 import { realStats } from '../../lib/stats';
+import { quotaStats } from '../../lib/quota';
 
 export const metadata = { title: 'Policy Fit · 관리자 대시보드' };
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ function sampleDaily() {
 export default async function Admin({ searchParams }) {
   const sp = (await searchParams) || {};
   const real = sp.view === 'real';
-  const st = real ? await realStats(30) : null;
+  const [st, qt] = await Promise.all([real ? realStats(30) : null, quotaStats(30)]);
   const cat = {};
   for (const d of index.docs) cat[d.category] = (cat[d.category] || 0) + 1;
   const cats = Object.entries(cat).sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value }));
@@ -41,6 +42,39 @@ export default async function Admin({ searchParams }) {
       <h2>④ 정책문서 색인 현황 <span className="tag real">실제 값</span></h2>
       <p className="sub">색인 문서 {index.docs.length}개 · {index.pages.length.toLocaleString('ko-KR')}쪽(그중 OCR {ocr}쪽) · 갱신 {builtText}</p>
       <Bars data={cats} unit="개" />
+    </section>
+  );
+  // 공공데이터포털 일일 호출 한도(실제 값). 응답 헤더에서 읽은 그날 사용 수라 마지막으로 부른 때 기준이다
+  const pct = (a, b) => (b ? Math.min(100, Math.round((a / b) * 100)) : 0);
+  const hm = (t) => fmt(t).slice(11, 16);
+  const meter = (used, lim) => (
+    <span className="qbar" aria-hidden="true"><i className={pct(used, lim) >= 100 ? 'full' : pct(used, lim) >= 80 ? 'warn' : ''} style={{ width: pct(used, lim) + '%' }} /></span>
+  );
+  const quota = (
+    <section className="panel quota">
+      <h2>공공데이터포털 일일 호출 한도 <span className="tag real">실제 값</span></h2>
+      <p className="sub">인증키 하나에 API(오퍼레이션)마다 하루 한도가 따로 있고 자정(KST)에 다시 찹니다. 사용 수는 포털 응답 헤더에서 읽은 값이라 그 API를 마지막으로 부른 시각 기준입니다(이 작업 환경·Actions처럼 같은 키를 쓰는 다른 곳의 호출도 포함).{!qt.db ? ' DB가 연결되지 않아 이 서버 인스턴스가 본 값만 나옵니다.' : ''}</p>
+      {qt.today.length ? (
+        <table className="weak">
+          <thead><tr><th>API</th><th className="n">오늘 사용</th><th className="n">한도</th><th className="n">남음</th><th className="bar"></th><th className="n">마지막 확인</th></tr></thead>
+          <tbody>{qt.today.map((x) => (
+            <tr key={x.op} className={x.used >= x.lim ? 'over' : ''}>
+              <td title={x.op}>{x.label}</td><td className="n">{x.used.toLocaleString('ko-KR')}</td><td className="n">{x.lim.toLocaleString('ko-KR')}</td>
+              <td className="n">{x.used >= x.lim ? '한도 초과' : (x.lim - x.used).toLocaleString('ko-KR')}</td><td className="bar">{meter(x.used, x.lim)}</td><td className="n">{hm(x.at)}</td>
+            </tr>))}</tbody>
+        </table>
+      ) : <p className="sub">오늘은 아직 포털을 부른 기록이 없습니다.</p>}
+      {qt.history.length > 0 && (<>
+        <h3>최근 30일 · 운영계정 신청 판단용</h3>
+        <table className="weak">
+          <thead><tr><th>API</th><th className="n">하루 최대</th><th className="n">하루 평균</th><th className="bar"></th><th className="n">한도 도달</th><th className="n">기록 일수</th></tr></thead>
+          <tbody>{qt.history.map((x) => (
+            <tr key={x.op}>
+              <td title={x.op}>{x.label}</td><td className="n">{x.peak.toLocaleString('ko-KR')} / {x.lim.toLocaleString('ko-KR')}</td><td className="n">{x.avg.toLocaleString('ko-KR')}</td>
+              <td className="bar">{meter(x.peak, x.lim)}</td><td className="n">{x.hits ? x.hits + '일' : '–'}</td><td className="n">{x.days}일</td>
+            </tr>))}</tbody>
+        </table>
+      </>)}
     </section>
   );
   const views = (
@@ -99,7 +133,9 @@ export default async function Admin({ searchParams }) {
               ) : empty}
             </section>
           </div>
+          {quota}
         </>)}
+        {!st.ok && quota}
       </main>
     );
   }
@@ -141,6 +177,7 @@ export default async function Admin({ searchParams }) {
         </section>
         {corpus}
       </div>
+      {quota}
     </main>
   );
 }
