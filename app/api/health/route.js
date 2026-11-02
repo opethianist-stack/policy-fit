@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { portalReason, isQuota } from '../../../lib/portal';
+import { noteQuota } from '../../../lib/quota';
 
 // 화면의 연결 상태 표시용. 호출 대상과 파라미터가 서버에 고정되어 있어
 // 브라우저는 주소나 키를 넘기지 않고 결과(ok / 사유)만 받는다.
@@ -34,6 +35,7 @@ async function call(base, params) {
     signal: AbortSignal.timeout(8000),
   });
   const text = (await res.text()).trim();
+  noteQuota(base, res.headers, res.status, isQuota(res.status, text));
   let json = null;
   if (text.startsWith('{') || text.startsWith('[')) {
     try { json = JSON.parse(text); } catch { json = null; }
