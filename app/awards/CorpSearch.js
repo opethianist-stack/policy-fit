@@ -146,7 +146,7 @@ export default function CorpSearch({ initial }) {
 
       <div className="aw-summary">
         <span>{data.from} ~ {data.to} 대표 낙찰 <b>{data.awards.length}</b>건{data.total ? <> · 낙찰금액 합계 <b>{won(data.total)}</b>원</> : null}</span>
-        {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}</span>}
+        {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}{data.partial.length > 1 ? ` 외 ${data.partial.length - 1}건` : ''}</span>}
         <button type="button" className="btn soft" onClick={exportXlsx} disabled={!data.awards.length}>엑셀 내보내기</button>
       </div>
 

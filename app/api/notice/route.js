@@ -1,4 +1,4 @@
-import { portalKey, portalGet, portalError, failReason } from '../../../lib/portal';
+import { portalKey, portalGet, portalError, portalHeader, failReason } from '../../../lib/portal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -101,8 +101,8 @@ export async function GET(req) {
     } catch (e) {
       return Response.json({ ok: false, error: failReason(e) }, { status: 502 });
     }
-    const header = r.json && r.json.response && r.json.response.header;
-    if (!header || header.resultCode !== '00') {
+    const header = portalHeader(r.json);
+    if (!header || header.resultCode !== '00' || !r.json.response) {
       lastReason = (header && header.resultMsg) || portalError(r.text) || `HTTP ${r.status}`;
       continue;
     }
