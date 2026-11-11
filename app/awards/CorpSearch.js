@@ -18,7 +18,7 @@ function monthNow(offset = 0) {
 
 export default function CorpSearch({ initial }) {
   const [c, setC] = useState('');
-  const [from, setFrom] = useState(monthNow(-11));
+  const [from, setFrom] = useState(monthNow(-2));   // 기본 최근 3개월(사업명 찾기와 같게)
   const [to, setTo] = useState(monthNow());
   const [busy, setBusy] = useState(false);
   const [sec, setSec] = useState(0);
@@ -107,7 +107,7 @@ export default function CorpSearch({ initial }) {
         ? <span className="aw-go"><button type="button" className="btn primary" disabled>조회 중 {sec}초</button><button type="button" className="btn ghost" onClick={cancel}>취소</button></span>
         : <button className="btn primary">조회</button>}
     </form>
-    <p className="aw-hint">사업자등록번호로 찾으면 기간 안에 그 업체가 대표로 낙찰받은 사업이 나옵니다(최대 12개월). 이름으로는 수주 현황에서 한 번이라도 조회된 업체 중에서 찾습니다.</p>
+    <p className="aw-hint">사업자등록번호로 찾으면 기간 안에 그 업체가 대표로 낙찰받은 사업이 나옵니다(기본 최근 3개월, 최대 12개월). 이름으로는 수주 현황에서 한 번이라도 조회된 업체 중에서 찾습니다.</p>
     {err && <p className="aw-err" role="alert">{err}</p>}
     {note && <p className="aw-note" role="status">{note}</p>}
 
