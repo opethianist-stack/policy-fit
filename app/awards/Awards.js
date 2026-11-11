@@ -126,7 +126,7 @@ export default function Awards() {
   const [mode, setMode] = useState('name');
   const [corpQ, setCorpQ] = useState(null);
   const [q, setQ] = useState('');
-  const [from, setFrom] = useState(monthNow().slice(0, 4) + '-01');
+  const [from, setFrom] = useState(monthNow(-2));   // 기본 최근 3개월(이번 달 포함) — 7일씩 나눠 불러 호출이 많다(STEP77·78)
   const [to, setTo] = useState(monthNow());
   const [org, setOrg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -311,7 +311,7 @@ export default function Awards() {
           ? <span className="aw-go"><button type="button" className="btn primary" disabled>조회 중 {sec}초</button><button type="button" className="btn ghost" onClick={cancel}>취소</button></span>
           : <button className="btn primary">조회</button>}
       </form>
-      <p className="aw-hint">기간은 최대 12개월입니다. 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 10초 안팎 걸리고, 같은 조건은 한 시간 동안 바로 나옵니다. 2순위·평가점수는 표가 뜬 뒤 이어서 채워집니다.</p>
+      <p className="aw-hint">기본은 최근 3개월이고 최대 12개월까지 넓힐 수 있습니다(기간이 길면 오래 걸립니다). 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 10초 안팎 걸리고, 같은 조건은 한 시간 동안 바로 나옵니다. 2순위·평가점수는 표가 뜬 뒤 이어서 채워집니다.</p>
       {err && <p className="aw-err" role="alert">{err}</p>}
       {note && <p className="aw-note" role="status">{note}</p>}
 
