@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { portalReason, isQuota } from '../../../lib/portal';
+import { portalReason, portalHeader, isQuota } from '../../../lib/portal';
 import { noteQuota, recentOk } from '../../../lib/quota';
 import { dbReady, query } from '../../../lib/db';
 
@@ -61,9 +61,8 @@ async function checkG2b(key) {
     ServiceKey: key, inqryDiv: '1', inqryBgnDt: ymd(-1) + '0000', inqryEndDt: ymd(0) + '2359',
     pageNo: '1', numOfRows: '1', type: 'json',
   });
-  const code = r.json && r.json.response && r.json.response.header && r.json.response.header.resultCode;
-  if (r.status === 200 && code === '00') return { ok: true, ms: r.ms };
-  const hdr = r.json && r.json.response && r.json.response.header;
+  const hdr = portalHeader(r.json);
+  if (r.status === 200 && hdr && hdr.resultCode === '00') return { ok: true, ms: r.ms };
   return fail(r, hdr && hdr.resultMsg);
 }
 

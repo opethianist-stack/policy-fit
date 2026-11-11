@@ -331,7 +331,7 @@ export default function Awards() {
           {rankState && !rankState.stopped && rankState.done < rankState.total && <span className="aw-busy">개찰순위 불러오는 중 {rankState.done}/{rankState.total} <button type="button" className="aw-stop" onClick={() => stopRanks(true)}>멈춤</button></span>}
           {rankState && rankState.stopped && <span className="aw-warn">개찰순위 불러오기를 멈췄습니다({rankState.done}/{rankState.total}). 남은 공고는 사업명을 눌러 하나씩 볼 수 있습니다</span>}
           {rankState && !rankState.stopped && rankState.done >= rankState.total && rankState.failed > 0 && <span className="aw-warn">개찰순위 {rankState.failed}건을 불러오지 못했습니다(사업명을 눌러 다시 보기)</span>}
-          {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}</span>}
+          {data.partial && <span className="aw-warn">일부 구간을 불러오지 못했습니다: {data.partial[0]}{data.partial.length > 1 ? ` 외 ${data.partial.length - 1}건` : ''}</span>}
           <button type="button" className="btn soft" onClick={exportXlsx} disabled={!sel.size}>엑셀 내보내기</button>
         </div>
         <nav className="aw-tabs" aria-label="보기">
