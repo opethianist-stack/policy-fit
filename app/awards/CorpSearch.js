@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { downloadXlsx } from './xlsx';
+import { recentList, recentGet, recentPut, ago } from './recent';
+
+const STORE = 'pf-corp-recent';
 
 // 업체로 찾기: 사업자등록번호로 업체 정보(조달청 사용자정보)와 그 업체가 대표로 낙찰받은 사업(최종낙찰)을 본다.
 // 이름으로 넣으면 이미 받아 둔 낙찰·개찰·계약 자료에 나온 업체 중에서 후보를 띄운다
@@ -30,8 +33,12 @@ export default function CorpSearch({ initial }) {
   const timer = useRef(null);
   const ctrl = useRef(null);   // 조회 취소(STEP76)
   const [note, setNote] = useState('');
+  const [recents, setRecents] = useState([]);
+  const [curKey, setCurKey] = useState('');
 
   useEffect(() => () => { clearInterval(timer.current); if (ctrl.current) ctrl.current.abort(); }, []);
+  // 다른 탭에 다녀와도 마지막 결과를 그대로(STEP79). 주소로 업체가 넘어오면 아래 효과가 새로 조회한다
+  useEffect(() => { const saved = recentList(STORE); setRecents(saved); if (saved.length) restore(saved[0].k); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (initial && initial.v) { setC(/^\d{10}$/.test(initial.v) ? bizFmt(initial.v) : initial.v); run(null, initial.v); } }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function run(e, value) {
@@ -56,7 +63,15 @@ export default function CorpSearch({ initial }) {
         if (j.candidates.length === 1) { clearInterval(timer.current); setBusy(false); setC(bizFmt(j.candidates[0].biz)); return run(null, j.candidates[0].biz); }
         setCands(j.candidates);
         if (!j.candidates.length) setErr('받아 둔 자료에서 이 이름의 업체를 찾지 못했습니다. 사업자등록번호로 찾아 주세요.');
-      } else { setData(j); setOpen(null); setRanks({}); }
+      } else {
+        setData(j); setOpen(null); setRanks({});
+        const k = `${j.biz}|${from}|${to}`;
+        setCurKey(k);
+        if (!j.partial) {
+          recentPut(STORE, { k, label: `${short((j.info && j.info.name) || bizFmt(j.biz))} · ${from}~${to}`, cond: { biz: j.biz, from, to }, data: j });
+          setRecents(recentList(STORE));
+        }
+      }
     } catch {
       if (ctrl.current !== my) return;   // 취소했거나 새 조회가 시작됨
       ctrl.current = null;
@@ -64,6 +79,15 @@ export default function CorpSearch({ initial }) {
     }
     clearInterval(timer.current);
     setBusy(false);
+  }
+
+  // 저장해 둔 결과를 다시 연다(포털을 부르지 않는다)
+  function restore(k) {
+    const hit = recentGet(STORE, k);
+    if (!hit || ctrl.current) return;
+    setC(bizFmt(hit.cond.biz)); setFrom(hit.cond.from); setTo(hit.cond.to);
+    setData(hit.data); setOpen(null); setRanks({}); setCands(null); setErr(''); setCurKey(k);
+    setNote(`${ago(hit.at)} 조회한 결과를 저장본에서 열었습니다. 최신으로 받으려면 조회를 누르세요.`);
   }
 
   function cancel() {
@@ -110,6 +134,15 @@ export default function CorpSearch({ initial }) {
     <p className="aw-hint">사업자등록번호로 찾으면 기간 안에 그 업체가 대표로 낙찰받은 사업이 나옵니다(기본 최근 3개월, 최대 12개월). 이름으로는 수주 현황에서 한 번이라도 조회된 업체 중에서 찾습니다.</p>
     {err && <p className="aw-err" role="alert">{err}</p>}
     {note && <p className="aw-note" role="status">{note}</p>}
+    {recents.length > 0 && (
+      <div className="aw-recent" aria-label="최근 조회">
+        <span>최근 조회</span>
+        {recents.map((r) => (
+          <button type="button" key={r.k} disabled={busy} className={curKey === r.k ? 'on' : ''} onClick={() => restore(r.k)}
+            title="저장해 둔 결과를 다시 엽니다(나라장터를 부르지 않음)">{r.label}<em>{ago(r.at)}</em></button>
+        ))}
+      </div>
+    )}
 
     <details className="aw-limits">
       <summary>이 화면으로 알 수 없는 것</summary>

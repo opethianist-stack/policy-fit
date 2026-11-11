@@ -547,6 +547,13 @@ table.weak .n { text-align: right; font-variant-numeric: tabular-nums; }
 .aw-go { display: inline-flex; gap: 8px; }
 .btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
 .btn.ghost:hover { background: var(--brand-tint); }
+.aw-recent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 2px 0; font-size: 12px; }
+.aw-recent > span { color: var(--muted); margin-right: 2px; }
+.aw-recent button { font: inherit; font-size: 12px; color: var(--slate); background: #fff; border: 1px solid var(--hairline); border-radius: 2px; padding: 3px 9px; cursor: pointer; max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-recent button em { font-style: normal; color: var(--faint); margin-left: 6px; }
+.aw-recent button:hover { border-color: var(--brand-line); color: var(--brand); }
+.aw-recent button.on { border-color: var(--brand); color: var(--brand); font-weight: 600; }
+.aw-recent button:disabled { opacity: .5; cursor: default; }
 .aw-note { margin: 8px 0 0; font-size: 13px; color: var(--slate); }
 .aw-stop { font: inherit; font-size: 12px; font-weight: 600; color: var(--brand); background: #fff; border: 1px solid var(--brand-line); border-radius: 2px; padding: 1px 8px; margin-left: 6px; cursor: pointer; }
 .aw-stop:hover { background: var(--brand-tint); }
@@ -563,13 +570,14 @@ table.weak .n { text-align: right; font-variant-numeric: tabular-nums; }
 .aw-table .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .aw-table .ck { width: 28px; text-align: center; }
 .aw-table .rg { font-weight: 700; color: var(--ink); white-space: nowrap; }
-.aw-table .nm { min-width: 200px; max-width: 280px; }
+.aw-table .nm { min-width: 200px; max-width: 280px; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.aw-table .nm .aw-link { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }   /* 긴 사업명이 옆 칸(개찰)과 겹치던 것 — 칸 안에서 줄바꿈(STEP79) */
 .aw-table .no { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; font-weight: 400; }
 .aw-table .op { white-space: nowrap; }
 .aw-table .fs { min-width: 140px; }
 .aw-table .fs b { color: var(--ink); }
 .aw-table .nm .fl { display: block; font-size: 11.5px; color: var(--warn); margin-top: 2px; }
-.aw-table .ct { min-width: 180px; max-width: 260px; }
+.aw-table .ct { min-width: 180px; max-width: 260px; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 .aw-table .sc { font-size: 11.5px; }
 .aw-table tr.off td { opacity: .45; }
 .aw-table tr.top td { color: var(--ink); font-weight: 700; background: var(--brand-tint); }
