@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { downloadXlsx } from './xlsx';
 import CorpSearch from './CorpSearch';
+import { recentList, recentGet, recentPut, ago } from './recent';
+
+const STORE = 'pf-awards-recent';
+const condKey = (c) => [c.q.trim(), c.from, c.to, c.org.trim()].join('|');
+const condLabel = (c) => `${c.q.trim()} · ${c.from}~${c.to}${c.org.trim() ? ' · ' + c.org.trim() : ''}`;
 
 // 수주 현황: 사업명 키워드 + 기간으로 나라장터 공고·개찰순위·최종낙찰·계약(공동수급 지분)을 공고 단위로 묶어 본다.
 // 서버(/api/awards)가 묶어 주고, 표 여섯 개와 엑셀은 화면에서 고른 사업만으로 만든다(키워드 잡음은 담당자가 빼게)
@@ -143,11 +148,16 @@ export default function Awards() {
   // 조회 취소(STEP76): 화면의 요청을 끊는다. 서버 쪽 호출은 끝까지 돌 수 있지만 결과는 캐시에만 남고, 늦게 온 응답은 버린다
   const ctrl = useRef(null);
   const rankCtrl = useRef(null);
+  const cond = useRef(null);   // 지금 화면에 띄운 결과의 조회 조건(최근 조회 저장 키)
+  const [recents, setRecents] = useState([]);
 
   useEffect(() => () => { clearInterval(timer.current); if (ctrl.current) ctrl.current.abort(); if (rankCtrl.current) rankCtrl.current.abort(); }, []);
   // 공고 검색 화면의 "작년 같은 사업"에서 넘어오면(?q=&from=&to=&org=) 바로 조회한다
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
+    const saved = recentList(STORE);
+    setRecents(saved);
+    if (saved.length && !(p.get('q') || '').trim()) restore(saved[0].k);   // 다른 탭에 다녀와도 마지막 결과를 그대로
     if (p.get('corp')) { setMode('corp'); setCorpQ({ v: p.get('corp').trim(), n: 1 }); return; }
     const q0 = (p.get('q') || '').trim();
     if (!q0) return;
@@ -177,6 +187,8 @@ export default function Awards() {
       ctrl.current = null;
       if (!j.ok) { setErr(j.error || '조회에 실패했습니다.'); setData(null); }
       else {
+        cond.current = { ...c, k: condKey(c) };
+        if (!j.partial) save(j);   // 일부 구간이 빠진 결과는 남기지 않는다
         setData(j);
         setSel(new Set(j.groups.filter((g) => g.status !== '공고 취소').map((g) => g.key)));
         setView('status'); setOpen(null);
@@ -191,6 +203,27 @@ export default function Awards() {
     }
     clearInterval(timer.current);
     setBusy(false);
+  }
+
+  function save(d) {
+    const c = cond.current;
+    if (!c || !d) return;
+    recentPut(STORE, { k: c.k, label: condLabel(c), cond: { q: c.q, from: c.from, to: c.to, org: c.org }, data: d });
+    setRecents(recentList(STORE));
+  }
+  // 저장해 둔 결과를 다시 연다(포털을 부르지 않는다). 개찰순위가 덜 채워진 공고만 이어서 받는다
+  function restore(k) {
+    const hit = recentGet(STORE, k);
+    if (!hit || ctrl.current) return;
+    stopRanks(false);
+    const c = hit.cond;
+    setQ(c.q); setFrom(c.from); setTo(c.to); setOrg(c.org || '');
+    cond.current = { ...c, org: c.org || '', k };
+    setData(hit.data);
+    setSel(new Set(hit.data.groups.filter((g) => g.status !== '공고 취소').map((g) => g.key)));
+    setView('status'); setOpen(null); setErr('');
+    setNote(`${ago(hit.at)} 조회한 결과를 저장본에서 열었습니다. 최신으로 받으려면 조회를 누르세요.`);
+    loadRanks(hit.data);
   }
 
   function cancel() {
@@ -208,7 +241,7 @@ export default function Awards() {
 
   // 표를 먼저 띄운 뒤 개찰순위 전체를 12건씩 나눠 함께 받는다(2순위·평가점수·업체 집계가 여기서 채워진다)
   async function loadRanks(j) {
-    const keys = [...new Set(j.groups.filter((g) => g.opening && /개찰완료/.test(g.opening.status) && g.opening.count > 0)
+    const keys = [...new Set(j.groups.filter((g) => g.opening && /개찰완료/.test(g.opening.status) && g.opening.count > 0 && !(g.ranking && g.ranking.ok))
       .map((g) => g.opening.no + '-' + g.opening.ord))];
     if (!keys.length) return;
     const seq = ++rankSeq.current;
@@ -238,6 +271,7 @@ export default function Awards() {
       setRankState((s) => (s ? { ...s, done: s.done + c.length, failed: s.failed + bad } : s));
     }));
     if (rankCtrl.current === my) rankCtrl.current = null;
+    if (seq === rankSeq.current) setData((d) => { if (d && !d.partial) save(d); return d; });   // 개찰순위까지 채운 결과로 저장본을 바꾼다
   }
 
   const chosen = useMemo(() => (data ? data.groups.filter((g) => sel.has(g.key)) : []), [data, sel]);
@@ -314,6 +348,15 @@ export default function Awards() {
       <p className="aw-hint">기본은 최근 3개월이고 최대 12개월까지 넓힐 수 있습니다(기간이 길면 오래 걸립니다). 계약은 기간 끝에서 넉 달 뒤까지 찾습니다. 처음 조회는 10초 안팎 걸리고, 같은 조건은 한 시간 동안 바로 나옵니다. 2순위·평가점수는 표가 뜬 뒤 이어서 채워집니다.</p>
       {err && <p className="aw-err" role="alert">{err}</p>}
       {note && <p className="aw-note" role="status">{note}</p>}
+      {recents.length > 0 && (
+        <div className="aw-recent" aria-label="최근 조회">
+          <span>최근 조회</span>
+          {recents.map((r) => (
+            <button type="button" key={r.k} disabled={busy} className={cond.current && cond.current.k === r.k ? 'on' : ''} onClick={() => restore(r.k)}
+              title="저장해 둔 결과를 다시 엽니다(나라장터를 부르지 않음)">{r.label}<em>{ago(r.at)}</em></button>
+          ))}
+        </div>
+      )}
 
       <details className="aw-limits">
         <summary>데이터로 알 수 없는 것</summary>
